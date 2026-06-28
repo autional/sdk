@@ -14,6 +14,8 @@ interface AuthClientConfig {
   http: AuthmsPlatform['http'];
   baseUrl: string;
   keyExchangeFn?: KeyExchangeFn;
+  /** 端点覆盖（留空使用默认路径）。后续从 auth-config 读取。 */
+  endpoints?: Record<string, string>;
 }
 
 const MAX_CAPTCHA_RETRIES = 3;

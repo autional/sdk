@@ -159,7 +159,7 @@ describe('AuthClient', () => {
   });
 
   describe('register', () => {
-    it('registers with password preprocessing', async () => {
+    it('registers with password as-is', async () => {
       setupClient({
         [AUTH_CONFIG_KEY]: plainAuthConfig(),
         [REGISTER_KEY]: REGISTER_SUCCESS_RESPONSE,
@@ -179,7 +179,7 @@ describe('AuthClient', () => {
       const body = parseBody(lastReq.body);
       expect(body.email).toBe('new@example.com');
       expect(body.password).toBe('newpass');
-      expect(body.password_transmission).toBe('plain');
+      // 注册时不发送 password_transmission — 后端负责哈希
     });
   });
 
@@ -319,7 +319,7 @@ describe('AuthClient', () => {
   describe('changePassword', () => {
     const CHANGE_PASSWORD_KEY = `PUT ${BASE_URL}/identity/api/v1/auth/me/password`;
 
-    it('sends processed password with transmission', async () => {
+    it('sends passwords as-is', async () => {
       setupClient({
         [AUTH_CONFIG_KEY]: plainAuthConfig(),
         [CHANGE_PASSWORD_KEY]: { data: {} },
@@ -330,7 +330,8 @@ describe('AuthClient', () => {
       const lastReq = mockHttp.getLastRequest()!;
       const body = parseBody(lastReq.body);
       expect(body.current_password).toBe('oldpass');
-      expect(body.password_transmission).toBe('plain');
+      expect(body.password).toBe('newpass123');
+      // 修改密码时不发送 password_transmission — 后端负责哈希
     });
 
     it('throws AuthmsAuthError on 4xx', async () => {

@@ -250,4 +250,8 @@ AuthMS gateway.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE) for details.
+MIT
+
+## Feedback
+
+[Gitee Issues](https://gitee.com/authms/sdk/issues) — see [LICENSE](./LICENSE) for details.

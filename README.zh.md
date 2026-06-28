@@ -105,3 +105,7 @@ cd packages/core && npx vitest run src/__tests__/integration.test.ts
 ## 许可证
 
 MIT
+
+## 反馈
+
+[Gitee Issues](https://gitee.com/authms/sdk/issues)

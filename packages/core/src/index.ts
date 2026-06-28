@@ -2,6 +2,8 @@ export { AuthMS } from './authms';
 export type { AuthmsConfig } from './authms';
 export { createPlatformBinding } from './binding';
 export type { BindingConfig, PlatformBinding } from './binding';
+export { setLocale, getLocale, t } from './i18n';
+export type { LocaleKey } from './i18n';
 export { TokenManager } from './token-manager';
 export { ApiClient } from './api-client';
 export { AuthClient } from './auth-client';

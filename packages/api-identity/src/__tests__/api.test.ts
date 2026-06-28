@@ -1,3 +1,4 @@
+// @ts-nocheck — vitest mock types
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   login,

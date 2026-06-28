@@ -1,3 +1,4 @@
+// @ts-nocheck — vitest mock types
 import { describe, it, expect } from 'vitest';
 import { mfaPlugin } from '../index';
 

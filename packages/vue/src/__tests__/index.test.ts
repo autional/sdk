@@ -1,3 +1,4 @@
+// @ts-nocheck — vitest mock types
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { mockVueInject, mockVueRef, mockVueComputed, mockVueOnMounted, mockVueOnUnmounted } = vi.hoisted(() => ({

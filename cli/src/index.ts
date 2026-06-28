@@ -62,7 +62,7 @@ function App() {
       <AuthmsProvider
         config={{
           appId: '${answers.appId}',
-          authUrl: process.env.REACT_APP_AUTH_URL || 'http://localhost:11080',
+          issuer: process.env.REACT_APP_AUTH_ISSUER || 'http://localhost:11080',
         }}
       >
         <Routes>
@@ -149,7 +149,7 @@ const router = createRouter({
 const app = createApp(App);
 app.provide('authmsConfig', {
   appId: '${answers.appId}',
-  authUrl: import.meta.env.VITE_AUTH_URL || 'http://localhost:11080',
+  issuer: import.meta.env.VITE_AUTH_ISSUER || 'http://localhost:11080',
 });
 app.use(router);
 app.mount('#app');
@@ -212,7 +212,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthmsProvider
           config={{
             appId: '${answers.appId}',
-            authUrl: process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:11080',
+            issuer: process.env.NEXT_PUBLIC_AUTH_ISSUER || 'http://localhost:11080',
           }}
         >
           {children}
@@ -438,12 +438,12 @@ import { ref, inject } from 'vue';
 import { AuthMS, browserPlatform } from '@authms/core';
 import type { AuthmsConfig } from '@authms/core';
 
-const config = inject<{ appId: string; authUrl: string }>('authmsConfig');
+const config = inject<{ appId: string; issuer: string }>('authmsConfig');
 if (!config) throw new Error('authmsConfig not provided');
 
 const authms = new AuthMS({
   appId: config.appId,
-  authUrl: config.authUrl,
+  issuer: config.issuer,
   platform: browserPlatform,
 });
 
@@ -486,7 +486,7 @@ function generateServicesEnv(services: string[]): string {
   for (const s of services) {
     lines.push(`VITE_AUTHMS_${s.toUpperCase()}_ENABLED=true`);
   }
-  lines.push(`VITE_AUTHMS_AUTH_URL=http://localhost:11080`);
+  lines.push(`VITE_AUTHMS_AUTH_ISSUER=http://localhost:11080`);
   return lines.join('\n') + '\n';
 }
 
@@ -741,7 +741,7 @@ ${answers.framework === 'next'
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| \`${answers.framework === 'next' ? 'NEXT_PUBLIC_AUTH_URL' : 'VITE_AUTH_URL'}\` | AuthMS gateway URL | \`http://localhost:11080\` |
+| \`${answers.framework === 'next' ? 'NEXT_PUBLIC_AUTH_ISSUER' : 'VITE_AUTH_ISSUER'}\` | AuthMS gateway URL | \`http://localhost:11080\` |
 ${answers.services.map(s => `| \`VITE_AUTHMS_${s.toUpperCase()}_ENABLED\` | Enable ${s} service | \`true\` |`).join('\n')}
 
 ## AuthMS SDK

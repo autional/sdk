@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthms } from '@authms/react';
+import { useAuthms } from '../authms';
 
 export function Login() {
   const { authConfig, login, loginWithOAuth, isLoading } = useAuthms();

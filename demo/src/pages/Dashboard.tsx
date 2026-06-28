@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthms } from '@authms/react';
+import { useAuthms } from '../authms';
 import { getProfile } from '@authms/api-identity';
 
 export function Dashboard() {

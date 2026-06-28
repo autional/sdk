@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthms, RequireAuth } from '@authms/react';
+import { useAuthms, RequireAuth } from './authms';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 

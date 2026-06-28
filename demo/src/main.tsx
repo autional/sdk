@@ -1,9 +1,13 @@
-// force HMR refresh — issuer/apiUrl split
-// AuthMS Demo — AI App Authentication
+/**
+ * AuthMS Demo — AI App Authentication
+ *
+ * 配置在 src/authms.ts，复制 examples/react-authms.ts 模式。
+ * 项目里永远 import from './authms'。
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthmsProvider } from '@authms/react';
+import { AuthmsProvider, authmsConfig } from './authms';
 import { App } from './App';
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -44,12 +48,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <BrowserRouter>
         <AuthmsProvider
-          config={{
-            appId: import.meta.env.VITE_AUTHMS_APP_ID || 'demo-app',
-            issuer: 'http://localhost:11080',
-            apiUrl: '',  // 走 Vite proxy
-            syncTabs: false,
-          }}
+          config={authmsConfig}
           loadingFallback={<div style={{ textAlign: 'center', padding: 60 }}>Connecting to AuthMS...</div>}
         >
           <App />

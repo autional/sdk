@@ -1,5 +1,6 @@
 /**
  * AuthMS Vue 接入模板
+ * @version 0.1.1
  *
  * 使用方法:
  *   1. npm install @authms/vue @authms/api-identity

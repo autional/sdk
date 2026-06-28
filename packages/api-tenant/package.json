@@ -29,7 +29,8 @@
     "@authms/core": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
   },
   "license": "MIT"
 }

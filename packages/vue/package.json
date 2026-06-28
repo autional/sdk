@@ -1,6 +1,6 @@
 {
   "name": "@authms/vue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AuthMS Vue SDK — createAuthms plugin, useAuthms composable, vAuth directive, and authmsGuard router guard",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -28,10 +28,10 @@
     "vue": ">=3.0.0"
   },
   "dependencies": {
-    "@authms/core": "workspace:*"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": "workspace:*",
+    "@authms/tsconfig": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

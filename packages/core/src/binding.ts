@@ -4,8 +4,8 @@
  * 用于各框架适配器，消除重复的 AuthMS 初始化/状态管理/事件订阅代码。
  * 适配器只需将此 binding 包装成框架特定的组件/hook。
  */
-import { AuthMS } from './authms';
-import type { AuthmsConfig, AuthResult, LoginRequest, OAuthOptions } from './types';
+import { AuthMS, type AuthmsConfig } from './authms';
+import type { AuthResult, LoginRequest, OAuthOptions } from './types';
 import type { AuthmsPlatform } from './platform/types';
 import { browserPlatform } from './platform/browser';
 

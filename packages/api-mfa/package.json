@@ -1,6 +1,6 @@
 {
   "name": "@authms/api-mfa",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AuthMS MFA Service API — auto-generated TypeScript client",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,7 +26,7 @@
     "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/core": "workspace:*",
+    "@authms/core": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0"

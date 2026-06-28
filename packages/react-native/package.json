@@ -1,6 +1,6 @@
 {
   "name": "@authms/react-native",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AuthMS React Native SDK — AuthmsProvider, useAuthms hook, and RequireAuth guard for iOS/Android",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -39,10 +39,10 @@
     "react-native": ">=0.70.0"
   },
   "dependencies": {
-    "@authms/core": "workspace:*"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": "workspace:*",
+    "@authms/tsconfig": ">=0.1.0",
     "@react-native-async-storage/async-storage": "^1.23.0",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",

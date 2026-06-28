@@ -1,6 +1,6 @@
 {
   "name": "@authms/miniapp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AuthMS WeChat Mini Program SDK — platform adapter, WeChat login, and token management",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -35,10 +35,10 @@
     "@authms/core": ">=0.1.0"
   },
   "dependencies": {
-    "@authms/core": "workspace:*"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": "workspace:*",
+    "@authms/tsconfig": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0"

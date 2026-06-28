@@ -1,6 +1,6 @@
 {
   "name": "@authms/next",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AuthMS Next.js SDK — middleware, server session, and provider for Next.js App Router",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -36,11 +36,11 @@
     "next": ">=14.0.0"
   },
   "dependencies": {
-    "@authms/core": "workspace:*",
-    "@authms/react": "workspace:*"
+    "@authms/core": ">=0.1.0",
+    "@authms/react": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": "workspace:*",
+    "@authms/tsconfig": ">=0.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "next": "^15.0.0",

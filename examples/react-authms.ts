@@ -12,8 +12,8 @@
 import { AuthmsProvider, useAuthms, RequireAuth } from '@authms/react';
 
 export const authmsConfig = {
-  appId: 'YOUR_APP_ID',                    // ← 在 AuthMS 控制台创建的应用 ID
-  issuer: 'https://auth.example.com',      // ← AuthMS 服务器地址（你的认证域名）
+  appId: 'YOUR_APP_ID',                         // ← 在 AuthMS 控制台创建的应用 ID
+  issuer: 'https://auth.iam.tianv.com',          // ← AuthMS 服务器地址（不是你的网站域名）
 };
 
 export { AuthmsProvider, useAuthms, RequireAuth };

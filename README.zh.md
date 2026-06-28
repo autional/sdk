@@ -37,10 +37,11 @@ cp examples/next-authms.ts src/authms.ts
 
 ```ts
 export const authmsConfig = {
-  appId: 'YOUR_APP_ID',                 // ← 在 AuthMS 控制台创建的应用 ID
-  issuer: 'https://auth.example.com',   // ← AuthMS 服务器地址（你的认证域名）
+  appId: 'YOUR_APP_ID',                       // ← 在 AuthMS 控制台创建的应用 ID
+  issuer: 'https://auth.iam.tianv.com',       // ← AuthMS 服务器地址
 };
 ```
+> **issuer 解释**：AuthMS 服务器的地址，**不是你网站的域名**。SDK 会去 `{issuer}/.well-known/openid-configuration` 发现认证端点。如果你的 AuthMS 在 `auth.iam.tianv.com` 上运行，就直接填这个。
 
 **完成。** 你的项目里所有文件都从 `./authms` 导入，不用管是什么框架：
 

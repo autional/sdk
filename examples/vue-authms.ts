@@ -13,7 +13,7 @@ import { createAuthms, useAuthms, authmsGuard } from '@authms/vue';
 
 export const authmsConfig = {
   appId: 'YOUR_APP_ID',                    // ← 在 AuthMS 控制台创建的应用 ID
-  issuer: 'https://auth.example.com',      // ← AuthMS 服务器地址（你的认证域名）
+  issuer: 'https://auth.iam.tianv.com',      // ← AuthMS 服务器地址（你的认证域名）
 };
 
 export const authmsPlugin = createAuthms(authmsConfig);

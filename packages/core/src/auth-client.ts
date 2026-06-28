@@ -180,7 +180,11 @@ export class AuthClient {
       return result;
     }
 
-    return { user: payload as any, accessToken: '', refreshToken: '', expiresIn: 0, tokenType: '' };
+    // 注册返回 user_id，归一化为 id
+    const user: Record<string, unknown> = { ...payload as Record<string, unknown> };
+    if (user.user_id && !user.id) user.id = user.user_id;
+
+    return { user: user as any, accessToken: '', refreshToken: '', expiresIn: 0, tokenType: '' };
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {

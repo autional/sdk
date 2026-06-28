@@ -1,0 +1,40 @@
+{
+  "name": "@authms/vue",
+  "version": "0.1.0",
+  "description": "AuthMS Vue SDK — createAuthms plugin, useAuthms composable, vAuth directive, and authmsGuard router guard",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core --external vue",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external @authms/core --external vue",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "files": ["dist", "src"],
+  "keywords": ["auth", "vue", "authentication", "authms"],
+  "license": "MIT",
+  "peerDependencies": {
+    "@authms/core": ">=0.1.0",
+    "vue": ">=3.0.0"
+  },
+  "dependencies": {
+    "@authms/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@authms/tsconfig": "workspace:*",
+    "rimraf": "^5.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}

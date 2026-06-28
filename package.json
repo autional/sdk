@@ -1,0 +1,19 @@
+{
+  "name": "authms-sdk",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev": "pnpm -r --parallel run dev",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "clean": "pnpm -r run clean",
+    "generate:api": "tsx scripts/generate-api-packages.ts",
+    "changeset": "changeset",
+    "publish:ci": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "typescript": "^5.8.0"
+  }
+}

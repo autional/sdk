@@ -1,0 +1,48 @@
+{
+  "name": "@authms/core",
+  "version": "0.1.0",
+  "description": "AuthMS Core SDK — framework-agnostic token management, API client, and auth flows",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./platform": {
+      "import": "./dist/platform/index.mjs",
+      "require": "./dist/platform/index.js",
+      "types": "./dist/platform/index.d.ts"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "auth",
+    "authentication",
+    "oauth",
+    "oidc",
+    "authms"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@authms/tsconfig": "workspace:*",
+    "rimraf": "^5.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}

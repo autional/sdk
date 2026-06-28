@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@authms/core": ["../packages/core/src/index.ts"],
+      "@authms/react": ["../packages/react/src/index.ts"],
+      "@authms/api-identity": ["../packages/api-identity/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

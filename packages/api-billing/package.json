@@ -1,0 +1,35 @@
+{
+  "name": "@authms/api-billing",
+  "version": "0.1.0",
+  "description": "AuthMS Billing Service API — auto-generated TypeScript client",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "peerDependencies": {
+    "@authms/core": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@authms/core": "workspace:*",
+    "rimraf": "^5.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "license": "MIT"
+}

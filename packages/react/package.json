@@ -1,0 +1,56 @@
+{
+  "name": "@authms/react",
+  "version": "0.1.0",
+  "description": "AuthMS React SDK — AuthmsProvider, useAuthms hook, and RequireAuth guard",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @authms/core",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @authms/core",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "auth",
+    "react",
+    "authentication",
+    "authms"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@authms/core": ">=0.1.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@authms/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@authms/tsconfig": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^29.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rimraf": "^5.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}

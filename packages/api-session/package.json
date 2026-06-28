@@ -1,0 +1,36 @@
+{
+  "name": "@authms/api-session",
+  "version": "0.1.1",
+  "description": "AuthMS Identity Service API \u2014 auto-generated TypeScript client",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "peerDependencies": {
+    "@authms/core": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@authms/core": ">=0.1.0",
+    "rimraf": "^5.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT"
+}

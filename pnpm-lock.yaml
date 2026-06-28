@@ -74,7 +74,7 @@ importers:
   packages/api-billing:
     devDependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       rimraf:
         specifier: ^5.0.0
@@ -85,11 +85,14 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)(jsdom@29.1.1)(terser@5.48.0)
 
   packages/api-identity:
     devDependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       rimraf:
         specifier: ^5.0.0
@@ -100,11 +103,14 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)(jsdom@29.1.1)(terser@5.48.0)
 
   packages/api-mfa:
     devDependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       rimraf:
         specifier: ^5.0.0
@@ -115,11 +121,14 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)(jsdom@29.1.1)(terser@5.48.0)
 
   packages/api-tenant:
     devDependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       rimraf:
         specifier: ^5.0.0
@@ -130,11 +139,14 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)(jsdom@29.1.1)(terser@5.48.0)
 
   packages/core:
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       rimraf:
         specifier: ^5.0.0
@@ -152,11 +164,11 @@ importers:
   packages/miniapp:
     dependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       rimraf:
         specifier: ^5.0.0
@@ -171,14 +183,14 @@ importers:
   packages/next:
     dependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       '@authms/react':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../react
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       '@types/react':
         specifier: ^19.0.0
@@ -204,18 +216,21 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)(jsdom@29.1.1)(terser@5.48.0)
 
   packages/plugin-mfa:
     dependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       '@authms/react':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../react
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       '@types/react':
         specifier: ^19.0.0
@@ -239,14 +254,70 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
-  packages/react:
+  packages/plugin-passkey:
     dependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
+        version: link:../tsconfig
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.17)
+      react:
+        specifier: '>=18.0.0'
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
+      rimraf:
+        specifier: ^5.0.0
+        version: 5.0.10
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  packages/plugin-tenant:
+    dependencies:
+      '@authms/core':
+        specifier: '>=0.1.0'
+        version: link:../core
+    devDependencies:
+      '@authms/tsconfig':
+        specifier: '>=0.1.0'
+        version: link:../tsconfig
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      react:
+        specifier: '>=18.0.0'
+        version: 19.2.7
+      rimraf:
+        specifier: ^5.0.0
+        version: 5.0.10
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+
+  packages/react:
+    dependencies:
+      '@authms/core':
+        specifier: '>=0.1.0'
+        version: link:../core
+    devDependencies:
+      '@authms/tsconfig':
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       '@testing-library/jest-dom':
         specifier: ^6.9.1
@@ -285,11 +356,11 @@ importers:
   packages/react-native:
     dependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       '@react-native-async-storage/async-storage':
         specifier: ^1.23.0
@@ -321,14 +392,14 @@ importers:
   packages/vue:
     dependencies:
       '@authms/core':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../core
       vue:
         specifier: '>=3.0.0'
         version: 3.5.39(typescript@5.9.3)
     devDependencies:
       '@authms/tsconfig':
-        specifier: workspace:*
+        specifier: '>=0.1.0'
         version: link:../tsconfig
       rimraf:
         specifier: ^5.0.0

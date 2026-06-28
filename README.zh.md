@@ -36,9 +36,9 @@ cp examples/next-authms.ts src/authms.ts
 打开 `src/authms.ts`，修改 `appId` 和 `issuer`：
 
 ```ts
-export const config = {
-  appId: 'YOUR_APP_ID',             // ← 改这里
-  issuer: 'https://auth.example.com', // ← 改这里
+export const authmsConfig = {
+  appId: 'YOUR_APP_ID',                 // ← 在 AuthMS 控制台创建的应用 ID
+  issuer: 'https://auth.example.com',   // ← AuthMS 服务器地址（你的认证域名）
 };
 ```
 

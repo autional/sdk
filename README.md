@@ -62,9 +62,9 @@ cp examples/next-authms.ts src/authms.ts
 **3. Edit 2 fields in `src/authms.ts`:**
 
 ```ts
-export const config = {
-  appId: 'YOUR_APP_ID',             // ← change this
-  issuer: 'https://auth.example.com', // ← change this
+export const authmsConfig = {
+  appId: 'YOUR_APP_ID',               // ← your AuthMS console App ID
+  issuer: 'https://auth.example.com',  // ← your AuthMS server URL
 };
 ```
 

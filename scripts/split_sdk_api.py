@@ -50,7 +50,7 @@ def parse_blocks(lines):
 
 
 def extract_fns(lines):
-    """Extract exported functions from block lines using brace counting."""
+    """Extract exported functions from block lines. Handles multi-line signatures."""
     fns = []
     i = 0
     while i < len(lines):
@@ -58,45 +58,71 @@ def extract_fns(lines):
         if not line.strip().startswith("export async function "):
             i += 1
             continue
-        # Collect function body with brace counting
-        body = [line]
-        i += 1
+
+        # Collect lines until we find the function body opening ') {'
+        # Multi-line params can contain { } braces (object types)
+        fn_start = i
+        while i < len(lines) and not (') {' in lines[i] and lines[i].strip().startswith(('}', ')', 'export'))):
+            i += 1
+        if i >= len(lines):
+            break
+
+        # Now i points to the line with ') {'
+        sig_lines = lines[fn_start:i+1]
+        
+        # Collect body with simple brace counting from ') {'
+        body_lines = []
         depth = 0
         started = False
-        while i < len(lines):
-            l = lines[i]
-            body.append(l)
+        j = i
+        # The ') {' line itself contains the opening brace
+        body_lines.append(lines[j])
+        depth += lines[j].count("{") - lines[j].count("}")
+        started = True
+        j += 1
+        
+        while j < len(lines):
+            l = lines[j]
+            body_lines.append(l)
             depth += l.count("{") - l.count("}")
-            started = True
-            i += 1
+            j += 1
             if started and depth <= 0:
                 break
-        fns.append(body)
+        
+        # Combine signature first line with rest
+        fn_lines = [lines[fn_start]] + body_lines
+        fns.append(fn_lines)
+        i = j
+
     return fns
 
 
 def convert(fn_lines):
     """Convert api.ts function to SDK tree-shakeable format."""
-    sig = fn_lines[0]
-    m = re.match(r"export async function (\w+)\((.+)\) \{", sig)
+    sig_line = fn_lines[0]
+    m = re.match(r"export async function (\w+)", sig_line)
     if not m:
         return None
     name = m.group(1)
 
-    out = []
-    out.append(f"export function {name}(client: ApiClient, data?: Record<string, unknown>) {{")
+    # Extract the API call line from the function body
+    api_call = None
+    for line in fn_lines:
+        if 'api.get(' in line or 'api.post(' in line or 'api.put(' in line or 'api.delete(' in line or 'api.patch(' in line:
+            api_call = line.strip()
+            break
 
-    for line in fn_lines[1:-1]:
-        line = re.sub(r'\bapi\.(get|post|put|delete|patch)\s*\(', r'client.\1(', line)
-        # Replace path params like `${id}` with data reference
-        line = re.sub(r'\$\{(\w+)\}', lambda m: f'${{data?.{m.group(1)}}}', line)
-        line = re.sub(r'const res\s*=\s*client\.', 'return client.', line)
-        if 'return res.data' in line:
-            continue
-        out.append(line)
+    if not api_call:
+        return None
 
-    out.append("}")
-    return "\n".join(out)
+    # Convert: const res = await api.get(`/path`, ...) → return client.get(`/path`)
+    # Also: await api.delete(...) → client.delete(...)
+    api_call = re.sub(r'(const res\s*=\s*)?await api\.', 'return client.', api_call)
+    api_call = api_call.rstrip(';')
+
+    return f"""export function {name}(client: ApiClient, data?: Record<string, unknown>) {{
+  {api_call};
+}}"""
 
 
 def main():

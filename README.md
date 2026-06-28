@@ -37,81 +37,51 @@ npm install @authms/api-identity @authms/api-tenant @authms/api-mfa @authms/api-
 
 ## Quick Start
 
-### React
+**1. Install packages:**
 
-```tsx
-import { AuthmsProvider, useAuthms } from '@authms/react';
-
-function App() {
-  return (
-    <AuthmsProvider config={{ appId: 'app_xxx', issuer: 'https://auth.example.com' }}>
-      <Dashboard />
-    </AuthmsProvider>
-  );
-}
-
-function Dashboard() {
-  const { user, isLoading, login, logout } = useAuthms();
-  if (isLoading) return <p>Loading...</p>;
-  if (!user) return <button onClick={() => login({ email: 'a@b.com', password: 'pwd' })}>Sign In</button>;
-  return <p>Hello {user.email} <button onClick={logout}>Sign Out</button></p>;
-}
+```bash
+# React
+npm install @authms/core @authms/react @authms/api-identity
+# Vue 3
+npm install @authms/core @authms/vue @authms/api-identity
+# Next.js
+npm install @authms/core @authms/react @authms/next @authms/api-identity
 ```
 
-### Vue 3
+**2. Copy the example file for your framework:**
 
-```vue
-<script setup>
-import { useAuthms } from '@authms/vue';
-const { user, isLoading, login, logout } = useAuthms();
-</script>
-
-<template>
-  <p v-if="isLoading">Loading...</p>
-  <button v-else-if="!user" @click="login({ email: 'a@b.com', password: 'pwd' })">Sign In</button>
-  <p v-else>Hello {{ user.email }} <button @click="logout">Sign Out</button></p>
-</template>
+```bash
+# React
+cp examples/react-authms.ts src/authms.ts
+# Vue 3
+cp examples/vue-authms.ts src/authms.ts
+# Next.js
+cp examples/next-authms.ts src/authms.ts
 ```
+
+**3. Edit 2 fields in `src/authms.ts`:**
 
 ```ts
-// main.ts
-import { createAuthms } from '@authms/vue';
-app.use(createAuthms({ appId: 'app_xxx', issuer: 'https://auth.example.com' }));
+export const config = {
+  appId: 'YOUR_APP_ID',             // ← change this
+  issuer: 'https://auth.example.com', // ← change this
+};
 ```
 
-### Next.js
+**4. Use it — same import path, any framework:**
 
 ```tsx
-// app/layout.tsx
-import { AuthmsProvider } from '@authms/next';
+import { useAuthms } from './authms';   // ← always './authms'
+const { user, isLoading, login, logout } = useAuthms();
+```
+
+> The example files (`examples/react-authms.ts`, `examples/vue-authms.ts`, `examples/next-authms.ts`) wrap the framework adapter with your config and re-export it. Your entire app imports from one file: `./authms`.
 
 export default function Layout({ children }) {
   return (
     <AuthmsProvider config={{ appId: 'app_xxx', issuer: 'https://auth.example.com' }}>
       {children}
     </AuthmsProvider>
-  );
-}
-```
-
-```tsx
-// middleware.ts
-import { authmsMiddleware } from '@authms/next';
-export default authmsMiddleware;
-export const config = { matcher: ['/((?!_next/static|favicon.ico).*)'] };
-```
-
-```tsx
-// app/page.tsx
-'use client';
-import { useAuthms } from '@authms/next';
-
-export default function Page() {
-  const { user, isLoading } = useAuthms();
-  return <p>{isLoading ? 'Loading...' : user ? `Hello ${user.email}` : 'Not signed in'}</p>;
-}
-```
-
 ---
 
 ## Available Packages

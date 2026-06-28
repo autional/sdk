@@ -57,4 +57,8 @@ export default async function DashboardPage() {
 }
 ```
 
+## Project Setup
+
+Copy [`examples/next-authms.ts`](../../examples/next-authms.ts) to `src/authms.ts`, edit `appId` and `issuer`. All your components import from `./authms`.
+
 See the [root SDK README](../../README.md) for full documentation.

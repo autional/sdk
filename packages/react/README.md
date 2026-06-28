@@ -49,4 +49,8 @@ function Dashboard() {
 // <RequireAuth loginPath="/login"><Dashboard /></RequireAuth>
 ```
 
+## Project Setup
+
+Copy [`examples/react-authms.ts`](../../examples/react-authms.ts) to `src/authms.ts`, edit `appId` and `issuer`. All your components import from `'./authms'`.
+
 See the [root SDK README](../../README.md) for full documentation.

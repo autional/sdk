@@ -51,4 +51,8 @@ const { user, isLoading, login, logout } = useAuthms();
 </template>
 ```
 
+## Project Setup
+
+Copy [`examples/vue-authms.ts`](../../examples/vue-authms.ts) to `src/authms.ts`, edit `appId` and `issuer`. All your components import from `./authms`.
+
 See the [root SDK README](../../README.md) for full documentation.

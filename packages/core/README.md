@@ -50,4 +50,8 @@ console.log(profile);
 
 The SDK reads the mode from `TenantAuthConfig.passwordPolicy.mode` and applies it automatically on login/register/change-password.
 
+## Project Setup
+
+For framework integration, pick the example for your framework: [`examples/react-authms.ts`](../../examples/react-authms.ts), [`examples/vue-authms.ts`](../../examples/vue-authms.ts), or [`examples/next-authms.ts`](../../examples/next-authms.ts). Copy to `src/authms.ts`, edit `appId` and `issuer`.
+
 See the [root SDK README](../../README.md) for full documentation.

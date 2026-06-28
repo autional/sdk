@@ -20,6 +20,8 @@ export interface AuthmsConfig {
   platform: AuthmsPlatform;
   storagePrefix?: string;
   syncTabs?: boolean;
+  /** 启用 BFF httpOnly cookie 模式（token 不存 localStorage） */
+  useCookie?: boolean;
 }
 
 type EventHandler = (...args: unknown[]) => void;
@@ -43,7 +45,7 @@ export class AuthMS {
     this.config = config;
     const apiUrl = config.apiUrl ?? config.issuer;
 
-    this.tokenManager = new TokenManager(config.platform.storage, config.storagePrefix);
+    this.tokenManager = new TokenManager(config.platform.storage, config.storagePrefix, config.useCookie);
     this.discovery = new Discovery(config.platform.http, config.apiUrl);
     this.authClient = new AuthClient({
       tokenManager: this.tokenManager,

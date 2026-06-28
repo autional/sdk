@@ -37,7 +37,7 @@ function createToken(expInSeconds = 900): string {
 
 const BASE_URL = 'https://api.example.com';
 
-const AUTH_CONFIG_KEY = `GET ${BASE_URL}/identity/api/v1/public/auth-config`;
+const AUTH_CONFIG_KEY = `GET ${BASE_URL}/identity/api/v1/public/auth-config/default`;
 const AUTH_CONFIG_TENANT_KEY = `GET ${BASE_URL}/identity/api/v1/public/auth-config/t1`;
 const LOGIN_KEY = `POST ${BASE_URL}/identity/api/v1/auth/login`;
 const REGISTER_KEY = `POST ${BASE_URL}/identity/api/v1/auth/register`;

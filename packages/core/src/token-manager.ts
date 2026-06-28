@@ -17,9 +17,13 @@ export class TokenManager {
   private store: TokenStore;
   private changeListeners: Set<(token: string | null) => void> = new Set();
 
-  constructor(storage: StorageAdapter, prefix?: string) {
+  /** 是否 httpOnly cookie 模式（不持久化 token） */
+  private cookieMode: boolean;
+
+  constructor(storage: StorageAdapter, prefix?: string, cookieMode?: boolean) {
     this.storage = storage;
     this.prefix = prefix ?? STORAGE_PREFIX;
+    this.cookieMode = cookieMode ?? false;
     this.store = this.initialStore();
   }
 
@@ -38,6 +42,7 @@ export class TokenManager {
   }
 
   async load(): Promise<void> {
+    if (this.cookieMode) return;
     try {
       const raw = await this.storage.getItem(this.storageKey('tokens'));
       if (raw) {
@@ -50,6 +55,7 @@ export class TokenManager {
   }
 
   async persist(): Promise<void> {
+    if (this.cookieMode) return;
     try {
       await this.storage.setItem(this.storageKey('tokens'), JSON.stringify(this.store));
     } catch { /* quota exceeded, non-critical */ }

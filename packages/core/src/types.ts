@@ -111,3 +111,12 @@ export const ERROR_CODES = {
   REFRESH_FAILED: 'REFRESH_FAILED',
   NOT_AUTHENTICATED: 'NOT_AUTHENTICATED',
 } as const;
+
+/**
+ * 已安装 API 包的类型占位接口。
+ * 各 API 包通过 module augmentation 扩展此接口。
+ *
+ * 安装 @authms/api-identity 后：
+ *   const { identity } = useAuthms().api;  // ← 类型安全
+ */
+export interface RegisteredApis {}

@@ -42,7 +42,7 @@ export class AuthClient {
 
     const path = tenantId
       ? `/identity/api/v1/public/auth-config/${tenantId}`
-      : '/identity/api/v1/public/auth-config';
+      : '/identity/api/v1/public/auth-config/default';
 
     const response = await this.http.request(`${this.baseUrl}${path}`);
     const json = await response.json() as Record<string, unknown>;

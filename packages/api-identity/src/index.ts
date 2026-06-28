@@ -233,3 +233,36 @@ export function deleteSession(client: ApiClient, sessionId: string): Promise<voi
 export function getMFAMethods(client: ApiClient): Promise<unknown[]> {
   return client.get('/identity/api/v1/auth/me/mfa-methods');
 }
+
+// ====== Module Augmentation ======
+// 安装此包后，useAuthms().api.identity 自动获得类型
+
+export interface IdentityApi {
+  login: typeof login;
+  register: typeof register;
+  refreshToken: typeof refreshToken;
+  getProfile: typeof getProfile;
+  updateProfile: typeof updateProfile;
+  logout: typeof logout;
+  verifyEmail: typeof verifyEmail;
+  sendVerificationEmail: typeof sendVerificationEmail;
+  changePassword: typeof changePassword;
+  forgotPassword: typeof forgotPassword;
+  resetPassword: typeof resetPassword;
+  checkPermission: typeof checkPermission;
+  getPermissions: typeof getPermissions;
+  getTenants: typeof getTenants;
+  switchTenant: typeof switchTenant;
+  requestRoleActivation: typeof requestRoleActivation;
+  getRoleActivations: typeof getRoleActivations;
+  deleteAccount: typeof deleteAccount;
+  getSessions: typeof getSessions;
+  deleteSession: typeof deleteSession;
+  getMFAMethods: typeof getMFAMethods;
+}
+
+declare module '@authms/core' {
+  interface RegisteredApis {
+    identity: IdentityApi;
+  }
+}

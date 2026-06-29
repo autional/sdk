@@ -254,7 +254,10 @@ If you use AI coding tools (Cursor, Claude, opencode), just tell your AI:
 
 > "Connect this project to AuthMS"
 
-The AI will read `.skills/sdk-migration-guide/` and guide you through dependency installation, configuration, code integration, and testing — automatically.
+The AI will automatically:
+1. Read `SETUP.md` for the entry point
+2. Fetch the Skill guide (`.skills/sdk-migration-guide/SKILL.md`)
+3. Complete dependency installation, configuration, code integration, and testing
 
 For manual setup, see [Quick Start](#quick-start) above.
 

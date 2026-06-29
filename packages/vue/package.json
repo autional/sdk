@@ -1,6 +1,6 @@
 {
   "name": "@authms/vue",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "AuthMS Vue SDK — createAuthms plugin, useAuthms composable, vAuth directive, and authmsGuard router guard",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

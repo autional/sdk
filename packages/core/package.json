@@ -1,6 +1,6 @@
 {
   "name": "@authms/core",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "AuthMS Core SDK — framework-agnostic token management, API client, and auth flows",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

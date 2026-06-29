@@ -103,6 +103,16 @@ cd packages/core && npx vitest run src/__tests__/integration.test.ts
 
 ---
 
+## AI 辅助接入
+
+如果你使用 AI 编码工具（Cursor、Claude、opencode），直接对 AI 说：
+
+> "帮我把这个项目接入 AuthMS"
+
+AI 会自动读取 `.skills/sdk-migration-guide/` 中的指南，完成依赖安装、配置注入、代码接入和测试验证。
+
+手动接入请参考上方的"快速接入"章节。
+
 ## 许可证
 
 MIT

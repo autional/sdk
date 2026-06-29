@@ -248,6 +248,16 @@ AuthMS gateway.
 
 ---
 
+## AI-Assisted Integration
+
+If you use AI coding tools (Cursor, Claude, opencode), just tell your AI:
+
+> "Connect this project to AuthMS"
+
+The AI will read `.skills/sdk-migration-guide/` and guide you through dependency installation, configuration, code integration, and testing — automatically.
+
+For manual setup, see [Quick Start](#quick-start) above.
+
 ## License
 
 MIT

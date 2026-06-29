@@ -109,7 +109,10 @@ cd packages/core && npx vitest run src/__tests__/integration.test.ts
 
 > "帮我把这个项目接入 AuthMS"
 
-AI 会自动读取 `.skills/sdk-migration-guide/` 中的指南，完成依赖安装、配置注入、代码接入和测试验证。
+AI 会自动：
+1. 读取 `SETUP.md` 获取入口
+2. 下载 Skill 指南（`.skills/sdk-migration-guide/SKILL.md`）
+3. 完成依赖安装、配置注入、代码接入和测试
 
 手动接入请参考上方的"快速接入"章节。
 

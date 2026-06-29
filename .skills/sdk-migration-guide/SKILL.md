@@ -24,13 +24,13 @@ description: >
 
 ## 前置准备（启动时自动执行）
 
-### 必读参考文档
+### 必读参考文档（远程可读）
 
-1. `README.md` — SDK 安装和快速接入
-2. `README.zh.md` — 中文版
-3. `examples/react-authms.ts` — React 接入模板
-4. `examples/vue-authms.ts` — Vue 接入模板
-5. `examples/next-authms.ts` — Next.js 接入模板
+- SDK README: `https://gitee.com/authms/sdk/raw/master/README.zh.md`
+- 接入入口: `https://gitee.com/authms/sdk/raw/master/SETUP.md`
+- React 模板: `https://gitee.com/authms/sdk/raw/master/examples/react-authms.ts`
+- Vue 模板: `https://gitee.com/authms/sdk/raw/master/examples/vue-authms.ts`
+- Next.js 模板: `https://gitee.com/authms/sdk/raw/master/examples/next-authms.ts`
 
 ### 工具包检查
 

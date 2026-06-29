@@ -20,6 +20,19 @@ description: >
 4. **安全第一**——私密信息不提交 git，公开信息自动写入配置。
 5. **文档即配置**——每个阶段产出的配置、决策、理由都记录为文档。
 
+## ⚠️ 强制执行规则（AI 必须遵守）
+
+```
+1. 按 Phase 1→8 顺序执行，不得跳过任何 Phase。
+2. 每个 Phase 开始前声明「Phase N 开始」。
+3. 每个 Phase 结束后向用户展示结果，等待确认。
+4. 用户确认后才进入下一个 Phase。
+5. 遇到错误时：展示错误 → 修复 → 从当前 Phase 重新开始，不回退。
+6. 任务完成后输出清单，逐项确认。
+```
+
+**如果你跳过任何 Phase，用户将无法正确接入 AuthMS。**
+
 ---
 
 ## 前置准备（启动时自动执行）
@@ -613,8 +626,6 @@ git checkout src/pages/Login.tsx
 
 ### 后续（P2+）
 
-### 后续（P2+）
-
 | 项目 | 优先级 |
 |------|:--:|
 | Firebase/Auth0 迁移专属路径 | P2 |
@@ -622,3 +633,38 @@ git checkout src/pages/Login.tsx
 | Playwright 自动化 E2E 集成到迁移流程 | P3 |
 
 ---
+
+## ⚠️ 任务完成检查清单（AI 必须逐项确认）
+
+**未全部打勾 = 任务未完成。**
+
+```
+Phase 完成:
+  ☐ Phase 1: 系统分析完成
+  ☐ Phase 2: 策略推荐完成
+  ☐ Phase 3: 租户注册完成（凭证已保存）
+  ☐ Phase 4: 依赖安装完成
+  ☐ Phase 5: 代码接入完成
+  ☐ Phase 6: 单元测试通过
+  ☐ Phase 7: 集成测试通过
+  ☐ Phase 8: 收尾完成
+
+产物检查:
+  ☐ src/authms.ts 存在且已填写
+  ☐ .env 含公开配置
+  ☐ AUTHMS_SETUP.md 存在
+  ☐ 管理员密码已提醒"只显示一次"
+  ☐ npm run dev 可正常启动
+```
+
+向用户输出最终摘要：
+
+```
+✅ AuthMS 接入完成
+  App ID:     app_01KW...
+  Issuer:     https://auth.iam.tianv.com
+  管理员:     admin@xxx.authms.com
+  登录页:     https://xxx.com/login
+  npm 启动:   npm run dev
+  接入文档:   AUTHMS_SETUP.md
+```

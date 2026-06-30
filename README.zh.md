@@ -77,7 +77,7 @@ SDK 自动根据租户配置处理密码传输，无需写任何代码：
 | 模式 | 说明 |
 |------|------|
 | `plain` | 明文传输 |
-| `hash` | SHA-256(password + tenantId) |
+| `hash` | SHA-256(password \| tenantId) — `password\|tenantId` 中间有 **竖线分隔符** |
 | `symmetric` | ECDH 密钥交换 + AES-256-GCM 加密 |
 | `asymmetric` | RSA-OAEP 公钥加密 |
 

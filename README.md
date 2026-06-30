@@ -142,7 +142,7 @@ mode via your tenant's password policy — all modes are handled transparently.
 | Mode | Description | When to Use |
 |------|-------------|-------------|
 | `plain` | Raw password sent over TLS | Dev/CI environments |
-| `hash` | SHA-256(password + tenantId) before transmission | Lightweight defense against passive observers |
+| `hash` | SHA-256(password \| tenantId) — 注意 `password\|tenantId` 中间有 **竖线分隔符** | Lightweight defense against passive observers |
 | `symmetric` | ECDH key exchange + AES-256-GCM encryption | Full encryption without persistent keys |
 | `asymmetric` | RSA-OAEP public key encryption with per-tenant key | Strongest: server holds private key, client encrypts with public key |
 

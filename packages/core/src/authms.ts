@@ -12,7 +12,7 @@ import type {
 } from './types';
 
 export interface AuthmsConfig {
-  appId: string;
+  appId?: string;
   issuer: string;
   apiUrl?: string;
   /** @deprecated 使用 issuer + apiUrl */
@@ -39,8 +39,10 @@ export class AuthMS {
   private _authConfig: Record<string, unknown> | null = null;
 
   constructor(config: AuthmsConfig) {
-    if (!config.appId) throw new AuthmsError('CONFIG_ERROR', 'appId is required', 500);
     if (!config.issuer) throw new AuthmsError('CONFIG_ERROR', 'issuer is required', 500);
+    if (!config.appId && typeof console !== 'undefined') {
+      console.warn('[AuthMS] appId 未设置。建议在 AuthMS 控制台创建应用后填写 appId，便于多应用管理和权限隔离。');
+    }
 
     this.config = config;
     const apiUrl = config.apiUrl ?? config.issuer;

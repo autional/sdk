@@ -243,7 +243,7 @@ scope = @autional 或 @authms
   ☑ 协议: 展示 7 天试用协议 → 必须勾选
 
 执行:
-  POST https://auth.iam.tianv.com/bff/tenant/api/v1/public/tenants
+  POST https://auth.iam.tianv.com/bff/tenant/api/v1/tenant/public/tenants
   { name, admin_email, admin_password, agreement_accepted: true }
 
   → 201 → 获得 tenantId

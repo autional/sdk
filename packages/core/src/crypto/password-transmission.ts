@@ -174,7 +174,7 @@ function sha256HexPureJS(input: string): string {
       const s1 = (ror(W[i - 2], 17) ^ ror(W[i - 2], 19) ^ (W[i - 2] >>> 10));
       W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0;
     }
-    let [a, b, c, d, e, f2, g, h] = H;
+    let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f2 = H[5], g = H[6], h = H[7];
     for (let i = 0; i < 64; i++) {
       const S1 = (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25));
       const ch = (e & f2) ^ (~e & g);

@@ -109,6 +109,20 @@ export function Login() {
           </button>
         </div>
       )}
+
+      <div style={{ marginTop: 20, padding: 16, background: '#f0fdf4', borderRadius: 8 }}>
+        <p style={{ fontWeight: 600, marginBottom: 4 }}>🆕 还没有租户？</p>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+          免费试用 7 天，无需邀请码，零门槛。
+        </p>
+        <button
+          className="btn btn-primary"
+          style={{ background: '#10b981' }}
+          onClick={() => alert('试用注册功能已就绪。\n\n调用 POST /api/v1/public/tenants\n或使用 SDK createTrialTenant()')}
+        >
+          注册试用租户
+        </button>
+      </div>
     </div>
   );
 }

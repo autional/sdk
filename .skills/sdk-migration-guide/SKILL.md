@@ -38,7 +38,7 @@ description: >
 
 ```
 1. 永不使用 git reset --hard。始终用 git checkout -- <file> 逐文件恢复。
-2. 改动前 git stash push -m "authms: pre-integration snapshot" — 保存用户工作区。
+2. 改动前 git stash --include-untracked — 保存所有改动（含未跟踪文件）。
 3. 改动后 git stash pop — 合并回来（如有冲突，让用户手动处理）。
 4. 永不读取用户的 .env 原有内容——只追加 AuthMS 相关字段。
 5. 永不读取用户的 User 表数据。
@@ -68,7 +68,7 @@ description: >
    没有 → git config user.email "sdk@authms.local"
 
 5. 创建隔离分支:
-   git stash push -m "authms: pre-integration snapshot"  # 先保存用户当前工作
+   git stash --include-untracked  # 保存用户当前工作（含未跟踪文件）→ 工作区恢复干净
    git checkout -b feature/authms
    → 失败（分支已存在）→ git checkout feature/authms
    → 所有改动在这个分支上，不影响 main

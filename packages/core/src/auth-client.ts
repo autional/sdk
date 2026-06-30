@@ -318,6 +318,37 @@ export class AuthClient {
     return data;
   }
 
+  /** 公开注册试用租户（无需 JWT） */
+  async createTrialTenant(config: {
+    name: string;
+    adminEmail: string;
+    adminPassword: string;
+    agreementAccepted?: boolean;
+  }): Promise<{ tenantId: string; name: string; status: string }> {
+    const body: Record<string, unknown> = {
+      name: config.name,
+      admin_email: config.adminEmail,
+      admin_password: config.adminPassword,
+      agreement_accepted: config.agreementAccepted !== false,
+    };
+    const response = await this.http.request(`${this.baseUrl}/tenant/api/v1/public/tenants`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AuthmsAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Trial registration failed',
+        response.status,
+      );
+    }
+    const json = await response.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    return { tenantId: data.id as string, name: data.name as string, status: data.status as string };
+  }
+
   private async buildLoginBody(credentials: LoginRequest, authConfig: TenantAuthConfig): Promise<Record<string, unknown>> {
     const processed = await processPasswordForTransmission(
       credentials.password,

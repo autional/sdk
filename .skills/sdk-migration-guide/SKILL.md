@@ -35,6 +35,19 @@ description: >
 
 ## 前置准备（启动时自动执行）
 
+### 语言与 npm scope 选择
+
+```
+询问用户语言偏好，选择对应的 npm scope：
+
+  [A] 中文用户 → @autional（GitHub: autional/sdk）
+  [B] English users → @authms（Gitee: authms/sdk）
+
+选定后，全程使用该 scope，不得混用。
+
+scope = @autional 或 @authms
+```
+
 ### 必读参考文档（远程可读）
 
 - SDK README: `https://gitee.com/authms/sdk/raw/master/README.zh.md`
@@ -133,7 +146,7 @@ description: >
 ### 1.5 性能影响评估
 
 ```
-@authms/core + @authms/react 对项目的影响：
+{scope}/core + {scope}/react 对项目的影响：
   Bundle 增量: ~15KB (gzipped ~5KB)
   首次加载: +~50ms (OIDC Discovery)
   Token 刷新: ~100ms (仅 401 时触发)
@@ -265,18 +278,18 @@ description: >
 
 ```bash
 # React
-npm install @authms/core @authms/react @authms/api-identity
+npm install {scope}/core {scope}/react {scope}/api-identity
 
 # Vue
-npm install @authms/core @authms/vue @authms/api-identity
+npm install {scope}/core {scope}/vue {scope}/api-identity
 
 # Next.js
-npm install @authms/core @authms/react @authms/next @authms/api-identity
+npm install {scope}/core {scope}/react {scope}/next {scope}/api-identity
 ```
 
 ```
 交互：
-  "将在你的项目中安装: @authms/core @authms/react @authms/api-identity
+  "将在你的项目中安装: {scope}/core {scope}/react {scope}/api-identity
    预计增加 ~50KB（gzipped ~15KB）。
    继续？ [确认] [取消]"
 ```
@@ -552,7 +565,7 @@ async function findOrCreateLocalUser(authmsUser: { id: string; email: string }) 
 
 ```bash
 # 1. 卸载包
-npm uninstall @authms/core @authms/react @authms/api-identity
+npm uninstall {scope}/core {scope}/react {scope}/api-identity
 
 # 2. 删除 SDK 配置
 rm src/authms.ts

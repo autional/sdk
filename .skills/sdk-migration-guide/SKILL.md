@@ -28,18 +28,24 @@ description: >
 2. 每个 Phase 开始前声明「Phase N 开始」。
 3. 每个 Phase 结束后向用户展示结果，等待确认。
 4. 用户确认后才进入下一个 Phase。
-5. 改代码出错 → `git checkout -- <file>` 恢复该文件 → 修正 → 重试。整个 Phase 失败 → `git reset --hard` → 从 Phase 开头重来。
-6. 所有改动必须在独立 git 分支（`feature/authms`）上进行。无 git 则自动 `git init` + 文件备份兜底。
+5. 改代码出错 → `git checkout -- <file>` 恢复该文件 → 修正 → 重试。
+   整个 Phase 失败 → `git checkout -- <changed_files>` 恢复所有改动 → 从 Phase 开头重来。
+
+6. 所有改动必须在独立 git 分支（`feature/authms`）上进行。
+   无 git 则自动 `git init` + 文件备份兜底。
 
 ## ⚠️ 代码安全与合规
 
 ```
-1. 永不读取用户的 .env 原有内容——只追加 AuthMS 相关字段。
-2. 永不读取用户的 User 表数据。
-3. Administrator 密码仅生成一次，不写入代码文件。
-4. 注入的代码全部 MIT 许可证，不引入 GPL 依赖。
-5. 改后必须 npm run build → 失败立即回退（git checkout --）。
-6. 改后输出 AUTHMS_CHANGES.md 记录所有变更。
+1. 永不使用 git reset --hard。始终用 git checkout -- <file> 逐文件恢复。
+2. 改动前 git stash push -m "authms: pre-integration snapshot" — 保存用户工作区。
+3. 改动后 git stash pop — 合并回来（如有冲突，让用户手动处理）。
+4. 永不读取用户的 .env 原有内容——只追加 AuthMS 相关字段。
+5. 永不读取用户的 User 表数据。
+6. 管理员密码仅生成一次，不写入代码文件。
+7. 注入的代码全部 MIT 许可证，不引入 GPL 依赖。
+8. 改后必须 npm run build → 失败立即逐文件恢复。
+9. 改后输出 AUTHMS_CHANGES.md 记录所有变更。
 ```
 
 ---
@@ -62,15 +68,18 @@ description: >
    没有 → git config user.email "sdk@authms.local"
 
 5. 创建隔离分支:
+   git stash push -m "authms: pre-integration snapshot"  # 先保存用户当前工作
    git checkout -b feature/authms
    → 失败（分支已存在）→ git checkout feature/authms
    → 所有改动在这个分支上，不影响 main
 
 6. 回退路径:
-   改坏了 → git reset --hard HEAD → 从头重试
-   整个接入不想继续 → git checkout main && git branch -D feature/authms
+   改坏单个文件 → git checkout -- <file> → 恢复 → 重试
+   整个 Phase 失败 → git checkout -- <所有被改过的文件> → 从 Phase 开头重试
+   整个接入放弃 → git checkout main → git stash pop（恢复用户原始状态）
    接入成功 → git add -A && git commit -m "feat: AuthMS 接入"
               → git checkout main && git merge feature/authms
+              → git stash pop（合并用户原始工作，冲突由用户处理）
    无 git → 从 .authms-backup 文件恢复
 ```
 
@@ -493,7 +502,7 @@ async function findOrCreateLocalUser(authmsUser: { id: string; email: string }) 
 1. npm run build（或等效构建命令）
    → 通过 ✅ → 进入 Phase 6
    → 失败 ❌ → git stash → 分析错误 → 修复 → 重试
-   → 连续 3 次失败 → git reset --hard → 向用户报告
+   → 连续 3 次失败 → git checkout -- <changed_files> → 分析错误 → 修复 → 重试
 
 2. 如项目有 npm test:
    → npm test → 通过 ✅

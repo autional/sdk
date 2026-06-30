@@ -246,7 +246,14 @@ scope = @autional 或 @authms
   POST https://auth.iam.tianv.com/bff/tenant/api/v1/public/tenants
   { name, admin_email, admin_password, agreement_accepted: true }
 
-  → 201 → 获得 tenantId + appId + 管理员凭据
+  → 201 → 获得 tenantId
+
+  然后注册管理员用户（带 super_admin 权限）:
+  POST https://auth.iam.tianv.com/bff/identity/api/v1/auth/register
+  { email, password, initial_role: "super_admin" }
+
+  → 201 → 获得 userId + appId
+
   → 限流拒绝 → "你已创建过试用租户，30 天后可重试"
 
 协议展示:

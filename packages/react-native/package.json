@@ -1,6 +1,6 @@
 {
   "name": "@authms/react-native",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AuthMS React Native SDK — AuthmsProvider, useAuthms hook, and RequireAuth guard for iOS/Android",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

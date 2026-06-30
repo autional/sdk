@@ -1,6 +1,6 @@
 {
   "name": "@authms/api-oauth",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AuthMS Identity Service API \u2014 auto-generated TypeScript client",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

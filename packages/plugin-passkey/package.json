@@ -1,6 +1,6 @@
 {
   "name": "@authms/plugin-passkey",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AuthMS Passkey Plugin — WebAuthn/Passkey authentication components and hooks",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

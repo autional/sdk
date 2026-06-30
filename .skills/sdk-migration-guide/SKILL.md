@@ -35,15 +35,14 @@ description: >
 
 ## 前置准备（启动时自动执行）
 
-### 语言与 npm scope 选择
+### 自动语言检测与 npm scope 选择
 
 ```
-询问用户语言偏好，选择对应的 npm scope：
+无需询问用户。自动判断语言：
+  - 用户说的/项目代码里含中文 → scope = @autional（GitHub: autional/sdk）
+  - 其他场景（英文/日韩/未知） → scope = @authms（Gitee: authms/sdk）
 
-  [A] 中文用户 → @autional（GitHub: autional/sdk）
-  [B] English users → @authms（Gitee: authms/sdk）
-
-选定后，全程使用该 scope，不得混用。
+选定后全程使用该 scope，不得混用。
 
 scope = @autional 或 @authms
 ```

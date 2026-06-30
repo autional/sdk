@@ -74,4 +74,32 @@ VITE_AUTHMS_API_URL={API_URL}
 2. .env.local 不在 git 中
 3. 定期检查 AuthMS 控制台的安全建议
 4. 生产环境启用 Gateway CORS: CORS_ENABLED=true
+
+## 测试账号
+| 账号 | 密码 | 角色 |
+|------|------|:----:|
+| {TEST1_EMAIL} | {TEST1_PASSWORD} | 测试用户 1 |
+| {TEST2_EMAIL} | {TEST2_PASSWORD} | 测试用户 2 |
+| {TEST3_EMAIL} | {TEST3_PASSWORD} | 测试用户 3 |
+
+> 测试账号密码仅第一次显示，后续可在 admin-console 重置。
+
+## 管理入口
+| Portal | 地址 | 用途 |
+|--------|------|------|
+| 管理后台 | https://auth.iam.tianv.com/admin | 用户管理、角色权限、审计日志 |
+| 用户门户 | https://auth.iam.tianv.com/user | 修改密码、设备管理 |
+| 安全仪表盘 | https://auth.iam.tianv.com/security | 异常检测、登录趋势 |
+| 开发者门户 | https://auth.iam.tianv.com/developer | API 文档、OAuth 管理 |
+| 系统状态 | https://auth.iam.tianv.com/status | 服务运行状况 |
+
+## 常用操作
+| 操作 | 步骤 |
+|------|------|
+| 添加用户 | admin-console → 用户管理 → 添加用户 |
+| 重置密码 | admin-console → 用户管理 → 用户 → 重置密码 |
+| 修改策略 | admin-console → 安全设置 |
+| 查看日志 | admin-console → 审计日志 |
+| 修改密码 | 用户门户 → 安全 → 修改密码 |
+| 忘记密码 | 登录页 → 忘记密码链接 |
 ```

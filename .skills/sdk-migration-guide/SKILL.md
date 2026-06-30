@@ -269,6 +269,30 @@ scope = @autional 或 @authms
 📋 tenantId + appId + issuer — 自动写入 .env 和 src/authms.ts
 ```
 
+## Phase 3.5：创建测试账号（新增）
+
+```
+创建 3 个测试账号，供多人/多角色测试使用。
+
+询问用户:
+  "需要创建几个测试账号？
+   [A] 3 个（推荐）— player1/2/3，自动生成密码
+   [B] 不创建 — 后续用手动添加"
+
+选 [A]:
+  └─ 自动创建 3 个用户（调用 identity register API）
+  └─ 密码自动生成（满足 Phase 2 策略）
+  └─ 记录到 AUTHMS_SETUP.md（密码仅显示一次）
+
+输出:
+  测试1: player1@xxx.com / Pwd123!
+  测试2: player2@xxx.com / Pwd456!
+  测试3: player3@xxx.com / Pwd789!
+
+选 [B]:
+  └─ 提示"后续可在 admin-console → 用户管理 → 添加用户"
+```
+
 ---
 
 ## Phase 4：依赖安装
@@ -382,6 +406,21 @@ async function findOrCreateLocalUser(authmsUser: { id: string; email: string }) 
 ```
 
 
+### 5.4 用户中心
+
+```text
+登录后用户还需要管理账号。提供以下功能：
+
+| 功能 | SDK 方法 | 页面 |
+|------|---------|------|
+| 修改密码 | changePassword() | /settings/password |
+| 个人资料 | getProfile()/updateProfile() | /settings/profile |
+| 忘记密码 | forgotPassword()/resetPassword() | /forgot-password |
+| 设备管理 | getSessions()/deleteSession() | /settings/sessions |
+| 注销账号 | deleteAccount() | /settings/delete |
+```
+
+
 ---
 
 ## Phase 6：单元测试
@@ -454,6 +493,42 @@ async function findOrCreateLocalUser(authmsUser: { id: string; email: string }) 
   src/App.tsx            — 包裹 AuthmsProvider
   src/pages/Login.tsx    — 替换登录逻辑（选项 A）
   README.md              — 补充 AuthMS 接入说明
+### 8.1.5 Portal 指引 + 操作指南
+
+```
+## 管理入口
+
+| Portal | 地址 | 谁用 | 做什么 |
+|--------|------|------|------|
+| 管理后台 | https://auth.iam.tianv.com/admin | 管理员 | 用户/角色/权限/安全策略/审计日志 |
+| 用户门户 | https://auth.iam.tianv.com/user | 普通用户 | 修改密码/查看设备/MFA |
+| 安全仪表盘 | https://auth.iam.tianv.com/security | 安全运营 | 异常检测/登录趋势/日志导出 |
+| 开发者门户 | https://auth.iam.tianv.com/developer | 开发者 | API 文档/OAuth 客户端 |
+| 系统状态 | https://auth.iam.tianv.com/status | 所有人 | 服务运行状况 |
+
+## 常用操作
+
+| 操作 | 步骤 |
+|------|------|
+| 添加用户 | admin-console → 用户管理 → 添加用户 |
+| 重置密码 | admin-console → 用户管理 → 用户 → 重置密码 |
+| 查看登录记录 | admin-console → 审计日志 |
+| 修改安全策略 | admin-console → 安全设置 |
+| 创建应用 | admin-console → 应用管理 → 创建应用 → 拿到 appId |
+| 禁用用户 | admin-console → 用户管理 → 用户 → 禁用 |
+| 删除用户 | admin-console → 用户管理 → 用户 → 删除（不可恢复） |
+| 升级计划 | admin-console → 计费 → 选择方案 |
+
+## 用户自助操作
+
+| 操作 | 位置 |
+|------|------|
+| 修改密码 | 用户门户 → 安全 → 修改密码 |
+| 忘记密码 | 登录页 → 忘记密码链接 |
+| 查看设备 | 用户门户 → 安全 → 登录设备 |
+| 注销账号 | 用户门户 → 设置 → 注销账号 |
+```
+
 ```
 
 ### 8.2 接入摘要（AUTHMS_SETUP.md）
@@ -655,6 +730,8 @@ Phase 完成:
 
 产物检查:
   ☐ src/authms.ts 存在且已填写
+  ☐ 测试账号已创建（至少 3 个）
+  ☐ Portal 指引已生成（管理后台/用户门户地址）
   ☐ .env 含公开配置
   ☐ AUTHMS_SETUP.md 存在
   ☐ 管理员密码已提醒"只显示一次"

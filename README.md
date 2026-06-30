@@ -1,8 +1,8 @@
-# AuthMS SDK
+# Autional SDK
 
-[![npm version](https://badge.fury.io/js/@authms%2Fcore.svg)](https://www.npmjs.com/package/@authms/core)
+[![npm version](https://badge.fury.io/js/@autional%2Fcore.svg)](https://www.npmjs.com/package/@autional/core)
 
-**Multi-framework authentication SDK for AuthMS.** Drop-in identity with built-in token management, multi-tab sync, password transmission security, and framework adapters for React, Vue, Next.js, React Native, and WeChat Mini Programs.
+**Multi-framework authentication SDK for Autional.** Drop-in identity with built-in token management, multi-tab sync, password transmission security, and framework adapters for React, Vue, Next.js, React Native, and WeChat Mini Programs.
 
 ---
 
@@ -12,25 +12,25 @@ Install the core SDK plus the framework adapter for your project:
 
 ```bash
 # React
-npm install @authms/react @authms/core
+npm install @autional/react @autional/core
 
 # Vue 3
-npm install @authms/vue @authms/core
+npm install @autional/vue @autional/core
 
 # Next.js (App Router)
-npm install @authms/next @authms/react @authms/core
+npm install @autional/next @autional/react @autional/core
 
 # React Native
-npm install @authms/react-native @authms/core
+npm install @autional/react-native @autional/core
 
 # WeChat Mini Program
-npm install @authms/miniapp @authms/core
+npm install @autional/miniapp @autional/core
 ```
 
 Add API packages for typed service calls:
 
 ```bash
-npm install @authms/api-identity @authms/api-tenant @authms/api-mfa @authms/api-billing
+npm install @autional/api-identity @autional/api-tenant @autional/api-mfa @autional/api-billing
 ```
 
 ---
@@ -41,11 +41,11 @@ npm install @authms/api-identity @authms/api-tenant @authms/api-mfa @authms/api-
 
 ```bash
 # React
-npm install @authms/core @authms/react @authms/api-identity
+npm install @autional/core @autional/react @autional/api-identity
 # Vue 3
-npm install @authms/core @authms/vue @authms/api-identity
+npm install @autional/core @autional/vue @autional/api-identity
 # Next.js
-npm install @authms/core @authms/react @authms/next @authms/api-identity
+npm install @autional/core @autional/react @autional/next @autional/api-identity
 ```
 
 **2. Copy the example file for your framework:**
@@ -63,8 +63,8 @@ cp examples/next-authms.ts src/authms.ts
 
 ```ts
 export const authmsConfig = {
-  appId: 'YOUR_APP_ID',               // ← your AuthMS console App ID
-  issuer: 'https://auth.example.com',  // ← your AuthMS server URL
+  appId: 'YOUR_APP_ID',               // ← your Autional console App ID
+  issuer: 'https://auth.example.com',  // ← your Autional server URL
 };
 ```
 
@@ -88,17 +88,17 @@ export default function Layout({ children }) {
 
 | Package | Description | Peer Deps |
 |---------|-------------|-----------|
-| `@authms/core` | Framework-agnostic core: token management, API client, auth flows, discovery, tab sync, crypto | — |
-| `@authms/react` | React 18+: `AuthmsProvider`, `useAuthms` hook, `RequireAuth` guard | `react`, `react-dom`, `@authms/core` |
-| `@authms/vue` | Vue 3: `createAuthms` plugin, `useAuthms` composable, `v-auth` directive, `authmsGuard` | `vue`, `@authms/core` |
-| `@authms/next` | Next.js 14+ App Router: middleware, `getServerSession`, `AuthmsProvider` | `next`, `@authms/react`, `@authms/core` |
-| `@authms/react-native` | React Native 0.70+: `AuthmsProvider`, `useAuthms`, `RequireAuth` for iOS/Android | `react`, `react-native`, `@authms/core` |
-| `@authms/miniapp` | WeChat Mini Program adapter: platform binding, WeChat login, token persistence | `@authms/core` |
-| `@authms/api-identity` | Auto-generated TypeScript client for Identity Service (login, register, profile, RBAC, NHI, etc.) | `@authms/core` |
-| `@authms/api-tenant` | Auto-generated TypeScript client for Tenant Service (tenant CRUD, plans, branding) | `@authms/core` |
-| `@authms/api-mfa` | Auto-generated TypeScript client for MFA Service (TOTP, SMS, passkey, backup codes) | `@authms/core` |
-| `@authms/api-billing` | Auto-generated TypeScript client for Billing Service (plans, invoices, usage) | `@authms/core` |
-| `@authms/plugin-mfa` | React MFA plugin: pre-built TOTP setup, passkey registration, backup code UI | `@authms/react`, `@authms/core` |
+| `@autional/core` | Framework-agnostic core: token management, API client, auth flows, discovery, tab sync, crypto | — |
+| `@autional/react` | React 18+: `AuthmsProvider`, `useAuthms` hook, `RequireAuth` guard | `react`, `react-dom`, `@autional/core` |
+| `@autional/vue` | Vue 3: `createAuthms` plugin, `useAuthms` composable, `v-auth` directive, `authmsGuard` | `vue`, `@autional/core` |
+| `@autional/next` | Next.js 14+ App Router: middleware, `getServerSession`, `AuthmsProvider` | `next`, `@autional/react`, `@autional/core` |
+| `@autional/react-native` | React Native 0.70+: `AuthmsProvider`, `useAuthms`, `RequireAuth` for iOS/Android | `react`, `react-native`, `@autional/core` |
+| `@autional/miniapp` | WeChat Mini Program adapter: platform binding, WeChat login, token persistence | `@autional/core` |
+| `@autional/api-identity` | Auto-generated TypeScript client for Identity Service (login, register, profile, RBAC, NHI, etc.) | `@autional/core` |
+| `@autional/api-tenant` | Auto-generated TypeScript client for Tenant Service (tenant CRUD, plans, branding) | `@autional/core` |
+| `@autional/api-mfa` | Auto-generated TypeScript client for MFA Service (TOTP, SMS, passkey, backup codes) | `@autional/core` |
+| `@autional/api-billing` | Auto-generated TypeScript client for Billing Service (plans, invoices, usage) | `@autional/core` |
+| `@autional/plugin-mfa` | React MFA plugin: pre-built TOTP setup, passkey registration, backup code UI | `@autional/react`, `@autional/core` |
 
 ---
 
@@ -108,8 +108,8 @@ Pass a config object to the framework provider or `createAuthms`:
 
 ```ts
 interface AuthmsConfig {
-  appId: string;               // Your AuthMS application ID (required)
-  issuer: string;              // AuthMS server origin, e.g. "https://auth.example.com" (required)
+  appId: string;               // Your Autional application ID (required)
+  issuer: string;              // Autional server origin, e.g. "https://auth.example.com" (required)
   apiUrl?: string;             // API base URL if different from issuer
   storagePrefix?: string;      // localStorage key prefix (default: "authms_")
   syncTabs?: boolean;          // Sync auth state across browser tabs (default: true)
@@ -135,7 +135,7 @@ await login({
 
 ## Password Transmission
 
-AuthMS supports four password transmission modes, configured per-tenant. The SDK's built-in
+Autional supports four password transmission modes, configured per-tenant. The SDK's built-in
 `processPasswordForTransmission` handles client-side preprocessing automatically. Select the
 mode via your tenant's password policy — all modes are handled transparently.
 
@@ -151,7 +151,7 @@ automatically applies the correct transformation on `login()` and `register()`. 
 also call the crypto functions directly:
 
 ```ts
-import { processPasswordForTransmission } from '@authms/core';
+import { processPasswordForTransmission } from '@autional/core';
 
 const result = await processPasswordForTransmission('mypassword', {
   mode: 'hash',
@@ -168,14 +168,14 @@ const result = await processPasswordForTransmission('mypassword', {
 
 ## API Usage
 
-The API packages provide type-safe functions backed by `@authms/core`'s token-managed
+The API packages provide type-safe functions backed by `@autional/core`'s token-managed
 HTTP client. Tokens are automatically refreshed and attached to every request.
 
 ```ts
-import { AuthMS } from '@authms/core';
-import { login, getProfile } from '@authms/api-identity';
+import { Autional } from '@autional/core';
+import { login, getProfile } from '@autional/api-identity';
 
-const authms = new AuthMS({
+const authms = new Autional({
   appId: 'app_xxx',
   issuer: 'https://auth.example.com',
 });
@@ -192,13 +192,13 @@ console.log(result.user.email, result.accessToken);
 const profile = await getProfile(authms);
 console.log(profile);
 
-// Cross-service calls with @authms/api-tenant
-import { getTenant } from '@authms/api-tenant';
+// Cross-service calls with @autional/api-tenant
+import { getTenant } from '@autional/api-tenant';
 const tenant = await getTenant(authms, 'tn_abc123');
 console.log(tenant.name, tenant.plan);
 ```
 
-The `AuthMS` instance exposes additional methods directly:
+The `Autional` instance exposes additional methods directly:
 
 | Method | Description |
 |--------|-------------|
@@ -244,7 +244,7 @@ pnpm dev
 ```
 
 Open `http://localhost:5173` and configure the issuer in the UI to point to your
-AuthMS gateway.
+Autional gateway.
 
 ---
 
@@ -252,7 +252,7 @@ AuthMS gateway.
 
 If you use AI coding tools (Cursor, Claude, opencode), just tell your AI:
 
-> "Connect this project to AuthMS"
+> "Connect this project to Autional"
 
 The AI will automatically:
 1. Read `SETUP.md` for the entry point

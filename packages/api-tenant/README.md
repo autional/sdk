@@ -1,6 +1,6 @@
-# @authms/api-tenant
+# @autional/api-tenant
 
-AuthMS Tenant Service API — auto-generated TypeScript client for tenant-service (10 functions).
+Autional Tenant Service API — auto-generated TypeScript client for tenant-service (10 functions).
 
 ## Functions
 
@@ -20,16 +20,16 @@ AuthMS Tenant Service API — auto-generated TypeScript client for tenant-servic
 ## Install
 
 ```bash
-npm install @authms/core @authms/api-tenant
+npm install @autional/core @autional/api-tenant
 ```
 
 ## Quick Start
 
 ```ts
-import { AuthMS, browserPlatform } from '@authms/core';
-import { getTenant, listMembers } from '@authms/api-tenant';
+import { Autional, browserPlatform } from '@autional/core';
+import { getTenant, listMembers } from '@autional/api-tenant';
 
-const authms = new AuthMS({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
 await authms.initialize();
 
 const tenant = await getTenant(authms.api, 'tenant-id-here');

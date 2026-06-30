@@ -1,6 +1,6 @@
-# @authms/api-billing
+# @autional/api-billing
 
-AuthMS Billing Service API — auto-generated TypeScript client for billing-service (9 functions).
+Autional Billing Service API — auto-generated TypeScript client for billing-service (9 functions).
 
 ## Functions
 
@@ -19,16 +19,16 @@ AuthMS Billing Service API — auto-generated TypeScript client for billing-serv
 ## Install
 
 ```bash
-npm install @authms/core @authms/api-billing
+npm install @autional/core @autional/api-billing
 ```
 
 ## Quick Start
 
 ```ts
-import { AuthMS, browserPlatform } from '@authms/core';
-import { getPlans, getSubscription, subscribe } from '@authms/api-billing';
+import { Autional, browserPlatform } from '@autional/core';
+import { getPlans, getSubscription, subscribe } from '@autional/api-billing';
 
-const authms = new AuthMS({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
 await authms.initialize();
 
 const plans = await getPlans(authms.api);

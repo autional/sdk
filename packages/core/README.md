@@ -1,10 +1,10 @@
-# @authms/core
+# @autional/core
 
-AuthMS Core SDK — framework-agnostic token management, API client, and authentication flows.
+Autional Core SDK — framework-agnostic token management, API client, and authentication flows.
 
 ## What's Inside
 
-- **`AuthMS`** — main client: login, register, logout, OAuth, token refresh, tenant switching, event system
+- **`Autional`** — main client: login, register, logout, OAuth, token refresh, tenant switching, event system
 - **`ApiClient`** — HTTP client with auto token injection, refresh on 401, and snake_case/camelCase conversion
 - **`AuthClient`** — authentication calls with password transmission preprocessing and PoW captcha solving
 - **`Discovery`** — OIDC discovery document fetching
@@ -15,15 +15,15 @@ AuthMS Core SDK — framework-agnostic token management, API client, and authent
 ## Install
 
 ```bash
-npm install @authms/core
+npm install @autional/core
 ```
 
 ## Quick Start
 
 ```ts
-import { AuthMS, browserPlatform } from '@authms/core';
+import { Autional, browserPlatform } from '@autional/core';
 
-const authms = new AuthMS({
+const authms = new Autional({
   appId: 'my-app',
   issuer: 'https://auth.iam.tianv.com',
   platform: browserPlatform,

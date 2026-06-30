@@ -1,24 +1,24 @@
-# @authms/next
+# @autional/next
 
-AuthMS Next.js SDK — middleware, server-side session, and provider for Next.js App Router.
+Autional Next.js SDK — middleware, server-side session, and provider for Next.js App Router.
 
 ## What's Inside
 
 - **`authmsMiddleware`** — edge middleware that redirects unauthenticated users from protected paths
 - **`getServerSession`** — server-side session lookup via cookie token + `/auth/me` API call
-- **`AuthmsProvider`** — client component wrapper (re-exports from `@authms/react` with SSR support)
+- **`AuthmsProvider`** — client component wrapper (re-exports from `@autional/react` with SSR support)
 
 ## Install
 
 ```bash
-npm install @authms/core @authms/react @authms/next
+npm install @autional/core @autional/react @autional/next
 ```
 
 ## Quick Start
 
 ```ts
 // middleware.ts
-import { authmsMiddleware } from '@authms/next';
+import { authmsMiddleware } from '@autional/next';
 
 export const config = { matcher: ['/dashboard/:path*', '/settings/:path*'] };
 
@@ -31,7 +31,7 @@ export default authmsMiddleware({
 
 ```tsx
 // app/layout.tsx
-import { AuthmsProvider } from '@authms/next';
+import { AuthmsProvider } from '@autional/next';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```tsx
 // app/dashboard/page.tsx
-import { getServerSession } from '@authms/next';
+import { getServerSession } from '@autional/next';
 
 export default async function DashboardPage() {
   const session = await getServerSession({ authUrl: 'https://auth.iam.tianv.com' });

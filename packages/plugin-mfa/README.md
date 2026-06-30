@@ -1,25 +1,25 @@
-# @authms/plugin-mfa
+# @autional/plugin-mfa
 
-AuthMS MFA Plugin — Multi-Factor Authentication UI components and flows for `@authms/react`.
+Autional MFA Plugin — Multi-Factor Authentication UI components and flows for `@autional/react`.
 
 ## Components
 
 - **`MfaSetup`** — guided TOTP setup with QR code display and verification
 - **`MfaGuard`** — wrapper that requires MFA challenge before rendering children
 - **`BackupCodes`** — display and regenerate one-time backup codes
-- **`mfaPlugin`** — plugin factory to register with `AuthMS.use()`
+- **`mfaPlugin`** — plugin factory to register with `Autional.use()`
 
 ## Install
 
 ```bash
-npm install @authms/core @authms/react @authms/plugin-mfa
+npm install @autional/core @autional/react @autional/plugin-mfa
 ```
 
 ## Quick Start
 
 ```tsx
-import { AuthmsProvider, useAuthms } from '@authms/react';
-import { MfaSetup, MfaGuard, BackupCodes } from '@authms/plugin-mfa';
+import { AuthmsProvider, useAuthms } from '@autional/react';
+import { MfaSetup, MfaGuard, BackupCodes } from '@autional/plugin-mfa';
 
 function SecurityPage() {
   return (

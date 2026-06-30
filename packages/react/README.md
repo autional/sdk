@@ -1,23 +1,23 @@
-# @authms/react
+# @autional/react
 
-AuthMS React SDK — `<AuthmsProvider>`, `useAuthms()` hook, and `<RequireAuth>` guard component.
+Autional React SDK — `<AuthmsProvider>`, `useAuthms()` hook, and `<RequireAuth>` guard component.
 
 ## What's Inside
 
-- **`AuthmsProvider`** — context provider that creates and initializes an `AuthMS` instance
+- **`AuthmsProvider`** — context provider that creates and initializes an `Autional` instance
 - **`useAuthms()`** — hook returning `{ authms, user, isLoading, isAuthenticated, login, logout }`
 - **`RequireAuth`** — wrapper that redirects unauthenticated users to a login page
 
 ## Install
 
 ```bash
-npm install @authms/core @authms/react
+npm install @autional/core @autional/react
 ```
 
 ## Quick Start
 
 ```tsx
-import { AuthmsProvider } from '@authms/react';
+import { AuthmsProvider } from '@autional/react';
 
 function App() {
   return (
@@ -29,7 +29,7 @@ function App() {
 ```
 
 ```tsx
-import { useAuthms, RequireAuth } from '@authms/react';
+import { useAuthms, RequireAuth } from '@autional/react';
 
 function Dashboard() {
   const { user, isLoading, login, logout } = useAuthms();

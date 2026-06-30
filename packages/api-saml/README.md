@@ -1,6 +1,6 @@
-# @authms/api-identity
+# @autional/api-identity
 
-AuthMS Identity Service API — auto-generated TypeScript client for identity-service (21 functions).
+Autional Identity Service API — auto-generated TypeScript client for identity-service (21 functions).
 
 ## Functions
 
@@ -31,16 +31,16 @@ AuthMS Identity Service API — auto-generated TypeScript client for identity-se
 ## Install
 
 ```bash
-npm install @authms/core @authms/api-identity
+npm install @autional/core @autional/api-identity
 ```
 
 ## Quick Start
 
 ```ts
-import { AuthMS, browserPlatform } from '@authms/core';
-import { login, getProfile } from '@authms/api-identity';
+import { Autional, browserPlatform } from '@autional/core';
+import { login, getProfile } from '@autional/api-identity';
 
-const authms = new AuthMS({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
 await authms.initialize();
 
 const result = await login(authms.api, { email: 'user@example.com', password: 's3cret' });

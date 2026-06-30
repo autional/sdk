@@ -1,5 +1,5 @@
 {
-  "name": "@authms/core",
+  "name": "@autional/core",
   "version": "0.2.1",
   "description": "AuthMS Core SDK — framework-agnostic token management, API client, and auth flows",
   "main": "./dist/index.js",
@@ -39,7 +39,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@authms/tsconfig": ">=0.1.0",
+    "@autional/tsconfig": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

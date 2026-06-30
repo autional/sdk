@@ -1,6 +1,6 @@
-# @authms/api-mfa
+# @autional/api-mfa
 
-AuthMS MFA Service API — auto-generated TypeScript client for mfa-service (10 functions).
+Autional MFA Service API — auto-generated TypeScript client for mfa-service (10 functions).
 
 ## Functions
 
@@ -20,16 +20,16 @@ AuthMS MFA Service API — auto-generated TypeScript client for mfa-service (10 
 ## Install
 
 ```bash
-npm install @authms/core @authms/api-mfa
+npm install @autional/core @autional/api-mfa
 ```
 
 ## Quick Start
 
 ```ts
-import { AuthMS, browserPlatform } from '@authms/core';
-import { setupTotp, verifyTotp, enableTotp } from '@authms/api-mfa';
+import { Autional, browserPlatform } from '@autional/core';
+import { setupTotp, verifyTotp, enableTotp } from '@autional/api-mfa';
 
-const authms = new AuthMS({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
 await authms.initialize();
 
 const setup = await setupTotp(authms.api);

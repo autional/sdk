@@ -1,7 +1,7 @@
 {
-  "name": "@authms/api-saml",
+  "name": "@autional/api-saml",
   "version": "0.2.1",
-  "description": "AuthMS Identity Service API \u2014 auto-generated TypeScript client",
+  "description": "Autional Identity Service API \u2014 auto-generated TypeScript client",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -14,7 +14,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @autional/core",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -23,10 +23,10 @@
     "src"
   ],
   "peerDependencies": {
-    "@authms/core": ">=0.1.0"
+    "@autional/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/core": ">=0.1.0",
+    "@autional/core": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

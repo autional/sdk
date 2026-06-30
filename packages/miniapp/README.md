@@ -1,6 +1,6 @@
-# @authms/miniapp
+# @autional/miniapp
 
-AuthMS WeChat Mini Program SDK — platform adapter, WeChat login, and token management.
+Autional WeChat Mini Program SDK — platform adapter, WeChat login, and token management.
 
 ## Platform Specifics
 
@@ -10,20 +10,20 @@ No BroadcastChannel or Web Crypto — key exchange and SHA-256 use pure-JS fallb
 
 ## What's Inside
 
-- **`createAuthms(config)`** — creates an `AuthMS` instance with `.loginWithWechat()` and `.getPhoneNumber()` extensions
+- **`createAuthms(config)`** — creates an `Autional` instance with `.loginWithWechat()` and `.getPhoneNumber()` extensions
 - **`miniappPlatform`** — ready-made platform binding for WeChat Mini Programs
 - **`useAuthms()`** — hook-style function (non-reactive, for component data)
 
 ## Install
 
 ```bash
-npm install @authms/core @authms/miniapp
+npm install @autional/core @autional/miniapp
 ```
 
 ## Quick Start
 
 ```ts
-import { createAuthms } from '@authms/miniapp';
+import { createAuthms } from '@autional/miniapp';
 
 const authms = createAuthms({
   appId: 'wx1234567890',

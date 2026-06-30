@@ -1,10 +1,10 @@
-# @authms/vue
+# @autional/vue
 
-AuthMS Vue SDK — `createAuthms()` plugin, `useAuthms()` composable, `v-auth` directive, and `authmsGuard` router guard.
+Autional Vue SDK — `createAuthms()` plugin, `useAuthms()` composable, `v-auth` directive, and `authmsGuard` router guard.
 
 ## What's Inside
 
-- **`createAuthms(config)`** — Vue plugin that creates and initializes an `AuthMS` instance, injects via `provide`
+- **`createAuthms(config)`** — Vue plugin that creates and initializes an `Autional` instance, injects via `provide`
 - **`useAuthms()`** — composable returning `{ authms, user, isLoading, isAuthenticated, login, logout }`
 - **`vAuth`** — directive for conditional rendering based on auth state
 - **`authmsGuard`** — `beforeEach` navigation guard for vue-router
@@ -12,7 +12,7 @@ AuthMS Vue SDK — `createAuthms()` plugin, `useAuthms()` composable, `v-auth` d
 ## Install
 
 ```bash
-npm install @authms/core @authms/vue
+npm install @autional/core @autional/vue
 ```
 
 ## Quick Start
@@ -20,7 +20,7 @@ npm install @authms/core @authms/vue
 ```ts
 // main.ts
 import { createApp } from 'vue';
-import { createAuthms } from '@authms/vue';
+import { createAuthms } from '@autional/vue';
 import App from './App.vue';
 
 const app = createApp(App);
@@ -34,7 +34,7 @@ app.mount('#app');
 ```vue
 <!-- Dashboard.vue -->
 <script setup lang="ts">
-import { useAuthms } from '@authms/vue';
+import { useAuthms } from '@autional/vue';
 
 const { user, isLoading, login, logout } = useAuthms();
 </script>

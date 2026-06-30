@@ -1,5 +1,5 @@
 {
-  "name": "@authms/plugin-passkey",
+  "name": "@autional/plugin-passkey",
   "version": "0.2.1",
   "description": "AuthMS Passkey Plugin — WebAuthn/Passkey authentication components and hooks",
   "main": "./dist/index.js",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @authms/core",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @authms/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @autional/core",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @autional/core",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -23,15 +23,15 @@
   "keywords": ["auth", "authentication", "passkey", "webauthn", "fido2", "authms", "plugin"],
   "license": "MIT",
   "peerDependencies": {
-    "@authms/core": ">=0.1.0",
+    "@autional/core": ">=0.1.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@authms/core": ">=0.1.0"
+    "@autional/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": ">=0.1.0",
+    "@autional/tsconfig": ">=0.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "react": ">=18.0.0",

@@ -1,10 +1,10 @@
-# @authms/react-native
+# @autional/react-native
 
-AuthMS React Native SDK — `AuthmsProvider`, `useAuthms()` hook, and `RequireAuth` guard for iOS/Android.
+Autional React Native SDK — `AuthmsProvider`, `useAuthms()` hook, and `RequireAuth` guard for iOS/Android.
 
 ## What's Inside
 
-- **`AuthmsProvider`** — context provider that creates and initializes an `AuthMS` instance (same API as `@authms/react`)
+- **`AuthmsProvider`** — context provider that creates and initializes an `Autional` instance (same API as `@autional/react`)
 - **`useAuthms()`** — hook returning `{ authms, user, isLoading, isAuthenticated, login, logout }`
 - **`RequireAuth`** — wrapper that redirects unauthenticated users to a login screen
 - **`createRNPlatform(storage)`** — creates an `AuthmsPlatform` backed by `AsyncStorage`
@@ -12,14 +12,14 @@ AuthMS React Native SDK — `AuthmsProvider`, `useAuthms()` hook, and `RequireAu
 ## Install
 
 ```bash
-npm install @authms/core @authms/react-native @react-native-async-storage/async-storage
+npm install @autional/core @autional/react-native @react-native-async-storage/async-storage
 ```
 
 ## Quick Start
 
 ```tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createRNPlatform, AuthmsProvider, useAuthms } from '@authms/react-native';
+import { createRNPlatform, AuthmsProvider, useAuthms } from '@autional/react-native';
 
 export default function App() {
   const platform = createRNPlatform(AsyncStorage);

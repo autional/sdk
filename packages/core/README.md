@@ -44,7 +44,7 @@ console.log(profile);
 | Mode | Transport | Description |
 |------|-----------|-------------|
 | `plain` | Raw password | No processing |
-| `hash` | SHA-256(password + tenantId) | Client-side hashing |
+| `hash` | SHA-256(password + "|" + tenantId) | Client-side hashing with separator |
 | `symmetric` | ECDH + AES-256-GCM | Key exchange, encrypted |
 | `asymmetric` | RSA-OAEP | Public-key encrypted |
 

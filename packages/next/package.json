@@ -1,5 +1,5 @@
 {
-  "name": "@autional/next",
+  "name": "@authms/next",
   "version": "0.2.1",
   "description": "AuthMS Next.js SDK — middleware, server session, and provider for Next.js App Router",
   "main": "./dist/index.js",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external next --external @autional/core --external @autional/react --external react --external react-dom",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external next --external @autional/core --external @autional/react --external react --external react-dom",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external next --external @authms/core --external @authms/react --external react --external react-dom",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external next --external @authms/core --external @authms/react --external react --external react-dom",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -31,16 +31,16 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0",
-    "@autional/react": ">=0.1.0",
+    "@authms/core": ">=0.1.0",
+    "@authms/react": ">=0.1.0",
     "next": ">=14.0.0"
   },
   "dependencies": {
-    "@autional/core": ">=0.1.0",
-    "@autional/react": ">=0.1.0"
+    "@authms/core": ">=0.1.0",
+    "@authms/react": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/tsconfig": ">=0.1.0",
+    "@authms/tsconfig": ">=0.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "next": "^15.0.0",

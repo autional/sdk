@@ -1,5 +1,5 @@
 {
-  "name": "@autional/react",
+  "name": "@authms/react",
   "version": "0.2.1",
   "description": "AuthMS React SDK — AuthmsProvider, useAuthms hook, and RequireAuth guard",
   "main": "./dist/index.js",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @autional/core",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @autional/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @authms/core",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @authms/core",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rimraf dist"
@@ -32,15 +32,15 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0",
+    "@authms/core": ">=0.1.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@autional/core": ">=0.1.0"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/tsconfig": ">=0.1.0",
+    "@authms/tsconfig": ">=0.1.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.0.0",

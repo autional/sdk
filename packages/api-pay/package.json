@@ -1,5 +1,5 @@
 {
-  "name": "@autional/api-pay",
+  "name": "@authms/api-pay",
   "version": "0.2.1",
   "description": "Autional Identity Service API \u2014 auto-generated TypeScript client",
   "main": "./dist/index.js",
@@ -14,7 +14,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @autional/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -23,10 +23,10 @@
     "src"
   ],
   "peerDependencies": {
-    "@autional/core": ">=0.1.0"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/core": ">=0.1.0",
+    "@authms/core": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

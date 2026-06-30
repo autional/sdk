@@ -1,5 +1,5 @@
 {
-  "name": "@autional/react-native",
+  "name": "@authms/react-native",
   "version": "0.2.1",
   "description": "AuthMS React Native SDK — AuthmsProvider, useAuthms hook, and RequireAuth guard for iOS/Android",
   "main": "./dist/index.js",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-native --external @autional/core --external @react-native-async-storage/async-storage",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-native --external @autional/core --external @react-native-async-storage/async-storage",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-native --external @authms/core --external @react-native-async-storage/async-storage",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-native --external @authms/core --external @react-native-async-storage/async-storage",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rimraf dist"
@@ -34,15 +34,15 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0",
+    "@authms/core": ">=0.1.0",
     "react": ">=18.0.0",
     "react-native": ">=0.70.0"
   },
   "dependencies": {
-    "@autional/core": ">=0.1.0"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/tsconfig": ">=0.1.0",
+    "@authms/tsconfig": ">=0.1.0",
     "@react-native-async-storage/async-storage": "^1.23.0",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",

@@ -1,7 +1,7 @@
 {
-  "name": "@autional/plugin-mfa",
+  "name": "@authms/plugin-mfa",
   "version": "0.2.1",
-  "description": "AuthMS MFA Plugin — Multi-Factor Authentication UI components and flows for @autional/react",
+  "description": "AuthMS MFA Plugin — Multi-Factor Authentication UI components and flows for @authms/react",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @autional/core --external @autional/react",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @autional/core --external @autional/react",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @authms/core --external @authms/react",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @authms/core --external @authms/react",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -34,17 +34,17 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0",
-    "@autional/react": ">=0.1.0",
+    "@authms/core": ">=0.1.0",
+    "@authms/react": ">=0.1.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@autional/core": ">=0.1.0",
-    "@autional/react": ">=0.1.0"
+    "@authms/core": ">=0.1.0",
+    "@authms/react": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/tsconfig": ">=0.1.0",
+    "@authms/tsconfig": ">=0.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "react": ">=18.0.0",

@@ -1,5 +1,5 @@
 {
-  "name": "@autional/miniapp",
+  "name": "@authms/miniapp",
   "version": "0.2.1",
   "description": "AuthMS WeChat Mini Program SDK — platform adapter, WeChat login, and token management",
   "main": "./dist/index.js",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @autional/core",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external @autional/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external @authms/core",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -32,13 +32,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0"
+    "@authms/core": ">=0.1.0"
   },
   "dependencies": {
-    "@autional/core": ">=0.1.0"
+    "@authms/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/tsconfig": ">=0.1.0",
+    "@authms/tsconfig": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

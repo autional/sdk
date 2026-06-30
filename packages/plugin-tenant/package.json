@@ -1,7 +1,7 @@
 {
-  "name": "@autional/plugin-tenant",
+  "name": "@authms/plugin-tenant",
   "version": "0.2.1",
-  "description": "AuthMS Tenant Plugin — Multi-tenant switching components for @autional/core",
+  "description": "AuthMS Tenant Plugin — Multi-tenant switching components for @authms/core",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -14,8 +14,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external @autional/core",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external @autional/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external @authms/core",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external @authms/core",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -33,11 +33,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0",
+    "@authms/core": ">=0.1.0",
     "react": ">=18.0.0"
   },
   "devDependencies": {
-    "@autional/tsconfig": ">=0.1.0",
+    "@authms/tsconfig": ">=0.1.0",
     "@types/react": "^19.0.0",
     "react": ">=18.0.0",
     "rimraf": "^5.0.0",

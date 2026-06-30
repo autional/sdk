@@ -28,12 +28,51 @@ description: >
 2. 每个 Phase 开始前声明「Phase N 开始」。
 3. 每个 Phase 结束后向用户展示结果，等待确认。
 4. 用户确认后才进入下一个 Phase。
-5. 遇到错误时：展示错误 → 修复 → 从当前 Phase 重新开始，不回退。
-6. 任务完成后输出检查清单，逐项确认。
+5. 改代码出错 → `git checkout -- <file>` 恢复该文件 → 修正 → 重试。整个 Phase 失败 → `git reset --hard` → 从 Phase 开头重来。
+6. 所有改动必须在独立 git 分支（`feature/authms`）上进行。无 git 则自动 `git init` + 文件备份兜底。
+
+## ⚠️ 代码安全与合规
+
+```
+1. 永不读取用户的 .env 原有内容——只追加 AuthMS 相关字段。
+2. 永不读取用户的 User 表数据。
+3. Administrator 密码仅生成一次，不写入代码文件。
+4. 注入的代码全部 MIT 许可证，不引入 GPL 依赖。
+5. 改后必须 npm run build → 失败立即回退（git checkout --）。
+6. 改后输出 AUTHMS_CHANGES.md 记录所有变更。
+```
 
 ---
 
 ## 前置准备（启动时自动执行）
+
+### Git 环境检测 + 分支隔离
+
+```
+1. git --version → 有 git → 继续
+   没有 git → 降级为文件备份模式（每个文件改前 cp xxx xxx.authms-backup）
+
+2. git init → 已初始化 → 继续
+   未初始化 → git init && echo "node_modules/" > .gitignore
+
+3. git config user.name → 有 → 继续
+   没有 → git config user.name "AuthMS SDK"
+
+4. git config user.email → 有 → 继续
+   没有 → git config user.email "sdk@authms.local"
+
+5. 创建隔离分支:
+   git checkout -b feature/authms
+   → 失败（分支已存在）→ git checkout feature/authms
+   → 所有改动在这个分支上，不影响 main
+
+6. 回退路径:
+   改坏了 → git reset --hard HEAD → 从头重试
+   整个接入不想继续 → git checkout main && git branch -D feature/authms
+   接入成功 → git add -A && git commit -m "feat: AuthMS 接入"
+              → git checkout main && git merge feature/authms
+   无 git → 从 .authms-backup 文件恢复
+```
 
 ### 自动语言检测与 npm scope 选择
 
@@ -333,6 +372,31 @@ npm install {scope}/core {scope}/react {scope}/next {scope}/api-identity
 
 ## Phase 5：代码接入（选项制）
 
+### 5.0 改动预览（强制）
+
+```
+在修改任何文件之前，展示清单：
+
+  "以下文件将被修改/新增。确认后继续。
+   ┌──────────────────────────────────────┐
+   │ 新增:                                 │
+   │  + src/authms.ts — SDK 配置           │
+   │  + AUTHMS_CHANGES.md — 变更记录        │
+   │                                      │
+   │ 修改:                                 │
+   │  ~ src/app/layout.tsx — Provider 包裹  │
+   │  ~ src/pages/Login.tsx — 登录页替换    │
+   │  ~ .env — 追加 AuthMS 配置            │
+   │                                      │
+   │ 不受影响:                              │
+   │  ✓ 你的业务逻辑代码                     │
+   │  ✓ 你的 User 表数据                    │
+   │  ✓ 你的 .env 原有内容                  │
+   └──────────────────────────────────────┘
+
+   确认？ [继续] [取消]"
+```
+
 ### 5.1 路由包裹
 
 ```tsx
@@ -421,6 +485,21 @@ async function findOrCreateLocalUser(authmsUser: { id: string; email: string }) 
 | 注销账号 | deleteAccount() | /settings/delete |
 ```
 
+### 5.5 构建验证（强制）
+
+```
+代码接入完成后立即验证:
+
+1. npm run build（或等效构建命令）
+   → 通过 ✅ → 进入 Phase 6
+   → 失败 ❌ → git stash → 分析错误 → 修复 → 重试
+   → 连续 3 次失败 → git reset --hard → 向用户报告
+
+2. 如项目有 npm test:
+   → npm test → 通过 ✅
+   → 失败 ❌ → 只修 AuthMS 相关的失败
+```
+
 
 ---
 
@@ -486,6 +565,7 @@ async function findOrCreateLocalUser(authmsUser: { id: string; email: string }) 
 创建的文件：
   src/authms.ts          — SDK 配置（可提交 git）
   AUTHMS_SETUP.md        — 接入摘要文档
+  AUTHMS_CHANGES.md      — 变更记录（改了哪些文件/包/代码）
   .env.local             — 私密环境变量（已 gitignore）
 
 修改的文件：
@@ -728,6 +808,11 @@ Phase 完成:
   ☐ Phase 6: 单元测试通过
   ☐ Phase 7: 集成测试通过
   ☐ Phase 8: 收尾完成
+
+  ☐ Git 分支隔离已启用（feature/authms）
+  ☐ npm run build 通过
+  ☐ 改动预览已展示给用户确认
+  ☐ AUTHMS_CHANGES.md 已生成
 
 产物检查:
   ☐ src/authms.ts 存在且已填写

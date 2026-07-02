@@ -37,3 +37,26 @@ const members = await listMembers(authms.api, tenant.id);
 ```
 
 See the [root SDK README](../../README.md) for full documentation.
+
+## Tenant Portal URLs
+
+**Backend no longer returns `loginUrl`/`adminUrl`.** The URL structure is a static convention.
+Construct portal URLs from the tenant slug (the `name` field) as follows:
+
+```ts
+const tenant = await createTenant(authms.api, { name: 'acme-corp', /* ... */ });
+
+// Portal URL convention:
+//   Login:  {portalOrigin}/{slug}/login?redirect={portalOrigin}/{slug}/admin
+//   Admin:  {portalOrigin}/{slug}/admin
+const portalOrigin = 'https://app.iam.tianv.com'; // or your project's portal domain
+const adminUrl = `${portalOrigin}/${tenant.name}/admin`;
+const loginUrl = `${portalOrigin}/${tenant.name}/login?redirect=${encodeURIComponent(adminUrl)}`;
+```
+
+**Frontend users**: use `buildTenantUrls(slug)` from `@authms/shared` for runtime origin-aware construction.
+
+| Environment | Portal Origin |
+|-------------|---------------|
+| Development  | `https://app.iam.tianv.local` |
+| Production   | `https://app.iam.tianv.com` |

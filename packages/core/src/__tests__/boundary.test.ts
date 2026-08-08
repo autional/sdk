@@ -45,7 +45,7 @@ describe('Boundary & Edge Cases', () => {
       const client = new ApiClient({ baseUrl: BASE_URL, tokenManager, http: mockHttp, refreshTokenFn: vi.fn() });
 
       await expect(client.get('/api/v1/users/me')).rejects.toBeInstanceOf(AuthmsNetworkError);
-    });
+    }, 15000);
   });
 
   describe('api-client: concurrent 401 / single-flight stress', () => {

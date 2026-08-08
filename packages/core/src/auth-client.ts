@@ -14,6 +14,8 @@ interface AuthClientConfig {
   http: AuthmsPlatform['http'];
   baseUrl: string;
   keyExchangeFn?: KeyExchangeFn;
+  /** 租户 ID（init 时确定，后续所有操作复用）*/
+  tenantId?: string;
   /** 端点覆盖（留空使用默认路径）。后续从 auth-config 读取。 */
   endpoints?: Record<string, string>;
 }
@@ -27,12 +29,14 @@ export class AuthClient {
   private baseUrl: string;
   private keyExchangeFn?: KeyExchangeFn;
   private configCache: Map<string, { data: TenantAuthConfig; at: number }> = new Map();
+  readonly tenantId: string;
 
   constructor(config: AuthClientConfig) {
     this.tokenManager = config.tokenManager;
     this.http = config.http;
     this.baseUrl = config.baseUrl;
     this.keyExchangeFn = config.keyExchangeFn;
+    this.tenantId = config.tenantId || '';
   }
 
   async fetchAuthConfig(tenantId?: string): Promise<TenantAuthConfig> {
@@ -229,6 +233,11 @@ export class AuthClient {
   async loginWithOAuth(options: OAuthOptions): Promise<void> {
     const redirectUri = options.redirectUri || (typeof window !== 'undefined' ? window.location.origin + '/oauth/callback' : '');
     const params = new URLSearchParams({ provider: options.provider, redirect_uri: redirectUri });
+    // 携带 tenant_id（如已确定），方便多租户 issuer 路由
+    const tenantId = options.tenantId || this.tenantId;
+    if (tenantId) {
+      params.set('tenant_id', tenantId);
+    }
     if (typeof window !== 'undefined') {
       window.location.href = `${this.baseUrl}/oauth/api/v1/oauth/${options.provider}/authorize?${params.toString()}`;
     } else {
@@ -417,6 +426,35 @@ export class AuthClient {
     this.tokenManager.setTokens(result.accessToken, result.refreshToken, result.expiresIn);
     this.tokenManager.setUser(result.user as Record<string, unknown>);
     this.tokenManager.persist();
+    return result;
+  }
+
+  /** 机器间认证 (Client Credentials) */
+  async loginWithClientCredentials(options: {
+    clientId: string;
+    clientSecret: string;
+    scopes?: string[];
+  }): Promise<AuthResult> {
+    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: options.clientId,
+        client_secret: options.clientSecret,
+        scope: (options.scopes || []).join(' '),
+      }).toString(),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AuthmsAuthError(
+        String(errJson.code ?? 'CC_FAILED'),
+        (errJson.message as string) || 'Client Credentials auth failed',
+        response.status,
+      );
+    }
+    const json = await response.json() as Record<string, unknown>;
+    const result = this.handleAuthResponse(json);
     return result;
   }
 }

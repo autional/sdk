@@ -46,6 +46,8 @@ export class ApiClient {
   private onForceLogout?: () => void;
   private refreshPromise: Promise<void> | null = null;
   private redirectingToLogin = false;
+  private maxRetries = 3;
+  private baseDelay = 1000;
 
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/$/, '');
@@ -118,17 +120,37 @@ export class ApiClient {
     };
 
     let response: Response;
-    try {
-      response = await this.http.request(url, requestInit);
-    } catch (err) {
-      throw new AuthmsNetworkError(err instanceof Error ? err.message : 'Network request failed');
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        response = await this.http.request(url, requestInit);
+      } catch (err) {
+        lastError = err as Error;
+        if (attempt < this.maxRetries) {
+          await new Promise(r => setTimeout(r, this.baseDelay * Math.pow(2, attempt)));
+          continue;
+        }
+        throw new AuthmsNetworkError(lastError.message || 'Network request failed after retries');
+      }
+
+      // 5xx 重试, 4xx 不重试
+      if (response.status >= 500 && attempt < this.maxRetries) {
+        lastError = new Error(`HTTP ${response.status}`);
+        await new Promise(r => setTimeout(r, this.baseDelay * Math.pow(2, attempt)));
+        continue;
+      }
+
+      if (response.status === 401 && !url.includes('/api/v1/auth/login') && !url.includes('/api/v1/auth/refresh')) {
+        return this.handle401<T>(url, requestInit);
+      }
+
+      return this.handleResponse<T>(response);
     }
 
-    if (response.status === 401 && !url.includes('/api/v1/auth/login') && !url.includes('/api/v1/auth/refresh')) {
-      return this.handle401<T>(url, requestInit);
-    }
-
-    return this.handleResponse<T>(response);
+    throw lastError
+      ? new AuthmsNetworkError(lastError.message)
+      : new AuthmsNetworkError('Request failed');
   }
 
   private async handle401<T>(url: string, requestInit: RequestInit): Promise<T> {

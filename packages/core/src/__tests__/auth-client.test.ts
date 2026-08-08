@@ -410,4 +410,70 @@ describe('AuthClient', () => {
       expect(tokenManager.getUser()!.email).toBe('test@example.com');
     });
   });
+
+  describe('loginWithClientCredentials', () => {
+    it('sends correct grant_type and returns token', async () => {
+      const mockHttp = {
+        lastRequest: null as Record<string, unknown> | null,
+        request: async (url: string, options: RequestInit) => {
+          mockHttp.lastRequest = { url, method: options.method, body: options.body };
+          return {
+            ok: true,
+            json: async () => ({
+              access_token: 'cc_test_token',
+              refresh_token: '',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            }),
+          };
+        },
+      };
+
+      const storage = new MockStorage();
+      const tokenManager = new TokenManager(storage);
+      const client = new AuthClient({
+        tokenManager,
+        http: mockHttp as any,
+        baseUrl: 'https://auth.test.com',
+      });
+
+      const result = await client.loginWithClientCredentials({
+        clientId: 'my-service',
+        clientSecret: 'secret-key',
+        scopes: ['identity:read', 'tenant:write'],
+      });
+
+      const body = (mockHttp.lastRequest as any)?.body as string;
+      const decodedBody = decodeURIComponent(body);
+      expect(body).toContain('grant_type=client_credentials');
+      expect(body).toContain('client_id=my-service');
+      expect(body).toContain('client_secret=secret-key');
+      expect(decodedBody).toContain('identity:read');
+      expect(decodedBody).toContain('tenant:write');
+      expect(result.accessToken).toBe('cc_test_token');
+    });
+
+    it('throws AuthmsAuthError on failure', async () => {
+      const mockHttp = {
+        request: async () => ({
+          ok: false,
+          status: 401,
+          json: async () => ({ code: 'INVALID_CLIENT', message: 'invalid client' }),
+        }),
+      };
+
+      const storage = new MockStorage();
+      const tokenManager = new TokenManager(storage);
+      const client = new AuthClient({
+        tokenManager,
+        http: mockHttp as any,
+        baseUrl: 'https://auth.test.com',
+      });
+
+      await expect(client.loginWithClientCredentials({
+        clientId: 'bad',
+        clientSecret: 'bad',
+      })).rejects.toBeInstanceOf(AuthmsAuthError);
+    });
+  });
 });

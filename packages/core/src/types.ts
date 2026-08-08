@@ -39,6 +39,8 @@ export interface RegisterRequest {
 export interface OAuthOptions {
   provider: string;
   redirectUri?: string;
+  /** 租户 ID（可选，默认从 SDK init 时确定）*/
+  tenantId?: string;
 }
 
 export interface TokenClaims {

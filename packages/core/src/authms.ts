@@ -22,6 +22,8 @@ export interface AuthmsConfig {
   syncTabs?: boolean;
   /** 启用 BFF httpOnly cookie 模式（token 不存 localStorage） */
   useCookie?: boolean;
+  /** 租户 ID (可选, 从 issuer 子域名自动提取或显式传入) */
+  tenantId?: string;
 }
 
 type EventHandler = (...args: unknown[]) => void;
@@ -37,6 +39,8 @@ export class AuthMS {
   private _ready = false;
   private _userCache: Record<string, unknown> | null = null;
   private _authConfig: Record<string, unknown> | null = null;
+  /** 确定的租户 ID (从 config 或 issuer 提取) */
+  readonly tenantId: string;
 
   constructor(config: AuthmsConfig) {
     if (!config.issuer) throw new AuthmsError('CONFIG_ERROR', 'issuer is required', 500);
@@ -47,12 +51,16 @@ export class AuthMS {
     this.config = config;
     const apiUrl = config.apiUrl ?? config.issuer;
 
+    // 确定 tenantId: 显式传入 > issuer 子域名提取 > null (后续按需获取)
+    this.tenantId = config.tenantId || this.extractTenantFromIssuer(config.issuer) || '';
+
     this.tokenManager = new TokenManager(config.platform.storage, config.storagePrefix, config.useCookie);
     this.discovery = new Discovery(config.platform.http, config.apiUrl);
     this.authClient = new AuthClient({
       tokenManager: this.tokenManager,
       http: config.platform.http,
       baseUrl: apiUrl,
+      tenantId: this.tenantId,
     });
 
     this.api = new ApiClient({
@@ -132,6 +140,32 @@ export class AuthMS {
     return this._ready;
   }
 
+  /** 等待 SDK 就绪 (租户配置加载完毕) */
+  async ready(): Promise<void> {
+    if (this._ready) return;
+    await new Promise<void>((resolve) => {
+      const unsubscribe = this.on('READY', () => {
+        unsubscribe();
+        resolve();
+      });
+    });
+  }
+
+  /** 从 issuer URL 提取子域名作为 tenant */
+  private extractTenantFromIssuer(issuer: string): string | null {
+    try {
+      const url = new URL(issuer);
+      const parts = url.hostname.split('.');
+      // 三级及以上域名: acme.auth.tianv.com → acme
+      if (parts.length >= 3) {
+        return parts[0];
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   get user(): User | null {
     return (this._userCache ?? this.tokenManager.getUser()) as unknown as User | null;
   }
@@ -177,6 +211,15 @@ export class AuthMS {
 
   async loginWithOAuth(options: OAuthOptions): Promise<void> {
     await this.authClient.loginWithOAuth(options);
+  }
+
+  /** 机器间认证 (Client Credentials) */
+  async loginWithClientCredentials(options: {
+    clientId: string;
+    clientSecret: string;
+    scopes?: string[];
+  }): Promise<AuthResult> {
+    return this.authClient.loginWithClientCredentials(options);
   }
 
   async handleOAuthCallback(url: string): Promise<AuthResult> {

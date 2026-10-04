@@ -1,0 +1,23 @@
+{
+  "region": "com",
+  "siteHost": "www.autional.com",
+  "issuer": "https://api.autional.com",
+  "apiUrl": "https://api.autional.com",
+  "npmScope": "@autional",
+  "npmRegistry": "",
+  "onboardCmd": "npx @autional/onboard",
+  "portals": {
+    "admin": "https://admin.autional.com",
+    "user": "https://user.autional.com",
+    "security": "https://security.autional.com",
+    "developer": "https://developer.autional.com",
+    "status": "https://status.autional.com"
+  },
+  "primaryLang": "en",
+  "langs": ["en", "zh"],
+  "mirror": {
+    "label": "jsDelivr",
+    "rawBase": "https://cdn.jsdelivr.net/gh/autional/sdk@main/skills/autional-com"
+  },
+  "repo": "https://github.com/autional/sdk"
+}

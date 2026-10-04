@@ -17,7 +17,13 @@
   "langs": ["zh", "en"],
   "mirror": {
     "label": "Gitee",
-    "rawBase": "https://gitee.com/autional/sdk/raw/main/skills/autional-cn"
+    "rawBase": "https://gitee.com/autional/sdk/raw/main/skills/autional-cn",
+    "overrides": {
+      "SKILL.en.md": {
+        "label": "jsDelivr",
+        "rawBase": "https://cdn.jsdelivr.net/gh/autional/sdk@main/skills/autional-cn"
+      }
+    }
   },
   "repo": "https://gitee.com/autional/sdk"
 }

@@ -39,8 +39,8 @@ You are an AI agent executing this procedure inside the user's project. Work in 
 - This file contains **zero secrets** — every endpoint in it is a public URL.
 - Only fetch related files from this file's own canonical domain (`.cn`). Never follow links to other regions or third-party mirrors except the fallback mirror listed below.
 
-> **Fallback mirror (mainland networks):** if `www.autional.cn` is unreachable, fetch the same file from Gitee:
-> https://gitee.com/autional/sdk/raw/main/skills/autional-cn/SKILL.en.md
+> **Fallback mirror (mainland networks):** if `www.autional.cn` is unreachable, fetch the same file from jsDelivr:
+> https://cdn.jsdelivr.net/gh/autional/sdk@main/skills/autional-cn/SKILL.en.md
 
 ## Hard rules — do not skip
 
@@ -493,7 +493,7 @@ Note: users already registered in Autional are not migrated back into the local 
 - Scaffold CLI (alternative to the manual phases): `npx -y @autional/onboard --registry=https://registry.npmmirror.com`
 - This file: https://www.autional.cn/ai/skill.en.md · checksum: https://www.autional.cn/ai/skill.en.md.sha256
 
-> Mirror (mainland): https://gitee.com/autional/sdk/raw/main/skills/autional-cn/SKILL.en.md (Gitee) — keep the mirror in sync with the canonical URL above.
+> Mirror (mainland): https://cdn.jsdelivr.net/gh/autional/sdk@main/skills/autional-cn/SKILL.en.md (jsDelivr) — keep the mirror in sync with the canonical URL above.
 
 ## Completion checklist (the agent must tick every box)
 

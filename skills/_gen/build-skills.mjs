@@ -4,6 +4,8 @@
  *
  * Source of truth:  skills/_core/PROCEDURE.md + skills/_core/references/*.md
  * Inputs:           skills/_gen/config.<region>.json
+ *                   (config.mirror.overrides[<repoFile>] may override {label, rawBase} per output
+ *                    file — e.g. the .cn English skill is mirrored on jsDelivr, not Gitee)
  * Outputs:          skills/autional-<region>/SKILL[.<lang>].md + references/ (primary language)
  *
  * Usage:
@@ -173,8 +175,8 @@ function makeVars(config, lang) {
     REPO_URL: config.repo,
     TUTORIAL_URL: `https://${host}/ai`,
     REFS_BASE: `https://${host}/ai/references`,
-    MIRROR_LABEL: config.mirror.label,
-    MIRROR_SKILL_URL: `${config.mirror.rawBase}/${repoFile}`,
+    MIRROR_LABEL: config.mirror.overrides?.[repoFile]?.label ?? config.mirror.label,
+    MIRROR_SKILL_URL: `${config.mirror.overrides?.[repoFile]?.rawBase ?? config.mirror.rawBase}/${repoFile}`,
     SKILL_SELF_URL: `https://${host}/ai/${siteFile}`,
     SKILL_SHA_URL: `https://${host}/ai/${siteFile}.sha256`,
   };

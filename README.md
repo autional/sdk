@@ -220,7 +220,7 @@ The `Autional` instance exposes additional methods directly:
 ## Examples
 
 Copy-and-paste integration templates for each framework are available in
-[`sdk/examples/`](https://github.com/linmes/authms/tree/master/sdk/examples):
+[`sdk/examples/`](https://github.com/autional/sdk/tree/master/examples):
 
 | File | Framework |
 |------|-----------|
@@ -256,7 +256,7 @@ If you use AI coding tools (Cursor, Claude, opencode), just tell your AI:
 
 The AI will automatically:
 1. Read `SETUP.md` for the entry point
-2. Fetch the Skill guide (`.skills/sdk-migration-guide/SKILL.md`)
+2. Fetch the Skill guide from `https://www.autional.com/ai/skill.md` (fallback mirror: `https://cdn.autional.com/ai/latest/SKILL.md`)
 3. Complete dependency installation, configuration, code integration, and testing
 
 For manual setup, see [Quick Start](#quick-start) above.
@@ -267,4 +267,4 @@ MIT
 
 ## Feedback
 
-[Gitee Issues](https://gitee.com/authms/sdk/issues) — see [LICENSE](./LICENSE) for details.
+[GitHub Issues](https://github.com/autional/sdk/issues) — see [LICENSE](./LICENSE) for details.

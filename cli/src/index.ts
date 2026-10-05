@@ -3,19 +3,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import inquirer from 'inquirer';
 
-const AUTHMS_DEPS = {
-  react: ['react', 'react-dom', 'react-router-dom', '@authms/react', '@authms/core'],
-  vue: ['vue', 'vue-router', '@authms/core'],
-  next: ['next', 'react', 'react-dom', '@authms/react', '@authms/core'],
+const AUTIONAL_DEPS = {
+  react: ['react', 'react-dom', 'react-router-dom', '@autional/react', '@autional/core'],
+  vue: ['vue', 'vue-router', '@autional/core'],
+  next: ['next', 'react', 'react-dom', '@autional/react', '@autional/core'],
 } as const;
 
-const AUTHMS_DEV_DEPS: Record<string, string[]> = {
+const AUTIONAL_DEV_DEPS: Record<string, string[]> = {
   react: ['@types/react', '@types/react-dom', 'typescript', 'vite', '@vitejs/plugin-react'],
   vue: ['typescript', 'vite', '@vitejs/plugin-vue', 'vue-tsc'],
   next: ['@types/react', '@types/react-dom', 'typescript', '@types/node'],
 };
 
-const AUTHMS_SERVICES = [
+const AUTIONAL_SERVICES = [
   { name: 'identity', value: 'identity', checked: true },
   { name: 'mfa', value: 'mfa', checked: false },
   { name: 'billing', value: 'billing', checked: false },
@@ -43,8 +43,8 @@ function scaffoldReact(projectDir: string, answers: Answers) {
   ensureDir(srcDir);
 
   const appTsx = `import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthmsProvider } from '@authms/react';
-import { RequireAuth } from '@authms/react';
+import { AuthmsProvider } from '@autional/react';
+import { RequireAuth } from '@autional/react';
 import LoginPage from './pages/Login';
 
 function HomePage() {
@@ -198,11 +198,11 @@ function scaffoldNextJs(projectDir: string, answers: Answers) {
   ensureDir(srcDir);
 
   const layoutTsx = `import type { Metadata } from 'next';
-import { AuthmsProvider } from '@authms/react';
+import { AuthmsProvider } from '@autional/react';
 
 export const metadata: Metadata = {
   title: '${answers.projectName}',
-  description: '${answers.projectName} — powered by AuthMS',
+  description: '${answers.projectName} — powered by Autional',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -225,7 +225,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   writeIfNotExists(path.join(srcDir, 'app', 'layout.tsx'), layoutTsx);
 
-  const pageTsx = `import { RequireAuth } from '@authms/react';
+  const pageTsx = `import { RequireAuth } from '@autional/react';
 
 export default function HomePage() {
   return (
@@ -279,7 +279,7 @@ function scaffoldLoginPage(projectDir: string, answers: Answers) {
 
   if (answers.framework === 'react' || answers.framework === 'next') {
     const loginTsx = `import { useState, type FormEvent } from 'react';
-import { useAuthms } from '@authms/react';
+import { useAuthms } from '@autional/react';
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
@@ -360,7 +360,7 @@ export default function LoginPage() {
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthms } from '@authms/react';
+import { useAuthms } from '@autional/react';
 
 export function LoginForm() {
   const { login } = useAuthms();
@@ -435,19 +435,19 @@ export function LoginForm() {
 
 <script setup lang="ts">
 import { ref, inject } from 'vue';
-import { AuthMS, browserPlatform } from '@authms/core';
-import type { AuthmsConfig } from '@authms/core';
+import { AuthMS, browserPlatform } from '@autional/core';
+import type { AuthmsConfig } from '@autional/core';
 
 const config = inject<{ appId: string; issuer: string }>('authmsConfig');
 if (!config) throw new Error('authmsConfig not provided');
 
-const authms = new AuthMS({
+const client = new AuthMS({
   appId: config.appId,
   issuer: config.issuer,
   platform: browserPlatform,
 });
 
-authms.initialize();
+client.initialize();
 
 const email = ref('');
 const password = ref('');
@@ -458,7 +458,7 @@ async function handleSubmit() {
   error.value = '';
   loading.value = true;
   try {
-    await authms.login({ email: email.value, password: password.value });
+    await client.login({ email: email.value, password: password.value });
     window.location.href = '/';
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Login failed';
@@ -482,11 +482,11 @@ interface Answers {
 }
 
 function generateServicesEnv(services: string[]): string {
-  const lines = ['# AuthMS Services'];
+  const lines = ['# Autional Services'];
   for (const s of services) {
-    lines.push(`VITE_AUTHMS_${s.toUpperCase()}_ENABLED=true`);
+    lines.push(`VITE_AUTIONAL_${s.toUpperCase()}_ENABLED=true`);
   }
-  lines.push(`VITE_AUTHMS_AUTH_ISSUER=http://localhost:11080`);
+  lines.push(`VITE_AUTIONAL_AUTH_ISSUER=http://localhost:11080`);
   return lines.join('\n') + '\n';
 }
 
@@ -499,7 +499,7 @@ async function main() {
  ██║  ██║╚██████╔╝   ██║   ██║  ██║██║ ╚═╝ ██║███████║
  ╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝
 
-  create-authms-app — scaffold a new AuthMS project
+  @autional/onboard — scaffold a new Autional project
 `);
 
   const answers = await inquirer.prompt<Answers>([
@@ -529,8 +529,8 @@ async function main() {
     {
       type: 'checkbox',
       name: 'services',
-      message: 'AuthMS services to enable:',
-      choices: AUTHMS_SERVICES,
+      message: 'Autional services to enable:',
+      choices: AUTIONAL_SERVICES,
     },
     {
       type: 'input',
@@ -565,8 +565,8 @@ async function main() {
   ensureDir(projectDir);
 
   // --- package.json ---
-  const pkgDeps = AUTHMS_DEPS[answers.framework];
-  const pkgDevDeps = AUTHMS_DEV_DEPS[answers.framework];
+  const pkgDeps = AUTIONAL_DEPS[answers.framework];
+  const pkgDevDeps = AUTIONAL_DEV_DEPS[answers.framework];
 
   const pkg: Record<string, unknown> = {
     name: answers.projectName,
@@ -721,9 +721,9 @@ dist/
     path.join(projectDir, 'README.md'),
     `# ${answers.projectName}
 
-Scaffolded with [create-authms-app](https://github.com/authms/create-authms-app).
+Scaffolded with the Autional onboarding CLI.
 
-AuthMS services: ${answers.services.join(', ') || 'none selected'}
+Autional services: ${answers.services.join(', ') || 'none selected'}
 
 ## Getting Started
 
@@ -741,15 +741,15 @@ ${answers.framework === 'next'
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| \`${answers.framework === 'next' ? 'NEXT_PUBLIC_AUTH_ISSUER' : 'VITE_AUTH_ISSUER'}\` | AuthMS gateway URL | \`http://localhost:11080\` |
-${answers.services.map(s => `| \`VITE_AUTHMS_${s.toUpperCase()}_ENABLED\` | Enable ${s} service | \`true\` |`).join('\n')}
+| \`${answers.framework === 'next' ? 'NEXT_PUBLIC_AUTH_ISSUER' : 'VITE_AUTH_ISSUER'}\` | Autional gateway URL | \`http://localhost:11080\` |
+${answers.services.map(s => `| \`VITE_AUTIONAL_${s.toUpperCase()}_ENABLED\` | Enable ${s} service | \`true\` |`).join('\n')}
 
-## AuthMS SDK
+## Autional SDK
 
-This project uses the AuthMS SDK for authentication and API access:
+This project uses the Autional SDK for authentication and API access:
 
-- [@authms/core] — Framework-agnostic core
-- [@authms/react] — React bindings
+- [@autional/core] — Framework-agnostic core
+- [@autional/react] — React bindings
 - [API packages](https://github.com/authms) — Auto-generated from swagger
 `,
   );

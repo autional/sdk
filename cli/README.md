@@ -1,11 +1,11 @@
-# create-authms-app
+# @autional/onboard
 
-Scaffold a new AuthMS project with React, Vue, or Next.js in seconds.
+Scaffold a new Autional project with React, Vue, or Next.js in seconds.
 
 ## Usage
 
 ```bash
-npx create-authms-app
+npx @autional/onboard
 # or after local build:
 pnpm build && node dist/index.js
 ```
@@ -17,8 +17,8 @@ You'll be prompted for:
 | Project name | Directory name for the new project |
 | Framework | React (Vite), Vue (Vite), or Next.js (App Router) |
 | TypeScript | Whether to scaffold with TypeScript (default: yes) |
-| AuthMS services | Checkbox selection: identity, mfa, billing, wallet |
-| App ID | OAuth client ID registered in AuthMS |
+| Autional services | Checkbox selection: identity, mfa, billing, wallet |
+| App ID | OAuth client ID registered in Autional |
 
 ## What Gets Created
 
@@ -49,7 +49,7 @@ my-app/
 │   ├── App.vue          ← Root component with router-view
 │   ├── main.ts          ← Vue app + router + provide(authmsConfig)
 │   ├── pages/
-│   │   └── Login.vue    ← Email/password login (AuthMS core direct)
+│   │   └── Login.vue    ← Email/password login (Autional core direct)
 │   └── env.d.ts
 ├── index.html
 ├── vite.config.ts
@@ -84,20 +84,20 @@ my-app/
 
 The scaffolded project uses:
 
-- `@authms/core` — Framework-agnostic auth client
-- `@authms/react` — React bindings (for React / Next.js)
+- `@autional/core` — Framework-agnostic auth client
+- `@autional/react` — React bindings (for React / Next.js)
 
-Vue scaffolds use `@authms/core` directly with provide/inject.
+Vue scaffolds use `@autional/core` directly with provide/inject.
 
-## AuthMS Backend
+## Autional Backend
 
-The scaffold assumes the AuthMS gateway is available at:
+The scaffold assumes the Autional gateway is available at:
 
 ```
 http://localhost:11080   (default dev)
 ```
 
-Configure this via the `VITE_AUTH_URL` (Vite) or `NEXT_PUBLIC_AUTH_URL` (Next.js) environment variable, and register your App ID via the OAuth client registration endpoint in the AuthMS admin console.
+Configure this via the `VITE_AUTH_URL` (Vite) or `NEXT_PUBLIC_AUTH_URL` (Next.js) environment variable, and register your App ID via the OAuth client registration endpoint in the Autional admin console.
 
 ## Build
 

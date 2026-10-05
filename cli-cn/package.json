@@ -1,0 +1,12 @@
+{
+  "name": "@autional-cn/onboard",
+  "version": "0.1.0",
+  "description": "Autional 接入脚手架 CLI（中国大陆包）— scaffold a React / Vue / Next.js project",
+  "type": "module",
+  "bin": { "onboard": "dist/index.js" },
+  "files": ["dist"],
+  "scripts": { "prepack": "node sync-dist.mjs" },
+  "keywords": ["autional", "onboarding", "scaffold", "cli", "china"],
+  "license": "MIT",
+  "dependencies": { "inquirer": "^12.0.0" }
+}

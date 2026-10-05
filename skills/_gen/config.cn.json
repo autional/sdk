@@ -5,7 +5,7 @@
   "apiUrl": "https://api.autional.cn",
   "npmScope": "@autional",
   "npmRegistry": "https://registry.npmmirror.com",
-  "onboardCmd": "npx -y @autional/onboard --registry=https://registry.npmmirror.com",
+  "onboardCmd": "npx -y @autional-cn/onboard --registry=https://registry.npmmirror.com",
   "portals": {
     "admin": "https://admin.autional.cn",
     "user": "https://user.autional.cn",

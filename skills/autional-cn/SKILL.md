@@ -489,7 +489,7 @@ git checkout <登录页>   # 若用了选项 A
 - `https://www.autional.cn/ai/references/compliance-matrix.md` — 合规对照表（NIST / PCI / GDPR / HIPAA 等）
 - `https://www.autional.cn/ai/references/config-template.md` — 配置、env 与 AUTIONAL_SETUP.md 模板
 - 人类教程：https://www.autional.cn/ai
-- 脚手架 CLI（手动接入的替代路径）：`npx -y @autional/onboard --registry=https://registry.npmmirror.com`
+- 脚手架 CLI（手动接入的替代路径）：`npx -y @autional-cn/onboard --registry=https://registry.npmmirror.com`
 - 本文件：https://www.autional.cn/ai/skill.md · 校验和：https://www.autional.cn/ai/skill.md.sha256
 
 > 镜像（大陆网络）：https://cdn.autional.cn/ai/latest/SKILL.md（Autional CDN）——与上方 canonical 地址保持同步。

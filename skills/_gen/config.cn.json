@@ -14,16 +14,13 @@
     "status": "https://status.autional.cn"
   },
   "primaryLang": "zh",
-  "langs": ["zh", "en"],
+  "langs": [
+    "zh",
+    "en"
+  ],
   "mirror": {
-    "label": "Gitee",
-    "rawBase": "https://gitee.com/autional/sdk/raw/main/skills/autional-cn",
-    "overrides": {
-      "SKILL.en.md": {
-        "label": "jsDelivr",
-        "rawBase": "https://cdn.jsdelivr.net/gh/autional/sdk@main/skills/autional-cn"
-      }
-    }
+    "label": "Autional CDN",
+    "rawBase": "https://cdn.autional.cn/ai/latest"
   },
   "repo": "https://gitee.com/autional/sdk"
 }

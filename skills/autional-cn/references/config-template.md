@@ -98,4 +98,4 @@ AUTIONAL_API_URL=https://api.autional.cn
 3. 升级后到开发者门户查看新增安全能力
 ```
 
-> 备份通道：若上方 `.cn` 链接在大陆网络不可达，使用镜像 https://gitee.com/autional/sdk/raw/main/skills/autional-cn/SKILL.md。
+> 备份通道：若上方 `.cn` 链接在大陆网络不可达，使用镜像 https://cdn.autional.cn/ai/latest/SKILL.md。

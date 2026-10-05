@@ -39,8 +39,8 @@ Autional 为应用提供身份层。本 Skill 把单机应用（或没有账号�
 - 本文件**不含任何密钥**——其中所有端点均为公开 URL。
 - 只从本文件自身的 canonical 域（`.cn`）抓取关联文件。除下方兜底镜像外，不要跟随其它 region 或第三方链接。
 
-> **兜底镜像（中国大陆网络）：**若 `www.autional.cn` 不可达，改用Gitee获取同一文件：
-> https://gitee.com/autional/sdk/raw/main/skills/autional-cn/SKILL.md
+> **兜底镜像（中国大陆网络）：**若 `www.autional.cn` 不可达，改用Autional CDN获取同一文件：
+> https://cdn.autional.cn/ai/latest/SKILL.md
 
 ## 硬性规则——不得跳过
 
@@ -493,7 +493,7 @@ git checkout <登录页>   # 若用了选项 A
 - 脚手架 CLI（手动接入的替代路径）：`npx -y @autional/onboard --registry=https://registry.npmmirror.com`
 - 本文件：https://www.autional.cn/ai/skill.md · 校验和：https://www.autional.cn/ai/skill.md.sha256
 
-> 镜像（大陆网络）：https://gitee.com/autional/sdk/raw/main/skills/autional-cn/SKILL.md（Gitee）——与上方 canonical 地址保持同步。
+> 镜像（大陆网络）：https://cdn.autional.cn/ai/latest/SKILL.md（Autional CDN）——与上方 canonical 地址保持同步。
 
 ## 任务完成检查清单（AI 必须逐项确认）
 

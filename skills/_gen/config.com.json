@@ -16,8 +16,8 @@
   "primaryLang": "en",
   "langs": ["en", "zh"],
   "mirror": {
-    "label": "jsDelivr",
-    "rawBase": "https://cdn.jsdelivr.net/gh/autional/sdk@main/skills/autional-com"
+    "label": "Autional CDN",
+    "rawBase": "https://cdn.autional.com/ai/latest"
   },
   "repo": "https://github.com/autional/sdk"
 }

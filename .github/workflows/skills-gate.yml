@@ -1,0 +1,41 @@
+name: Skills Consistency Gate
+
+# Fail-closed gate for the region × language skill distribution.
+# Single logical source: skills/_core → skills/_gen/config.<region>.json →
+# committed artifacts skills/autional-{com,cn}/SKILL[.lang].md (+ references/).
+# See skills/_gen/check-skills.mjs for the 5 checks.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'skills/**'
+      - '.github/workflows/skills-gate.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'skills/**'
+      - '.github/workflows/skills-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skills-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  skills-gate:
+    name: skills/_core consistency (G1–G5)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No install step: the gate uses Node builtins only.
+      - name: Run consistency gate
+        run: node skills/_gen/check-skills.mjs

@@ -14,10 +14,12 @@
     "status": "https://status.autional.com"
   },
   "primaryLang": "en",
-  "langs": ["en", "zh"],
+  "langs": [
+    "en",
+    "zh"
+  ],
   "mirror": {
     "label": "Autional CDN",
     "rawBase": "https://cdn.autional.com/ai/latest"
-  },
-  "repo": "https://github.com/autional/sdk"
+  }
 }

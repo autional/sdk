@@ -1030,7 +1030,6 @@ git checkout <登录页>   # 若用了选项 A
 
 - `{{REFS_BASE}}/compliance-matrix.md` — compliance matrix (NIST / PCI / GDPR / HIPAA and more)
 - `{{REFS_BASE}}/config-template.md` — config, env and AUTIONAL_SETUP.md templates
-- Repository / issues: {{REPO_URL}}
 - Human-readable tutorial: {{TUTORIAL_URL}}
 - Scaffold CLI (alternative to the manual phases): `{{ONBOARD_CMD}}`
 - This file: {{SKILL_SELF_URL}} · checksum: {{SKILL_SHA_URL}}
@@ -1040,7 +1039,6 @@ git checkout <登录页>   # 若用了选项 A
 
 - `{{REFS_BASE}}/compliance-matrix.md` — 合规对照表（NIST / PCI / GDPR / HIPAA 等）
 - `{{REFS_BASE}}/config-template.md` — 配置、env 与 AUTIONAL_SETUP.md 模板
-- 仓库 / 问题反馈：{{REPO_URL}}
 - 人类教程：{{TUTORIAL_URL}}
 - 脚手架 CLI（手动接入的替代路径）：`{{ONBOARD_CMD}}`
 - 本文件：{{SKILL_SELF_URL}} · 校验和：{{SKILL_SHA_URL}}

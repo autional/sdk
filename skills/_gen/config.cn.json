@@ -21,6 +21,5 @@
   "mirror": {
     "label": "Autional CDN",
     "rawBase": "https://cdn.autional.cn/ai/latest"
-  },
-  "repo": "https://gitee.com/autional/sdk"
+  }
 }

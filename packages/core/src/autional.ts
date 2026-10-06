@@ -3,21 +3,21 @@ import { ApiClient } from './api-client';
 import { AuthClient } from './auth-client';
 import { Discovery } from './discovery';
 import { TabSync } from './sync';
-import { AuthmsError } from './errors';
-import type { AuthmsPlatform } from './platform/types';
-import type { AuthmsPlugin } from './plugin';
+import { AutionalError } from './errors';
+import type { AutionalPlatform } from './platform/types';
+import type { AutionalPlugin } from './plugin';
 import type {
   User, AuthResult, LoginRequest, RegisterRequest,
-  OAuthOptions, AuthmsEvent, SecurityAlert, TenantAuthConfig,
+  OAuthOptions, AutionalEvent, SecurityAlert, TenantAuthConfig,
 } from './types';
 
-export interface AuthmsConfig {
+export interface AutionalConfig {
   appId?: string;
   issuer: string;
   apiUrl?: string;
   /** @deprecated 使用 issuer + apiUrl */
   authUrl?: string;
-  platform: AuthmsPlatform;
+  platform: AutionalPlatform;
   storagePrefix?: string;
   syncTabs?: boolean;
   /** 启用 BFF httpOnly cookie 模式（token 不存 localStorage） */
@@ -28,8 +28,8 @@ export interface AuthmsConfig {
 
 type EventHandler = (...args: unknown[]) => void;
 
-export class AuthMS {
-  private config: AuthmsConfig;
+export class Autional {
+  private config: AutionalConfig;
   tokenManager: TokenManager;
   api: ApiClient;
   private authClient: AuthClient;
@@ -42,10 +42,10 @@ export class AuthMS {
   /** 确定的租户 ID (从 config 或 issuer 提取) */
   readonly tenantId: string;
 
-  constructor(config: AuthmsConfig) {
-    if (!config.issuer) throw new AuthmsError('CONFIG_ERROR', 'issuer is required', 500);
+  constructor(config: AutionalConfig) {
+    if (!config.issuer) throw new AutionalError('CONFIG_ERROR', 'issuer is required', 500);
     if (!config.appId && typeof console !== 'undefined') {
-      console.warn('[AuthMS] appId 未设置。建议在 AuthMS 控制台创建应用后填写 appId，便于多应用管理和权限隔离。');
+      console.warn('[Autional] appId 未设置。建议在 Autional 控制台创建应用后填写 appId，便于多应用管理和权限隔离。');
     }
 
     this.config = config;
@@ -263,11 +263,11 @@ export class AuthMS {
     return this.tokenManager.getTenantId();
   }
 
-  use(plugin: AuthmsPlugin): void {
+  use(plugin: AutionalPlugin): void {
     plugin.install(this);
   }
 
-  on(event: AuthmsEvent, handler: EventHandler): () => void {
+  on(event: AutionalEvent, handler: EventHandler): () => void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set());
     }
@@ -275,7 +275,7 @@ export class AuthMS {
     return () => this.eventHandlers.get(event)?.delete(handler);
   }
 
-  emit(event: AuthmsEvent, ...args: unknown[]): void {
+  emit(event: AutionalEvent, ...args: unknown[]): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach(fn => {

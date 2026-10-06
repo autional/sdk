@@ -18,7 +18,7 @@ npm install @autional/core @autional/react @autional/plugin-mfa
 ## Quick Start
 
 ```tsx
-import { AuthmsProvider, useAuthms } from '@autional/react';
+import { AutionalProvider, useAutional } from '@autional/react';
 import { MfaSetup, MfaGuard, BackupCodes } from '@autional/plugin-mfa';
 
 function SecurityPage() {

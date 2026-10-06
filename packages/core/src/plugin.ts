@@ -1,8 +1,8 @@
-import type { AuthMS } from './authms';
+import type { Autional } from './autional';
 
-export interface AuthmsPlugin {
+export interface AutionalPlugin {
   name: string;
   version: string;
-  install(core: AuthMS): void | Promise<void>;
+  install(core: Autional): void | Promise<void>;
   uninstall?(): void | Promise<void>;
 }

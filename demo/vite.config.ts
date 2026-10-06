@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@authms/core': path.resolve(__dirname, '../packages/core/src'),
-      '@authms/react': path.resolve(__dirname, '../packages/react/src'),
-      '@authms/api-identity': path.resolve(__dirname, '../packages/api-identity/src'),
+      '@autional/core': path.resolve(__dirname, '../packages/core/src'),
+      '@autional/react': path.resolve(__dirname, '../packages/react/src'),
+      '@autional/api-identity': path.resolve(__dirname, '../packages/api-identity/src'),
     },
   },
   server: {

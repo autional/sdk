@@ -43,7 +43,7 @@ function scaffoldReact(projectDir: string, answers: Answers) {
   ensureDir(srcDir);
 
   const appTsx = `import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthmsProvider } from '@autional/react';
+import { AutionalProvider } from '@autional/react';
 import { RequireAuth } from '@autional/react';
 import LoginPage from './pages/Login';
 
@@ -59,7 +59,7 @@ function HomePage() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthmsProvider
+      <AutionalProvider
         config={{
           appId: '${answers.appId}',
           issuer: process.env.REACT_APP_AUTH_ISSUER || 'http://localhost:11080',
@@ -78,7 +78,7 @@ function App() {
             }
           />
         </Routes>
-      </AuthmsProvider>
+      </AutionalProvider>
     </BrowserRouter>
   );
 }
@@ -147,7 +147,7 @@ const router = createRouter({
 });
 
 const app = createApp(App);
-app.provide('authmsConfig', {
+app.provide('autionalConfig', {
   appId: '${answers.appId}',
   issuer: import.meta.env.VITE_AUTH_ISSUER || 'http://localhost:11080',
 });
@@ -198,7 +198,7 @@ function scaffoldNextJs(projectDir: string, answers: Answers) {
   ensureDir(srcDir);
 
   const layoutTsx = `import type { Metadata } from 'next';
-import { AuthmsProvider } from '@autional/react';
+import { AutionalProvider } from '@autional/react';
 
 export const metadata: Metadata = {
   title: '${answers.projectName}',
@@ -209,14 +209,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <AuthmsProvider
+        <AutionalProvider
           config={{
             appId: '${answers.appId}',
             issuer: process.env.NEXT_PUBLIC_AUTH_ISSUER || 'http://localhost:11080',
           }}
         >
           {children}
-        </AuthmsProvider>
+        </AutionalProvider>
       </body>
     </html>
   );
@@ -245,7 +245,7 @@ export default function HomePage() {
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const authCookie = request.cookies.get('authms_access_token');
+  const authCookie = request.cookies.get('autional_access_token');
   const { pathname } = request.nextUrl;
 
   if (!authCookie && pathname !== '/login') {
@@ -279,11 +279,11 @@ function scaffoldLoginPage(projectDir: string, answers: Answers) {
 
   if (answers.framework === 'react' || answers.framework === 'next') {
     const loginTsx = `import { useState, type FormEvent } from 'react';
-import { useAuthms } from '@autional/react';
+import { useAutional } from '@autional/react';
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuthms();
+  const { login, isAuthenticated } = useAutional();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -360,10 +360,10 @@ export default function LoginPage() {
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthms } from '@autional/react';
+import { useAutional } from '@autional/react';
 
 export function LoginForm() {
-  const { login } = useAuthms();
+  const { login } = useAutional();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -435,13 +435,13 @@ export function LoginForm() {
 
 <script setup lang="ts">
 import { ref, inject } from 'vue';
-import { AuthMS, browserPlatform } from '@autional/core';
-import type { AuthmsConfig } from '@autional/core';
+import { Autional, browserPlatform } from '@autional/core';
+import type { AutionalConfig } from '@autional/core';
 
-const config = inject<{ appId: string; issuer: string }>('authmsConfig');
-if (!config) throw new Error('authmsConfig not provided');
+const config = inject<{ appId: string; issuer: string }>('autionalConfig');
+if (!config) throw new Error('autionalConfig not provided');
 
-const client = new AuthMS({
+const client = new Autional({
   appId: config.appId,
   issuer: config.issuer,
   platform: browserPlatform,
@@ -507,7 +507,7 @@ async function main() {
       type: 'input',
       name: 'projectName',
       message: 'Project name:',
-      default: 'my-authms-app',
+      default: 'my-autional-app',
       validate: (v: string) => v.trim().length > 0 || 'Project name is required',
     },
     {
@@ -750,7 +750,7 @@ This project uses the Autional SDK for authentication and API access:
 
 - [@autional/core] — Framework-agnostic core
 - [@autional/react] — React bindings
-- [API packages](https://github.com/authms) — Auto-generated from swagger
+- [API packages](https://github.com/autional) — Auto-generated from swagger
 `,
   );
 

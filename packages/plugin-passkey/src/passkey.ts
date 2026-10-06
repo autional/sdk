@@ -1,9 +1,9 @@
-import type { AuthmsPlugin, AuthMS } from '@authms/core';
+import type { AutionalPlugin, Autional } from '@autional/core';
 
-export function passkeyPlugin(): AuthmsPlugin {
+export function passkeyPlugin(): AutionalPlugin {
   return {
-    name: '@authms/plugin-passkey',
+    name: '@autional/plugin-passkey',
     version: '0.1.0',
-    install(_core: AuthMS) {},
+    install(_core: Autional) {},
   };
 }

@@ -1,14 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-export interface AuthmsMiddlewareConfig {
+export interface AutionalMiddlewareConfig {
   protectedPaths: string[];
   loginPath: string;
   publicPaths?: string[];
   cookieName?: string;
 }
 
-const DEFAULT_COOKIE_NAME = 'authms_token';
+const DEFAULT_COOKIE_NAME = 'autional_token';
 
 const NEXTJS_INTERNAL = [
   '/_next/',
@@ -52,7 +52,7 @@ function extractToken(request: NextRequest, cookieName: string): string | null {
   );
 }
 
-export function authmsMiddleware(config: AuthmsMiddlewareConfig) {
+export function autionalMiddleware(config: AutionalMiddlewareConfig) {
   const {
     protectedPaths,
     loginPath,

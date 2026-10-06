@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import type { User } from '@authms/core';
+import type { User } from '@autional/core';
 
 export interface ServerSessionConfig {
   authUrl: string;
@@ -11,7 +11,7 @@ export interface ServerSession {
   accessToken: string | null;
 }
 
-const DEFAULT_COOKIE_NAME = 'authms_token';
+const DEFAULT_COOKIE_NAME = 'autional_token';
 
 function getTokenFromCookies(cookieStore: Awaited<ReturnType<typeof cookies>>, cookieName: string): string | null {
   const cookie = cookieStore.get(cookieName);

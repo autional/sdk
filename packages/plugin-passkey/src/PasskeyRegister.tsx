@@ -16,7 +16,7 @@ export function PasskeyRegister({ onSuccess, onError }: PasskeyRegisterProps) {
     try {
       const publicKey: PublicKeyCredentialCreationOptions = {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
-        rp: { name: 'AuthMS', id: window.location.hostname },
+        rp: { name: 'Autional', id: window.location.hostname },
         user: {
           id: crypto.getRandomValues(new Uint8Array(16)),
           name: 'user@example.com',

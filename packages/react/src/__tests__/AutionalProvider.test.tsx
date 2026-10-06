@@ -22,8 +22,8 @@ const initState = vi.hoisted(() => {
     preReady: false as boolean,
     /**
      * When true, initialize() resolves normally (so Provider shows children)
-     * but does NOT set _ready=true. useAuthms.isLoading stays true until
-     * authms emits 'READY' some other way. Used for RequireAuth loadingFallback test.
+     * but does NOT set _ready=true. useAutional.isLoading stays true until
+     * autional emits 'READY' some other way. Used for RequireAuth loadingFallback test.
      */
     stayUnready: false as boolean,
 
@@ -51,10 +51,10 @@ const initState = vi.hoisted(() => {
   };
 });
 
-// ---- mock @authms/core ----
+// ---- mock @autional/core ----
 
-vi.mock('@authms/core', () => ({
-  AuthMS: vi.fn().mockImplementation(function AuthMSMock(this: any, config: any) {
+vi.mock('@autional/core', () => ({
+  Autional: vi.fn().mockImplementation(function AutionalMock(this: any, config: any) {
     const self = this;
     this.config = config;
     this._handlers = new Map<string, Set<Function>>();
@@ -85,7 +85,7 @@ vi.mock('@authms/core', () => ({
 
       if (initState.deferInit) {
         // Deferred: Provider stays in loading, RequireAuth never mounts.
-        // On resolve, set _ready + emit READY so useAuthms transitions.
+        // On resolve, set _ready + emit READY so useAutional transitions.
         return initState.getDeferred().then(() => {
           self._ready = true;
           (self.emit as Function)('READY');
@@ -93,7 +93,7 @@ vi.mock('@authms/core', () => ({
       }
 
       if (initState.stayUnready) {
-        // Provider shows children (ready=true) but useAuthms sees isLoading=true.
+        // Provider shows children (ready=true) but useAutional sees isLoading=true.
         // Never set _ready or emit READY — RequireAuth's loadingFallback appears.
         return Promise.resolve();
       }
@@ -143,7 +143,7 @@ vi.mock('@authms/core', () => ({
 
   browserPlatform: {},
 
-  AuthmsError: class extends Error {
+  AutionalError: class extends Error {
     code: string;
     status: number;
     constructor(c: string, m: string, s: number) {
@@ -155,14 +155,14 @@ vi.mock('@authms/core', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { AuthmsProvider, useAuthms, RequireAuth } from '../index';
+import { AutionalProvider, useAutional, RequireAuth } from '../index';
 
 // ---- helpers ----
 
 const baseConfig = { appId: 'test-app', issuer: 'https://auth.example.com' };
 
 function TestConsumer() {
-  const { user, isLoading, isAuthenticated } = useAuthms();
+  const { user, isLoading, isAuthenticated } = useAutional();
   return (
     <div>
       <span data-testid="loading">{String(isLoading)}</span>
@@ -185,13 +185,13 @@ afterEach(() => {
 
 // ---- tests ----
 
-describe('AuthmsProvider', () => {
+describe('AutionalProvider', () => {
   // 1
   it('renders children after initialization', async () => {
     render(
-      <AuthmsProvider config={baseConfig}>
+      <AutionalProvider config={baseConfig}>
         <div data-testid="child">Hello</div>
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     await waitFor(() => {
@@ -204,12 +204,12 @@ describe('AuthmsProvider', () => {
     initState.deferInit = true;
 
     render(
-      <AuthmsProvider
+      <AutionalProvider
         config={baseConfig}
         loadingFallback={<div data-testid="loader">Loading...</div>}
       >
         <div data-testid="child">Hello</div>
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     expect(screen.getByTestId('loader')).toBeInTheDocument();
@@ -228,9 +228,9 @@ describe('AuthmsProvider', () => {
     initState.rejectInit = true;
 
     render(
-      <AuthmsProvider config={baseConfig}>
+      <AutionalProvider config={baseConfig}>
         <div data-testid="child">Hello</div>
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     await waitFor(() => {
@@ -241,13 +241,13 @@ describe('AuthmsProvider', () => {
   });
 });
 
-describe('useAuthms', () => {
+describe('useAutional', () => {
   // 3
   it('returns user, isLoading, isAuthenticated', async () => {
     render(
-      <AuthmsProvider config={baseConfig}>
+      <AutionalProvider config={baseConfig}>
         <TestConsumer />
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     await waitFor(() => {
@@ -260,12 +260,12 @@ describe('useAuthms', () => {
   // 4
   it('throws when used outside Provider', () => {
     function BadConsumer() {
-      useAuthms();
+      useAutional();
       return null;
     }
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<BadConsumer />)).toThrow(
-      'useAuthms must be used within AuthmsProvider',
+      'useAutional must be used within AutionalProvider',
     );
     spy.mockRestore();
   });
@@ -278,11 +278,11 @@ describe('RequireAuth', () => {
     initState.initialUser = { id: 'user-1', email: 'a@b.com' };
 
     render(
-      <AuthmsProvider config={baseConfig}>
+      <AutionalProvider config={baseConfig}>
         <RequireAuth>
           <div data-testid="protected">Secret</div>
         </RequireAuth>
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     await waitFor(() => {
@@ -295,11 +295,11 @@ describe('RequireAuth', () => {
     initState.preReady = true;
 
     render(
-      <AuthmsProvider config={baseConfig}>
+      <AutionalProvider config={baseConfig}>
         <RequireAuth fallback={<div data-testid="fallback">Please log in</div>}>
           <div data-testid="protected">Secret</div>
         </RequireAuth>
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     await waitFor(() => {
@@ -313,15 +313,15 @@ describe('RequireAuth', () => {
     initState.stayUnready = true;
 
     render(
-      <AuthmsProvider config={baseConfig}>
+      <AutionalProvider config={baseConfig}>
         <RequireAuth loadingFallback={<div data-testid="auth-loading">Checking...</div>}>
           <div data-testid="protected">Secret</div>
         </RequireAuth>
-      </AuthmsProvider>,
+      </AutionalProvider>,
     );
 
     // Provider ready=true → renders children → RequireAuth mounts
-    // useAuthms.isLoading = !isReady() = true → RequireAuth shows loadingFallback
+    // useAutional.isLoading = !isReady() = true → RequireAuth shows loadingFallback
     await waitFor(() => {
       expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
     });

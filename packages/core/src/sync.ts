@@ -19,7 +19,7 @@ export class TabSync {
     if (typeof BroadcastChannel === 'undefined') return;
 
     try {
-      this.channel = new BroadcastChannel('authms:sync');
+      this.channel = new BroadcastChannel('autional:sync');
       this.channel.onmessage = (event: MessageEvent<SyncMessage>) => {
         const { type } = event.data;
         switch (type) {

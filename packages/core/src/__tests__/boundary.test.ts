@@ -3,7 +3,7 @@ import { TokenManager } from '../token-manager';
 import { ApiClient } from '../api-client';
 import { AuthClient } from '../auth-client';
 import { Discovery } from '../discovery';
-import { AuthmsNetworkError } from '../errors';
+import { AutionalNetworkError } from '../errors';
 import type { StorageAdapter } from '../platform/types';
 
 class MockStorage implements StorageAdapter {
@@ -29,7 +29,7 @@ const BASE_URL = 'https://api.example.com';
 
 describe('Boundary & Edge Cases', () => {
   describe('api-client: request timeout', () => {
-    it('should throw AuthmsNetworkError on timeout', async () => {
+    it('should throw AutionalNetworkError on timeout', async () => {
       const mockHttp = {
         request: async () => {
           const err = new Error('Request timed out');
@@ -44,7 +44,7 @@ describe('Boundary & Edge Cases', () => {
 
       const client = new ApiClient({ baseUrl: BASE_URL, tokenManager, http: mockHttp, refreshTokenFn: vi.fn() });
 
-      await expect(client.get('/api/v1/users/me')).rejects.toBeInstanceOf(AuthmsNetworkError);
+      await expect(client.get('/api/v1/users/me')).rejects.toBeInstanceOf(AutionalNetworkError);
     }, 15000);
   });
 

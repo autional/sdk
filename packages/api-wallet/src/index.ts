@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-wallet — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-wallet — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminWallets(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/wallet/api/v1/admin/wallets`, { params });

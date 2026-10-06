@@ -1,13 +1,13 @@
 import { type Directive, type DirectiveBinding } from 'vue';
-import { getAuthms } from './createAuthms';
+import { getAutional } from './createAutional';
 
 type AuthRoles = string | string[];
 
 function hasRequiredRole(roles: AuthRoles): boolean {
-  const authms = getAuthms();
-  if (!authms?.isAuthenticated()) return false;
+  const autional = getAutional();
+  if (!autional?.isAuthenticated()) return false;
 
-  const user = authms.user;
+  const user = autional.user;
   if (!user) return false;
 
   const userRole = user.role as string | undefined;

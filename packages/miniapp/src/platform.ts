@@ -1,4 +1,4 @@
-import type { AuthmsPlatform } from './types';
+import type { AutionalPlatform } from './types';
 
 class MiniResponse {
   private _data: any;
@@ -41,7 +41,7 @@ class MiniResponse {
   }
 }
 
-export const miniappPlatform: AuthmsPlatform = {
+export const miniappPlatform: AutionalPlatform = {
   storage: {
     getItem(key: string): string | null {
       try {

@@ -1,5 +1,5 @@
-export { AuthmsProvider, useAuthms, useAuthmsContext } from './AuthmsProvider';
-export type { AuthmsProviderConfig } from './AuthmsProvider';
+export { AutionalProvider, useAutional, useAutionalContext } from './AutionalProvider';
+export type { AutionalProviderConfig } from './AutionalProvider';
 export { RequireAuth } from './RequireAuth';
 export { createRNPlatform } from './platform';
 export type { AsyncStorageLike } from './types';

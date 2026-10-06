@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-rbac — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-rbac — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminApprovalRequests(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/rbac/api/v1/admin/approval-requests`, { params });

@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-verification — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-verification — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminVerifications(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/verification/api/v1/admin/verifications`, { params });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuthmsContext } from '@authms/react';
+import { useAutionalContext } from '@autional/react';
 import { BackupCodes } from './BackupCodes';
 
 type FlowState = 'setup' | 'verify' | 'done';
@@ -45,7 +45,7 @@ const styles = {
 };
 
 export function MfaSetup() {
-  const { authms } = useAuthmsContext();
+  const { autional } = useAutionalContext();
   const [flow, setFlow] = useState<FlowState>('setup');
   const [data, setData] = useState<TotpSetupData | null>(null);
   const [code, setCode] = useState('');
@@ -56,7 +56,7 @@ export function MfaSetup() {
     setLoading(true);
     setError('');
     try {
-      const result = await authms.api.post<TotpSetupData>(
+      const result = await autional.api.post<TotpSetupData>(
         '/identity/api/v1/mfa/totp/generate',
       );
       setData(result);
@@ -73,7 +73,7 @@ export function MfaSetup() {
     setLoading(true);
     setError('');
     try {
-      await authms.api.post('/identity/api/v1/mfa/totp/verify', { code });
+      await autional.api.post('/identity/api/v1/mfa/totp/verify', { code });
       setFlow('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Verification failed');

@@ -1,13 +1,13 @@
 # @autional/vue
 
-Autional Vue SDK — `createAuthms()` plugin, `useAuthms()` composable, `v-auth` directive, and `authmsGuard` router guard.
+Autional Vue SDK — `createAutional()` plugin, `useAutional()` composable, `v-auth` directive, and `autionalGuard` router guard.
 
 ## What's Inside
 
-- **`createAuthms(config)`** — Vue plugin that creates and initializes an `Autional` instance, injects via `provide`
-- **`useAuthms()`** — composable returning `{ authms, user, isLoading, isAuthenticated, login, logout }`
+- **`createAutional(config)`** — Vue plugin that creates and initializes an `Autional` instance, injects via `provide`
+- **`useAutional()`** — composable returning `{ autional, user, isLoading, isAuthenticated, login, logout }`
 - **`vAuth`** — directive for conditional rendering based on auth state
-- **`authmsGuard`** — `beforeEach` navigation guard for vue-router
+- **`autionalGuard`** — `beforeEach` navigation guard for vue-router
 
 ## Install
 
@@ -20,11 +20,11 @@ npm install @autional/core @autional/vue
 ```ts
 // main.ts
 import { createApp } from 'vue';
-import { createAuthms } from '@autional/vue';
+import { createAutional } from '@autional/vue';
 import App from './App.vue';
 
 const app = createApp(App);
-app.use(createAuthms({
+app.use(createAutional({
   appId: 'my-app',
   issuer: 'https://auth.iam.tianv.com',
 }));
@@ -34,9 +34,9 @@ app.mount('#app');
 ```vue
 <!-- Dashboard.vue -->
 <script setup lang="ts">
-import { useAuthms } from '@autional/vue';
+import { useAutional } from '@autional/vue';
 
-const { user, isLoading, login, logout } = useAuthms();
+const { user, isLoading, login, logout } = useAutional();
 </script>
 
 <template>
@@ -53,6 +53,6 @@ const { user, isLoading, login, logout } = useAuthms();
 
 ## Project Setup
 
-Copy [`examples/vue-authms.ts`](../../examples/vue-authms.ts) to `src/authms.ts`, edit `appId` and `issuer`. All your components import from `./authms`.
+Copy [`examples/vue-autional.ts`](../../examples/vue-autional.ts) to `src/autional.ts`, edit `appId` and `issuer`. All your components import from `./autional`.
 
 See the [root SDK README](../../README.md) for full documentation.

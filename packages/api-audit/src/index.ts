@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-audit — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-audit — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminAuditAlerts(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/audit/api/v1/admin/audit/alerts`, { params });

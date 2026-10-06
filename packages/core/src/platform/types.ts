@@ -14,7 +14,7 @@ export interface CryptoAdapter {
   generateRandomString(length: number): string;
 }
 
-export interface AuthmsPlatform {
+export interface AutionalPlatform {
   storage: StorageAdapter;
   http: HttpAdapter;
   crypto?: CryptoAdapter;

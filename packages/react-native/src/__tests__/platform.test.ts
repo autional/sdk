@@ -9,7 +9,7 @@ describe('React Native platform adapter', () => {
     removeItem: async (_k: string) => {},
   };
 
-  it('createRNPlatform returns AuthmsPlatform', () => {
+  it('createRNPlatform returns AutionalPlatform', () => {
     const platform = createRNPlatform(mockStorage);
     expect(platform.storage).toBeDefined();
     expect(platform.http).toBeDefined();

@@ -3,9 +3,9 @@
  * SDK E2E Tests — Demo Page 浏览器自动化测试
  *
  * Prerequisites:
- *   - Docker AuthMS running (gateway on port 11080 with CORS enabled)
+ *   - Docker Autional running (gateway on port 11080 with CORS enabled)
  *   - Demo Vite dev server running (port 5300 with proxy configured)
- *   - Or: set VITE_AUTHMS_API_URL=http://localhost:11080/bff
+ *   - Or: set VITE_AUTIONAL_API_URL=http://localhost:11080/bff
  *
  * These tests validate the complete UI flow:
  *   Login page → fill form → submit → Dashboard → logout → Login page

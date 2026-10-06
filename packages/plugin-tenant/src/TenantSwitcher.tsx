@@ -1,10 +1,10 @@
 import { type FC } from 'react';
-import type { AuthMS } from '@authms/core';
+import type { Autional } from '@autional/core';
 import { useTenants } from './useTenants';
 import type { Tenant } from './useTenants';
 
 export interface TenantSwitcherProps {
-  authms: AuthMS;
+  autional: Autional;
   tenants: Tenant[];
 }
 
@@ -36,8 +36,8 @@ const select: React.CSSProperties = {
   maxWidth: 200,
 };
 
-export const TenantSwitcher: FC<TenantSwitcherProps> = ({ authms, tenants }) => {
-  const { currentId, switchTenant } = useTenants(authms, tenants);
+export const TenantSwitcher: FC<TenantSwitcherProps> = ({ autional, tenants }) => {
+  const { currentId, switchTenant } = useTenants(autional, tenants);
   const current = tenants.find((t) => t.id === currentId);
 
   return (

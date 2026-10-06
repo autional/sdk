@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useAuthms } from './AuthmsProvider';
+import { useAutional } from './AutionalProvider';
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -9,7 +9,7 @@ interface RequireAuthProps {
 }
 
 export function RequireAuth({ children, roles, fallback, loadingFallback }: RequireAuthProps) {
-  const { isAuthenticated, isLoading, user } = useAuthms();
+  const { isAuthenticated, isLoading, user } = useAutional();
   const [phase, setPhase] = useState<'loading' | 'unauthenticated' | 'forbidden' | 'ok'>('loading');
 
   useEffect(() => {

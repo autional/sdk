@@ -1,10 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthms, RequireAuth } from './authms';
+import { useAutional, RequireAuth } from './autional';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 
 export function App() {
-  const { isAuthenticated } = useAuthms();
+  const { isAuthenticated } = useAutional();
 
   return (
     <Routes>

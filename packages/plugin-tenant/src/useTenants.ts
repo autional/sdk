@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { AuthMS } from '@authms/core';
+import type { Autional } from '@autional/core';
 
 export interface Tenant {
   id: string;
@@ -7,18 +7,18 @@ export interface Tenant {
   displayName?: string;
 }
 
-export function useTenants(authms: AuthMS, tenants: Tenant[]) {
+export function useTenants(autional: Autional, tenants: Tenant[]) {
   const [currentId, setCurrentId] = useState<string | null>(
-    () => authms.getTenantId(),
+    () => autional.getTenantId(),
   );
 
   const switchTenant = useCallback(
     (id: string) => {
-      authms.setTenantId(id);
+      autional.setTenantId(id);
       setCurrentId(id);
-      authms.emit('TOKEN_CHANGED');
+      autional.emit('TOKEN_CHANGED');
     },
-    [authms],
+    [autional],
   );
 
   return { tenants, currentId, switchTenant };

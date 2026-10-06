@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@authms/core': resolve(import.meta.dirname, '../core/src/index.ts'),
+      '@autional/core': resolve(import.meta.dirname, '../core/src/index.ts'),
     },
   },
   test: {

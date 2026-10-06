@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-notification — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-notification — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminAnnouncementsPost(client: ApiClient, data?: Record<string, unknown>) {
   return client.post(`/notification/api/v1/admin/announcements`, data);

@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-saml — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-saml — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminSamlProviders(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/saml/api/v1/admin/saml/providers`, { params });

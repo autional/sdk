@@ -1,7 +1,7 @@
 {
-  "name": "@authms/vue",
+  "name": "@autional/vue",
   "version": "0.2.1",
-  "description": "AuthMS Vue SDK — createAuthms plugin, useAuthms composable, vAuth directive, and authmsGuard router guard",
+  "description": "Autional Vue SDK — createAutional plugin, useAutional composable, vAuth directive, and autionalGuard router guard",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -14,24 +14,32 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core --external vue",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external @authms/core --external vue",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external @autional/core --external vue",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external @autional/core --external vue",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "prepublishOnly": "node ../../scripts/prepublish-guard.mjs"
   },
-  "files": ["dist", "src"],
-  "keywords": ["auth", "vue", "authentication", "authms"],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "auth",
+    "vue",
+    "authentication",
+    "autional"
+  ],
   "license": "MIT",
   "peerDependencies": {
-    "@authms/core": ">=0.1.0",
+    "@autional/core": ">=0.1.0",
     "vue": ">=3.0.0"
   },
   "dependencies": {
-    "@authms/core": ">=0.1.0"
+    "@autional/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

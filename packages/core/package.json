@@ -1,7 +1,7 @@
 {
-  "name": "@authms/core",
+  "name": "@autional/core",
   "version": "0.2.2",
-  "description": "AuthMS Core SDK — framework-agnostic token management, API client, and auth flows",
+  "description": "Autional Core SDK — framework-agnostic token management, API client, and auth flows",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -19,12 +19,13 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/index.ts src/platform/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/platform/index.ts --format cjs,esm --dts --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "prepublishOnly": "node ../../scripts/prepublish-guard.mjs"
   },
   "files": [
     "dist",
@@ -35,11 +36,10 @@
     "authentication",
     "oauth",
     "oidc",
-    "authms"
+    "autional"
   ],
   "license": "MIT",
   "devDependencies": {
-    "@authms/tsconfig": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

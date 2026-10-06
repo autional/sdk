@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-status — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-status — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function statusBadgeByBadge(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/status/api/v1/status/badge/${service}`);

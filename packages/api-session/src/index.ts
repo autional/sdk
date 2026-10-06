@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-session — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-session — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminDevicesRiskByDevices(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/session/api/v1/admin/devices/${deviceId}/risk`);

@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-oauth — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-oauth — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminOauthClients(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/oauth/api/v1/admin/oauth/clients`, { params });

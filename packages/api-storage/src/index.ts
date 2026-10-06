@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-storage — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-storage — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminStorageBuckets(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/storage/api/v1/admin/storage/buckets`, { params });

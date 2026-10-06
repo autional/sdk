@@ -1,4 +1,4 @@
-import { getAuthms } from './createAuthms';
+import { getAutional } from './createAutional';
 
 interface RouteLocation {
   path: string;
@@ -12,21 +12,21 @@ type GuardReturn =
 
 type NavigationGuard = (to: RouteLocation, from: RouteLocation) => GuardReturn;
 
-export function authmsGuard(roles?: string[]): NavigationGuard {
+export function autionalGuard(roles?: string[]): NavigationGuard {
   return (to) => {
-    const authms = getAuthms();
+    const autional = getAutional();
 
-    if (!authms || !authms.isReady()) {
+    if (!autional || !autional.isReady()) {
       return true;
     }
 
-    if (!authms.isAuthenticated()) {
+    if (!autional.isAuthenticated()) {
       if (to.path === '/login') return true;
       return { path: '/login', query: { redirect: to.fullPath } };
     }
 
     if (roles && roles.length > 0) {
-      const user = authms.user;
+      const user = autional.user;
       const userRole = (user as Record<string, unknown> | null)?.['role'] as string | undefined;
 
       if (!userRole || !roles.includes(userRole)) {

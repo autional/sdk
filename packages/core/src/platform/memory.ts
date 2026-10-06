@@ -1,6 +1,6 @@
-import type { AuthmsPlatform } from './types';
+import type { AutionalPlatform } from './types';
 
-export function memoryPlatform(): AuthmsPlatform {
+export function memoryPlatform(): AutionalPlatform {
   const store = new Map<string, string>();
 
   return {

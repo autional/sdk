@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TokenManager } from '../token-manager';
 import { ApiClient } from '../api-client';
-import { AuthmsApiError, AuthmsAuthError, AuthmsNetworkError } from '../errors';
+import { AutionalApiError, AutionalAuthError, AutionalNetworkError } from '../errors';
 
 class MockStorage {
   private store = new Map<string, string>();
@@ -123,7 +123,7 @@ describe('ApiClient', () => {
     const client = new ApiClient({ baseUrl: BASE_URL, tokenManager, http: mockHttp, refreshTokenFn: refreshFn, onForceLogout });
 
     await expect(client.get('/api/v1/users/me')).rejects.toMatchObject({
-      name: 'AuthmsAuthError',
+      name: 'AutionalAuthError',
       code: 'SESSION_EXPIRED',
       message: 'Session expired, please login again',
       status: 401,
@@ -264,7 +264,7 @@ describe('ApiClient', () => {
     const client = new ApiClient({ baseUrl: BASE_URL, tokenManager, http: mockHttp, refreshTokenFn: vi.fn() });
 
     await expect(client.get('/api/v1/auth/refresh')).rejects.toMatchObject({
-      name: 'AuthmsApiError',
+      name: 'AutionalApiError',
       code: '401002',
       message: 'refresh token expired',
       status: 401,
@@ -288,15 +288,15 @@ describe('ApiClient', () => {
     const client = new ApiClient({ baseUrl: BASE_URL, tokenManager, http: mockHttp, refreshTokenFn: vi.fn() });
 
     await expect(client.get('/api/v1/tenants/unknown')).rejects.toMatchObject({
-      name: 'AuthmsApiError',
+      name: 'AutionalApiError',
       code: '404001',
       message: 'tenant not found',
       status: 404,
     });
   });
 
-  // ── 10. Network error → AuthmsNetworkError ───────────────────────
-  it('should throw AuthmsNetworkError on network failure', async () => {
+  // ── 10. Network error → AutionalNetworkError ───────────────────────
+  it('should throw AutionalNetworkError on network failure', async () => {
     const mockHttp = {
       request: async () => {
         throw new TypeError('Failed to fetch');
@@ -309,6 +309,6 @@ describe('ApiClient', () => {
 
     const client = new ApiClient({ baseUrl: BASE_URL, tokenManager, http: mockHttp, refreshTokenFn: vi.fn() });
 
-    await expect(client.get('/api/v1/users/me')).rejects.toBeInstanceOf(AuthmsNetworkError);
+    await expect(client.get('/api/v1/users/me')).rejects.toBeInstanceOf(AutionalNetworkError);
   }, 15000);
 });

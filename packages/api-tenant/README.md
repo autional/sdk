@@ -29,11 +29,11 @@ npm install @autional/core @autional/api-tenant
 import { Autional, browserPlatform } from '@autional/core';
 import { getTenant, listMembers } from '@autional/api-tenant';
 
-const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
-await authms.initialize();
+const autional = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+await autional.initialize();
 
-const tenant = await getTenant(authms.api, 'tenant-id-here');
-const members = await listMembers(authms.api, tenant.id);
+const tenant = await getTenant(autional.api, 'tenant-id-here');
+const members = await listMembers(autional.api, tenant.id);
 ```
 
 See the [root SDK README](../../README.md) for full documentation.
@@ -44,7 +44,7 @@ See the [root SDK README](../../README.md) for full documentation.
 Construct portal URLs from the tenant slug (the `name` field) as follows:
 
 ```ts
-const tenant = await createTenant(authms.api, { name: 'acme-corp', /* ... */ });
+const tenant = await createTenant(autional.api, { name: 'acme-corp', /* ... */ });
 
 // Portal URL convention:
 //   Login:  {portalOrigin}/{slug}/login?redirect={portalOrigin}/{slug}/admin
@@ -54,7 +54,7 @@ const adminUrl = `${portalOrigin}/${tenant.name}/admin`;
 const loginUrl = `${portalOrigin}/${tenant.name}/login?redirect=${encodeURIComponent(adminUrl)}`;
 ```
 
-**Frontend users**: use `buildTenantUrls(slug)` from `@authms/shared` for runtime origin-aware construction.
+**Frontend users**: use `buildTenantUrls(slug)` from `@autional/shared` for runtime origin-aware construction.
 
 | Environment | Portal Origin |
 |-------------|---------------|

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate TypeScript API packages for the AuthMS SDK
+Generate TypeScript API packages for the Autional SDK
 from micro-service swagger.json files.
 
 Output: sdk/packages/api-{prefix}/src/index.ts
@@ -577,7 +577,7 @@ def generate_module_augmentation(prefix, func_infos):
 
     lines = []
     lines.append("// ====== Module Augmentation =====")
-    lines.append(f"// Installing this package auto-types useAuthms().api.{prefix}")
+    lines.append(f"// Installing this package auto-types useAutional().api.{prefix}")
     lines.append("")
     lines.append(f"export interface {cap}Api {{")
     for fi in func_infos:
@@ -588,7 +588,7 @@ def generate_module_augmentation(prefix, func_infos):
             lines.append(f"  {fi['name']}: typeof {fi['name']};")
     lines.append("}")
     lines.append("")
-    lines.append("declare module '@authms/core' {")
+    lines.append("declare module '@autional/core' {")
     lines.append("  interface RegisteredApis {")
     lines.append(f"    {prefix}: {cap}Api;")
     lines.append("  }")
@@ -600,9 +600,9 @@ def generate_package_json(prefix, svc_name):
     cap = prefix[0].upper() + prefix[1:]
     cap = re.sub(r"-(\w)", lambda m: m.group(1).upper(), cap)
     return json.dumps({
-        "name": f"@authms/api-{prefix}",
+        "name": f"@autional/api-{prefix}",
         "version": "0.1.0",
-        "description": f"AuthMS {cap} API — auto-generated TypeScript client from {svc_name}",
+        "description": f"Autional {cap} API — auto-generated TypeScript client from {svc_name}",
         "main": "./dist/index.js",
         "module": "./dist/index.mjs",
         "types": "./dist/index.d.ts",
@@ -615,7 +615,7 @@ def generate_package_json(prefix, svc_name):
         },
         "sideEffects": False,
         "scripts": {
-            "build": f"tsup src/index.ts --format cjs,esm --dts --clean --external @authms/core",
+            "build": f"tsup src/index.ts --format cjs,esm --dts --clean --external @autional/core",
             "typecheck": "tsc --noEmit",
             "clean": "rimraf dist"
         },
@@ -624,10 +624,10 @@ def generate_package_json(prefix, svc_name):
             "src"
         ],
         "peerDependencies": {
-            "@authms/core": ">=0.1.0"
+            "@autional/core": ">=0.1.0"
         },
         "devDependencies": {
-            "@authms/core": ">=0.1.0",
+            "@autional/core": ">=0.1.0",
             "rimraf": "^5.0.0",
             "tsup": "^8.4.0",
             "typescript": "^5.8.0"
@@ -641,7 +641,7 @@ def generate_tsconfig():
         "extends": "../../tsconfig.base.json",
         "compilerOptions": {
             "paths": {
-                "@authms/core": ["../core/src/index.ts"]
+                "@autional/core": ["../core/src/index.ts"]
             }
         },
         "include": ["src"],
@@ -653,12 +653,12 @@ def generate_index_file(prefix, svc_name, definitions, endpoints):
     now = datetime.now().strftime("%Y-%m-%d")
     lines = []
     lines.append("/**")
-    lines.append(f" * @authms/api-{prefix} \u2014 Auto-generated from {svc_name} swagger.json")
+    lines.append(f" * @autional/api-{prefix} \u2014 Auto-generated from {svc_name} swagger.json")
     lines.append(f" * Generated: {now}")
     lines.append(f" * DO NOT EDIT \u2014 run `python sdk/scripts/generate-api-packages.py` to regenerate")
     lines.append(" */")
     lines.append("")
-    lines.append("import type { ApiClient } from '@authms/core';")
+    lines.append("import type { ApiClient } from '@autional/core';")
 
     used_refs = collect_referenced_defs(endpoints, definitions)
     types_section = generate_types(definitions, used_refs)

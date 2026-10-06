@@ -8,7 +8,7 @@ vi.mock('next/server', () => ({
 }));
 
 import { NextResponse } from 'next/server';
-import { authmsMiddleware } from '../middleware';
+import { autionalMiddleware } from '../middleware';
 
 function createMockRequest(
   pathname: string,
@@ -33,11 +33,11 @@ function createMockRequest(
   };
 }
 
-describe('authmsMiddleware', () => {
+describe('autionalMiddleware', () => {
   const config = {
     protectedPaths: ['/dashboard', '/admin', '/settings'],
     loginPath: '/login',
-    cookieName: 'authms_token',
+    cookieName: 'autional_token',
   };
 
   beforeEach(() => {
@@ -45,7 +45,7 @@ describe('authmsMiddleware', () => {
   });
 
   it('redirects to login when no token on protected path', () => {
-    const middleware = authmsMiddleware(config);
+    const middleware = autionalMiddleware(config);
     const req = createMockRequest('/dashboard');
 
     const result = middleware(req as any);
@@ -56,8 +56,8 @@ describe('authmsMiddleware', () => {
   });
 
   it('passes through when valid token is on protected path', () => {
-    const middleware = authmsMiddleware(config);
-    const req = createMockRequest('/dashboard', { authms_token: 'valid-token' });
+    const middleware = autionalMiddleware(config);
+    const req = createMockRequest('/dashboard', { autional_token: 'valid-token' });
 
     const result = middleware(req as any);
 
@@ -65,7 +65,7 @@ describe('authmsMiddleware', () => {
   });
 
   it('always passes through for public paths', () => {
-    const middleware = authmsMiddleware({
+    const middleware = autionalMiddleware({
       ...config,
       publicPaths: ['/about', '/contact'],
     });
@@ -77,7 +77,7 @@ describe('authmsMiddleware', () => {
   });
 
   it('always passes through for login path (no redirect loop)', () => {
-    const middleware = authmsMiddleware(config);
+    const middleware = autionalMiddleware(config);
     const req = createMockRequest('/login');
 
     const result = middleware(req as any);
@@ -86,7 +86,7 @@ describe('authmsMiddleware', () => {
   });
 
   it('blocks all configured protected paths when no token', () => {
-    const middleware = authmsMiddleware(config);
+    const middleware = autionalMiddleware(config);
 
     for (const path of config.protectedPaths) {
       const req = createMockRequest(path);
@@ -98,7 +98,7 @@ describe('authmsMiddleware', () => {
   });
 
   it('passes through when token is in Authorization header instead of cookie', () => {
-    const middleware = authmsMiddleware(config);
+    const middleware = autionalMiddleware(config);
     const req = createMockRequest(
       '/dashboard',
       {},

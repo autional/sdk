@@ -1,17 +1,17 @@
 import { inject, ref, computed, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue';
-import { AUTHMS_KEY } from './createAuthms';
+import { AUTIONAL_KEY } from './createAutional';
 import {
-  AuthMS,
-  AuthmsError,
+  Autional,
+  AutionalError,
   type User,
   type AuthResult,
   type LoginRequest,
   type RegisterRequest,
   type OAuthOptions,
-} from '@authms/core';
+} from '@autional/core';
 
-export interface UseAuthmsReturn {
-  authms: AuthMS;
+export interface UseAutionalReturn {
+  autional: Autional;
   user: Ref<User | null>;
   isLoading: Ref<boolean>;
   isAuthenticated: ComputedRef<boolean>;
@@ -22,35 +22,35 @@ export interface UseAuthmsReturn {
   getAccessToken: () => Promise<string | null>;
 }
 
-export function useAuthms(): UseAuthmsReturn {
-  const authms = inject(AUTHMS_KEY);
+export function useAutional(): UseAutionalReturn {
+  const autional = inject(AUTIONAL_KEY);
 
-  if (!authms) {
-    throw new AuthmsError(
+  if (!autional) {
+    throw new AutionalError(
       'CONFIG_ERROR',
-      'useAuthms() must be used within a Vue app that has createAuthms() plugin installed',
+      'useAutional() must be used within a Vue app that has createAutional() plugin installed',
       500,
     );
   }
 
-  const user = ref<User | null>(authms.user);
-  const isLoading = ref<boolean>(!authms.isReady());
+  const user = ref<User | null>(autional.user);
+  const isLoading = ref<boolean>(!autional.isReady());
   const isAuthenticated = computed(() => !!user.value);
 
   let unsubReady: (() => void) | undefined;
   let unsubUser: (() => void) | undefined;
 
   onMounted(() => {
-    if (authms.isReady()) {
+    if (autional.isReady()) {
       isLoading.value = false;
     }
 
-    unsubReady = authms.on('READY', () => {
+    unsubReady = autional.on('READY', () => {
       isLoading.value = false;
     });
 
-    unsubUser = authms.on('USER_CHANGED', () => {
-      user.value = authms.user;
+    unsubUser = autional.on('USER_CHANGED', () => {
+      user.value = autional.user;
     });
   });
 
@@ -60,14 +60,14 @@ export function useAuthms(): UseAuthmsReturn {
   });
 
   return {
-    authms,
+    autional,
     user,
     isLoading,
     isAuthenticated,
-    login: (credentials) => authms.login(credentials),
-    loginWithOAuth: (options) => authms.loginWithOAuth(options),
-    register: (data) => authms.register(data),
-    logout: () => authms.logout(),
-    getAccessToken: () => authms.getAccessToken(),
+    login: (credentials) => autional.login(credentials),
+    loginWithOAuth: (options) => autional.loginWithOAuth(options),
+    register: (data) => autional.register(data),
+    logout: () => autional.logout(),
+    getAccessToken: () => autional.getAccessToken(),
   };
 }

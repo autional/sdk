@@ -1,26 +1,26 @@
-import { AuthMS } from '@authms/core';
-import type { AuthmsConfig } from '@authms/core';
-import type { AuthResult } from '@authms/core';
+import { Autional } from '@autional/core';
+import type { AutionalConfig } from '@autional/core';
+import type { AuthResult } from '@autional/core';
 import { miniappPlatform } from './platform';
 import type { MiniappConfig, WechatPhoneEvent } from './types';
 
-export interface AuthmsWithWechat extends AuthMS {
+export interface AutionalWithWechat extends Autional {
   loginWithWechat(): Promise<AuthResult>;
   getPhoneNumber(e: WechatPhoneEvent): Promise<string>;
 }
 
-export function createAuthms(config: MiniappConfig): AuthmsWithWechat {
-  const coreConfig: AuthmsConfig = {
+export function createAutional(config: MiniappConfig): AutionalWithWechat {
+  const coreConfig: AutionalConfig = {
     appId: config.appId,
     issuer: config.authUrl,
     platform: miniappPlatform,
-    storagePrefix: config.storagePrefix ?? 'authms_',
+    storagePrefix: config.storagePrefix ?? 'autional_',
     syncTabs: false,
   };
 
-  const authms = new AuthMS(coreConfig) as AuthmsWithWechat;
+  const autional = new Autional(coreConfig) as AutionalWithWechat;
 
-  authms.loginWithWechat = async function (): Promise<AuthResult> {
+  autional.loginWithWechat = async function (): Promise<AuthResult> {
     const loginRes: { code?: string; errMsg?: string } = await new Promise(
       (resolve, reject) => {
         wx.login({
@@ -67,18 +67,18 @@ export function createAuthms(config: MiniappConfig): AuthmsWithWechat {
       },
     };
 
-    authms.tokenManager.setTokens(result.accessToken, result.refreshToken, result.expiresIn);
-    authms.tokenManager.setUser(result.user as unknown as Record<string, unknown>);
-    authms.tokenManager.persist();
+    autional.tokenManager.setTokens(result.accessToken, result.refreshToken, result.expiresIn);
+    autional.tokenManager.setUser(result.user as unknown as Record<string, unknown>);
+    autional.tokenManager.persist();
 
-    (authms as any)._userCache = result.user;
-    authms.emit('USER_CHANGED');
-    authms.emit('TOKEN_CHANGED');
+    (autional as any)._userCache = result.user;
+    autional.emit('USER_CHANGED');
+    autional.emit('TOKEN_CHANGED');
 
     return result;
   };
 
-  authms.getPhoneNumber = async function (e: WechatPhoneEvent): Promise<string> {
+  autional.getPhoneNumber = async function (e: WechatPhoneEvent): Promise<string> {
     if (!e?.detail?.errMsg || e.detail.errMsg !== 'getPhoneNumber:ok') {
       throw new Error('getPhoneNumber authorization denied');
     }
@@ -90,7 +90,7 @@ export function createAuthms(config: MiniappConfig): AuthmsWithWechat {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authms.tokenManager.getAccessToken()}`,
+            'Authorization': `Bearer ${autional.tokenManager.getAccessToken()}`,
           },
           body: JSON.stringify({ code: e.detail.code }),
         },
@@ -112,7 +112,7 @@ export function createAuthms(config: MiniappConfig): AuthmsWithWechat {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authms.tokenManager.getAccessToken()}`,
+            'Authorization': `Bearer ${autional.tokenManager.getAccessToken()}`,
           },
           body: JSON.stringify({
             encrypted_data: e.detail.encryptedData,
@@ -134,15 +134,15 @@ export function createAuthms(config: MiniappConfig): AuthmsWithWechat {
   };
 
   const app = getApp({ allowDefault: true });
-  if (!app.__authmsInitialized) {
-    app.__authmsInitialized = true;
-    authms.initialize().catch(() => {
-      /* initialization is best-effort; authms is usable once token loads */
+  if (!app.__autionalInitialized) {
+    app.__autionalInitialized = true;
+    autional.initialize().catch(() => {
+      /* initialization is best-effort; autional is usable once token loads */
     });
   }
 
   app.globalData = app.globalData || {};
-  app.globalData.authms = authms;
+  app.globalData.autional = autional;
 
-  return authms;
+  return autional;
 }

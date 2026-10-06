@@ -1,7 +1,7 @@
 // @ts-nocheck — vitest mock types
 import { describe, it, expect } from 'vitest';
 import { miniappPlatform } from '../platform';
-import type { AuthmsPlatform } from '../types';
+import type { AutionalPlatform } from '../types';
 
 describe('miniapp platform adapter', () => {
   it('provides storage adapter', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TokenManager } from '../token-manager';
 import { AuthClient } from '../auth-client';
-import { AuthmsAuthError } from '../errors';
+import { AutionalAuthError } from '../errors';
 import type { StorageAdapter } from '../platform/types';
 
 class MockStorage implements StorageAdapter {
@@ -138,7 +138,7 @@ describe('AuthClient', () => {
       expect(body.password_transmission).toBe('hash');
     });
 
-    it('throws AuthmsAuthError on 401', async () => {
+    it('throws AutionalAuthError on 401', async () => {
       setupClient({
         [AUTH_CONFIG_KEY]: plainAuthConfig(),
         [LOGIN_KEY]: { code: '40100001', message: 'Invalid credentials', __status: 401 },
@@ -146,12 +146,12 @@ describe('AuthClient', () => {
 
       await expect(
         client.login({ email: 'bad@example.com', password: 'wrong' }),
-      ).rejects.toThrow(AuthmsAuthError);
+      ).rejects.toThrow(AutionalAuthError);
 
       await expect(
         client.login({ email: 'bad@example.com', password: 'wrong' }),
       ).rejects.toMatchObject({
-        name: 'AuthmsAuthError',
+        name: 'AutionalAuthError',
         code: '40100001',
         status: 401,
       });
@@ -242,7 +242,7 @@ describe('AuthClient', () => {
       tokenManager.setTokens(createToken(), 'old_rt', 900);
 
       await expect(client.refreshToken()).rejects.toMatchObject({
-        name: 'AuthmsAuthError',
+        name: 'AutionalAuthError',
         code: 'TOKEN_REUSE',
         status: 401,
       });
@@ -334,7 +334,7 @@ describe('AuthClient', () => {
       // 修改密码时不发送 password_transmission — 后端负责哈希
     });
 
-    it('throws AuthmsAuthError on 4xx', async () => {
+    it('throws AutionalAuthError on 4xx', async () => {
       setupClient({
         [AUTH_CONFIG_KEY]: plainAuthConfig(),
         [CHANGE_PASSWORD_KEY]: { code: '40000001', message: 'Invalid current password', __status: 400 },
@@ -342,7 +342,7 @@ describe('AuthClient', () => {
 
       await expect(
         client.changePassword('wrongold', 'newpass123'),
-      ).rejects.toThrow(AuthmsAuthError);
+      ).rejects.toThrow(AutionalAuthError);
     });
   });
 
@@ -352,12 +352,12 @@ describe('AuthClient', () => {
 
       await expect(
         client.loginWithOAuth({ provider: 'google' }),
-      ).rejects.toThrow(AuthmsAuthError);
+      ).rejects.toThrow(AutionalAuthError);
 
       await expect(
         client.loginWithOAuth({ provider: 'google' }),
       ).rejects.toMatchObject({
-        name: 'AuthmsAuthError',
+        name: 'AutionalAuthError',
         code: 'NOT_BROWSER',
       });
     });
@@ -453,7 +453,7 @@ describe('AuthClient', () => {
       expect(result.accessToken).toBe('cc_test_token');
     });
 
-    it('throws AuthmsAuthError on failure', async () => {
+    it('throws AutionalAuthError on failure', async () => {
       const mockHttp = {
         request: async () => ({
           ok: false,
@@ -473,7 +473,7 @@ describe('AuthClient', () => {
       await expect(client.loginWithClientCredentials({
         clientId: 'bad',
         clientSecret: 'bad',
-      })).rejects.toBeInstanceOf(AuthmsAuthError);
+      })).rejects.toBeInstanceOf(AutionalAuthError);
     });
   });
 });

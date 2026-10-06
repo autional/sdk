@@ -32,9 +32,9 @@ describe('TabSync', () => {
 
     sync.listen();
 
-    const channel = MockBroadcastChannel['channels'].get('authms:sync');
+    const channel = MockBroadcastChannel['channels'].get('autional:sync');
     expect(channel).toBeDefined();
-    expect(channel!.name).toBe('authms:sync');
+    expect(channel!.name).toBe('autional:sync');
     expect(channel!.onmessage).toBeDefined();
 
     channel!.onmessage!({ data: { type: 'LOGOUT', timestamp: Date.now() } });
@@ -63,11 +63,11 @@ describe('TabSync', () => {
     const sync = new TabSync(vi.fn(), vi.fn());
     sync.listen();
 
-    expect(MockBroadcastChannel['channels'].has('authms:sync')).toBe(true);
+    expect(MockBroadcastChannel['channels'].has('autional:sync')).toBe(true);
 
     sync.close();
 
-    expect(MockBroadcastChannel['channels'].has('authms:sync')).toBe(false);
+    expect(MockBroadcastChannel['channels'].has('autional:sync')).toBe(false);
   });
 
   it('non-browser environment — handles missing BroadcastChannel gracefully', () => {

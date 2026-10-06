@@ -27,7 +27,7 @@ You'll be prompted for:
 ```
 my-app/
 ├── src/
-│   ├── App.tsx          ← AuthmsProvider + RequireAuth + Routes
+│   ├── App.tsx          ← AutionalProvider + RequireAuth + Routes
 │   ├── main.tsx         ← ReactDOM entry
 │   ├── pages/
 │   │   └── Login.tsx    ← Email/password login form
@@ -47,7 +47,7 @@ my-app/
 my-app/
 ├── src/
 │   ├── App.vue          ← Root component with router-view
-│   ├── main.ts          ← Vue app + router + provide(authmsConfig)
+│   ├── main.ts          ← Vue app + router + provide(autionalConfig)
 │   ├── pages/
 │   │   └── Login.vue    ← Email/password login (Autional core direct)
 │   └── env.d.ts
@@ -66,7 +66,7 @@ my-app/
 my-app/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx   ← RootLayout with AuthmsProvider
+│   │   ├── layout.tsx   ← RootLayout with AutionalProvider
 │   │   ├── page.tsx     ← Home page (RequireAuth protected)
 │   │   └── login/
 │   │       ├── page.tsx     ← Login page (server component)

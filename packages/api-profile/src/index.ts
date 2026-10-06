@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-profile — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-profile — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminProfiles(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/profile/api/v1/admin/profiles`, { params });

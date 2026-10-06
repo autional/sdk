@@ -1,17 +1,17 @@
-import type { AuthmsPlatform } from './platform/types';
+import type { AutionalPlatform } from './platform/types';
 import type { TokenManager } from './token-manager';
 import type {
   AuthResult, LoginRequest, RegisterRequest, OAuthOptions,
   TenantAuthConfig, PasswordPolicyConfig,
 } from './types';
-import { AuthmsAuthError, AuthmsNetworkError } from './errors';
+import { AutionalAuthError, AutionalNetworkError } from './errors';
 import { processPasswordForTransmission } from './crypto/password-transmission';
 import { solveProofOfWork } from './crypto/pow-solver';
 import type { KeyExchangeFn } from './crypto/password-transmission';
 
 interface AuthClientConfig {
   tokenManager: TokenManager;
-  http: AuthmsPlatform['http'];
+  http: AutionalPlatform['http'];
   baseUrl: string;
   keyExchangeFn?: KeyExchangeFn;
   /** 租户 ID（init 时确定，后续所有操作复用）*/
@@ -25,7 +25,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export class AuthClient {
   private tokenManager: TokenManager;
-  private http: AuthmsPlatform['http'];
+  private http: AutionalPlatform['http'];
   private baseUrl: string;
   private keyExchangeFn?: KeyExchangeFn;
   private configCache: Map<string, { data: TenantAuthConfig; at: number }> = new Map();
@@ -121,12 +121,12 @@ export class AuthClient {
           captchaRetries++;
           continue;
         }
-        throw new AuthmsAuthError(code, (errJson.message as string) || `Login failed`, 401);
+        throw new AutionalAuthError(code, (errJson.message as string) || `Login failed`, 401);
       }
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-        throw new AuthmsAuthError(
+        throw new AutionalAuthError(
           String(errJson.code ?? response.status),
           (errJson.message as string) || `Login failed`,
           response.status,
@@ -169,7 +169,7 @@ export class AuthClient {
 
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new AuthmsAuthError(
+      throw new AutionalAuthError(
         String(errJson.code ?? response.status),
         (errJson.message as string) || `Registration failed`,
         response.status,
@@ -222,7 +222,7 @@ export class AuthClient {
 
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new AuthmsAuthError(
+      throw new AutionalAuthError(
         String(errJson.code ?? response.status),
         (errJson.message as string) || `Password change failed`,
         response.status,
@@ -241,7 +241,7 @@ export class AuthClient {
     if (typeof window !== 'undefined') {
       window.location.href = `${this.baseUrl}/oauth/api/v1/oauth/${options.provider}/authorize?${params.toString()}`;
     } else {
-      throw new AuthmsAuthError('NOT_BROWSER', 'OAuth login requires a browser environment', 400);
+      throw new AutionalAuthError('NOT_BROWSER', 'OAuth login requires a browser environment', 400);
     }
   }
 
@@ -249,7 +249,7 @@ export class AuthClient {
     const urlObj = new URL(url);
     const code = urlObj.searchParams.get('code');
     const state = urlObj.searchParams.get('state');
-    if (!code) throw new AuthmsAuthError('OAUTH_FAILED', 'No authorization code in callback URL', 400);
+    if (!code) throw new AutionalAuthError('OAUTH_FAILED', 'No authorization code in callback URL', 400);
 
     const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/token`, {
       method: 'POST',
@@ -260,14 +260,14 @@ export class AuthClient {
       }).toString(),
     });
 
-    if (!response.ok) throw new AuthmsNetworkError(`OAuth token exchange failed (${response.status})`);
+    if (!response.ok) throw new AutionalNetworkError(`OAuth token exchange failed (${response.status})`);
     const json = await response.json() as Record<string, unknown>;
     return this.handleAuthResponse(json);
   }
 
   async refreshToken(): Promise<void> {
     const refreshToken = this.tokenManager.getRefreshToken();
-    if (!refreshToken) throw new AuthmsAuthError('NO_REFRESH_TOKEN', 'No refresh token available', 401);
+    if (!refreshToken) throw new AutionalAuthError('NO_REFRESH_TOKEN', 'No refresh token available', 401);
 
     const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/refresh`, {
       method: 'POST',
@@ -281,11 +281,11 @@ export class AuthClient {
       if (code.startsWith('400002')) {
         this.tokenManager.clear();
         this.tokenManager.persist();
-        throw new AuthmsAuthError('TOKEN_REUSE', 'Refresh token reused — all sessions revoked', 401);
+        throw new AutionalAuthError('TOKEN_REUSE', 'Refresh token reused — all sessions revoked', 401);
       }
       this.tokenManager.clear();
       this.tokenManager.persist();
-      throw new AuthmsAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
+      throw new AutionalAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
     }
 
     const json = await response.json() as Record<string, unknown>;
@@ -311,7 +311,7 @@ export class AuthClient {
         body: JSON.stringify({ refresh_token: refreshToken }),
       }).catch(() => {});
     }
-    if (typeof window !== 'undefined') window.localStorage.removeItem('authms_auth_tokens');
+    if (typeof window !== 'undefined') window.localStorage.removeItem('autional_auth_tokens');
   }
 
   async getProfile(): Promise<Record<string, unknown> | null> {
@@ -347,7 +347,7 @@ export class AuthClient {
     });
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new AuthmsAuthError(
+      throw new AutionalAuthError(
         String(errJson.code ?? response.status),
         (errJson.message as string) || 'Trial registration failed',
         response.status,
@@ -367,7 +367,7 @@ export class AuthClient {
     });
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new AuthmsAuthError(
+      throw new AutionalAuthError(
         String(errJson.code ?? response.status),
         (errJson.message as string) || 'Upgrade failed',
         response.status,
@@ -447,7 +447,7 @@ export class AuthClient {
     });
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new AuthmsAuthError(
+      throw new AutionalAuthError(
         String(errJson.code ?? 'CC_FAILED'),
         (errJson.message as string) || 'Client Credentials auth failed',
         response.status,

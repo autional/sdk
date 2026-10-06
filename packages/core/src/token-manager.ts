@@ -9,7 +9,7 @@ interface TokenStore {
   expiresAt: number | null;
 }
 
-const STORAGE_PREFIX = 'authms_';
+const STORAGE_PREFIX = 'autional_';
 
 export class TokenManager {
   private storage: StorageAdapter;

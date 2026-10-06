@@ -6,8 +6,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export default {
   resolve: {
     alias: {
-      '@authms/core': resolve(__dirname, '../core/src/index.ts'),
-      '@authms/react': resolve(__dirname, '../react/src/index.ts'),
+      '@autional/core': resolve(__dirname, '../core/src/index.ts'),
+      '@autional/react': resolve(__dirname, '../react/src/index.ts'),
     },
   },
   test: {

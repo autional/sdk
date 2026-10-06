@@ -1,7 +1,7 @@
-import type { AuthmsPlatform } from '@authms/core';
+import type { AutionalPlatform } from '@autional/core';
 import type { AsyncStorageLike } from './types';
 
-export function createRNPlatform(storage: AsyncStorageLike): AuthmsPlatform {
+export function createRNPlatform(storage: AsyncStorageLike): AutionalPlatform {
   return {
     storage: {
       getItem(key) { return storage.getItem(key); },

@@ -28,12 +28,12 @@ npm install @autional/core @autional/api-billing
 import { Autional, browserPlatform } from '@autional/core';
 import { getPlans, getSubscription, subscribe } from '@autional/api-billing';
 
-const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
-await authms.initialize();
+const autional = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+await autional.initialize();
 
-const plans = await getPlans(authms.api);
-const sub = await getSubscription(authms.api);
-await subscribe(authms.api, { planId: plans[0].id });
+const plans = await getPlans(autional.api);
+const sub = await getSubscription(autional.api);
+await subscribe(autional.api, { planId: plans[0].id });
 ```
 
 See the [root SDK README](../../README.md) for full documentation.

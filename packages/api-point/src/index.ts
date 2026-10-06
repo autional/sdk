@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-point — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-point — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminPointRules(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/point/api/v1/admin/point-rules`, { params });

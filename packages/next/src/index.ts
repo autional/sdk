@@ -1,6 +1,6 @@
-export { authmsMiddleware } from './middleware';
-export type { AuthmsMiddlewareConfig } from './middleware';
+export { autionalMiddleware } from './middleware';
+export type { AutionalMiddlewareConfig } from './middleware';
 export { getServerSession } from './server';
 export type { ServerSessionConfig, ServerSession } from './server';
-export { AuthmsProvider } from './provider';
-export type { AuthmsNextProviderConfig } from './provider';
+export { AutionalProvider } from './provider';
+export type { AutionalNextProviderConfig } from './provider';

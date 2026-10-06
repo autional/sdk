@@ -24,30 +24,30 @@ npm install @autional/core @autional/react @autional/next @autional/api-identity
 
 ```bash
 # React 用户
-cp examples/react-authms.ts src/authms.ts
+cp examples/react-autional.ts src/autional.ts
 # Vue 3 用户
-cp examples/vue-authms.ts src/authms.ts
+cp examples/vue-autional.ts src/autional.ts
 # Next.js 用户
-cp examples/next-authms.ts src/authms.ts
+cp examples/next-autional.ts src/autional.ts
 ```
 
 **步骤 3：改 2 个字段**
 
-打开 `src/authms.ts`，修改 `appId` 和 `issuer`：
+打开 `src/autional.ts`，修改 `appId` 和 `issuer`：
 
 ```ts
-export const authmsConfig = {
+export const autionalConfig = {
   appId: 'YOUR_APP_ID',                       // ← 在 Autional 控制台创建的应用 ID
   issuer: 'https://api.autional.cn',          // ← Autional 服务器地址
 };
 ```
 > **issuer 解释**：Autional 服务器的地址，**不是你网站的域名**。SDK 会去 `{issuer}/.well-known/openid-configuration` 发现认证端点。中国大陆用 `https://api.autional.cn`（国际用 `https://api.autional.com`），直接填对应 region 的地址即可。
 
-**完成。** 你的项目里所有文件都从 `./authms` 导入，不用管是什么框架：
+**完成。** 你的项目里所有文件都从 `./autional` 导入，不用管是什么框架：
 
 ```tsx
-import { useAuthms } from './authms';  // ← 永远是 './authms'
-const { user, isLoading, login, logout } = useAuthms();
+import { useAutional } from './autional';  // ← 永远是 './autional'
+const { user, isLoading, login, logout } = useAutional();
 ```
 
 ---
@@ -57,8 +57,8 @@ const { user, isLoading, login, logout } = useAuthms();
 | 包 | 说明 |
 |----|------|
 | `@autional/core` | 框架无关核心：token、API、认证流程、Discovery、多标签同步、密码加密 |
-| `@autional/react` | React 适配器：AuthmsProvider + useAuthms + RequireAuth |
-| `@autional/vue` | Vue 3 适配器：createAuthms + useAuthms + v-auth + 路由守卫 |
+| `@autional/react` | React 适配器：AutionalProvider + useAutional + RequireAuth |
+| `@autional/vue` | Vue 3 适配器：createAutional + useAutional + v-auth + 路由守卫 |
 | `@autional/next` | Next.js 适配器：中间件 + getServerSession + Provider |
 | `@autional/api-identity` | 身份认证 API（21 个函数，树摇导出） |
 | `@autional/api-tenant` | 租户管理 API（10 个函数） |

@@ -52,17 +52,17 @@ npm install @autional/core @autional/react @autional/next @autional/api-identity
 
 ```bash
 # React
-cp examples/react-authms.ts src/authms.ts
+cp examples/react-autional.ts src/autional.ts
 # Vue 3
-cp examples/vue-authms.ts src/authms.ts
+cp examples/vue-autional.ts src/autional.ts
 # Next.js
-cp examples/next-authms.ts src/authms.ts
+cp examples/next-autional.ts src/autional.ts
 ```
 
-**3. Edit 2 fields in `src/authms.ts`:**
+**3. Edit 2 fields in `src/autional.ts`:**
 
 ```ts
-export const authmsConfig = {
+export const autionalConfig = {
   appId: 'YOUR_APP_ID',               // ← your Autional console App ID
   issuer: 'https://auth.example.com',  // ← your Autional server URL
 };
@@ -71,17 +71,17 @@ export const authmsConfig = {
 **4. Use it — same import path, any framework:**
 
 ```tsx
-import { useAuthms } from './authms';   // ← always './authms'
-const { user, isLoading, login, logout } = useAuthms();
+import { useAutional } from './autional';   // ← always './autional'
+const { user, isLoading, login, logout } = useAutional();
 ```
 
-> The example files (`examples/react-authms.ts`, `examples/vue-authms.ts`, `examples/next-authms.ts`) wrap the framework adapter with your config and re-export it. Your entire app imports from one file: `./authms`.
+> The example files (`examples/react-autional.ts`, `examples/vue-autional.ts`, `examples/next-autional.ts`) wrap the framework adapter with your config and re-export it. Your entire app imports from one file: `./autional`.
 
 export default function Layout({ children }) {
   return (
-    <AuthmsProvider config={{ appId: 'app_xxx', issuer: 'https://auth.example.com' }}>
+    <AutionalProvider config={{ appId: 'app_xxx', issuer: 'https://auth.example.com' }}>
       {children}
-    </AuthmsProvider>
+    </AutionalProvider>
 ---
 
 ## Available Packages
@@ -89,10 +89,10 @@ export default function Layout({ children }) {
 | Package | Description | Peer Deps |
 |---------|-------------|-----------|
 | `@autional/core` | Framework-agnostic core: token management, API client, auth flows, discovery, tab sync, crypto | — |
-| `@autional/react` | React 18+: `AuthmsProvider`, `useAuthms` hook, `RequireAuth` guard | `react`, `react-dom`, `@autional/core` |
-| `@autional/vue` | Vue 3: `createAuthms` plugin, `useAuthms` composable, `v-auth` directive, `authmsGuard` | `vue`, `@autional/core` |
-| `@autional/next` | Next.js 14+ App Router: middleware, `getServerSession`, `AuthmsProvider` | `next`, `@autional/react`, `@autional/core` |
-| `@autional/react-native` | React Native 0.70+: `AuthmsProvider`, `useAuthms`, `RequireAuth` for iOS/Android | `react`, `react-native`, `@autional/core` |
+| `@autional/react` | React 18+: `AutionalProvider`, `useAutional` hook, `RequireAuth` guard | `react`, `react-dom`, `@autional/core` |
+| `@autional/vue` | Vue 3: `createAutional` plugin, `useAutional` composable, `v-auth` directive, `autionalGuard` | `vue`, `@autional/core` |
+| `@autional/next` | Next.js 14+ App Router: middleware, `getServerSession`, `AutionalProvider` | `next`, `@autional/react`, `@autional/core` |
+| `@autional/react-native` | React Native 0.70+: `AutionalProvider`, `useAutional`, `RequireAuth` for iOS/Android | `react`, `react-native`, `@autional/core` |
 | `@autional/miniapp` | WeChat Mini Program adapter: platform binding, WeChat login, token persistence | `@autional/core` |
 | `@autional/api-identity` | Auto-generated TypeScript client for Identity Service (login, register, profile, RBAC, NHI, etc.) | `@autional/core` |
 | `@autional/api-tenant` | Auto-generated TypeScript client for Tenant Service (tenant CRUD, plans, branding) | `@autional/core` |
@@ -104,14 +104,14 @@ export default function Layout({ children }) {
 
 ## Configuration
 
-Pass a config object to the framework provider or `createAuthms`:
+Pass a config object to the framework provider or `createAutional`:
 
 ```ts
-interface AuthmsConfig {
+interface AutionalConfig {
   appId: string;               // Your Autional application ID (required)
   issuer: string;              // Autional server origin, e.g. "https://auth.example.com" (required)
   apiUrl?: string;             // API base URL if different from issuer
-  storagePrefix?: string;      // localStorage key prefix (default: "authms_")
+  storagePrefix?: string;      // localStorage key prefix (default: "autional_")
   syncTabs?: boolean;          // Sync auth state across browser tabs (default: true)
 }
 ```
@@ -121,7 +121,7 @@ interface AuthmsConfig {
 When the tenant requires CAPTCHA, provide a `captchaToken` + `captchaProvider` in the login request:
 
 ```ts
-const { login } = useAuthms();
+const { login } = useAutional();
 
 await login({
   email: 'user@example.com',
@@ -175,26 +175,26 @@ HTTP client. Tokens are automatically refreshed and attached to every request.
 import { Autional } from '@autional/core';
 import { login, getProfile } from '@autional/api-identity';
 
-const authms = new Autional({
+const autional = new Autional({
   appId: 'app_xxx',
   issuer: 'https://auth.example.com',
 });
-await authms.initialize();
+await autional.initialize();
 
 // Login
-const result = await login(authms, {
+const result = await login(autional, {
   email: 'user@example.com',
   password: 'securePassword123',
 });
 console.log(result.user.email, result.accessToken);
 
 // Fetch profile (auto-authenticated)
-const profile = await getProfile(authms);
+const profile = await getProfile(autional);
 console.log(profile);
 
 // Cross-service calls with @autional/api-tenant
 import { getTenant } from '@autional/api-tenant';
-const tenant = await getTenant(authms, 'tn_abc123');
+const tenant = await getTenant(autional, 'tn_abc123');
 console.log(tenant.name, tenant.plan);
 ```
 
@@ -202,18 +202,18 @@ The `Autional` instance exposes additional methods directly:
 
 | Method | Description |
 |--------|-------------|
-| `authms.initialize()` | Load persisted tokens, discover OIDC config |
-| `authms.login(credentials)` | Authenticate and store tokens |
-| `authms.register(data)` | Register a new user |
-| `authms.logout()` | Clear tokens, broadcast to other tabs |
-| `authms.loginWithOAuth(opts)` | Initiate OAuth PKCE flow |
-| `authms.handleOAuthCallback(url)` | Complete OAuth callback |
-| `authms.getAccessToken()` | Get current access token (refreshes if expired) |
-| `authms.isAuthenticated()` | Check if a valid token exists |
-| `authms.setTenantId(id)` | Switch active tenant |
-| `authms.fetchAuthConfig(tenantId?)` | Fetch tenant's password policy, login methods, branding |
-| `authms.on(event, handler)` | Subscribe to auth events (`READY`, `USER_CHANGED`, `LOGGED_OUT`, etc.) |
-| `authms.dispose()` | Clean up listeners and tab sync |
+| `autional.initialize()` | Load persisted tokens, discover OIDC config |
+| `autional.login(credentials)` | Authenticate and store tokens |
+| `autional.register(data)` | Register a new user |
+| `autional.logout()` | Clear tokens, broadcast to other tabs |
+| `autional.loginWithOAuth(opts)` | Initiate OAuth PKCE flow |
+| `autional.handleOAuthCallback(url)` | Complete OAuth callback |
+| `autional.getAccessToken()` | Get current access token (refreshes if expired) |
+| `autional.isAuthenticated()` | Check if a valid token exists |
+| `autional.setTenantId(id)` | Switch active tenant |
+| `autional.fetchAuthConfig(tenantId?)` | Fetch tenant's password policy, login methods, branding |
+| `autional.on(event, handler)` | Subscribe to auth events (`READY`, `USER_CHANGED`, `LOGGED_OUT`, etc.) |
+| `autional.dispose()` | Clean up listeners and tab sync |
 
 ---
 
@@ -224,9 +224,9 @@ Copy-and-paste integration templates for each framework are available in
 
 | File | Framework |
 |------|-----------|
-| `react-authms.ts` | React 18+ with AuthmsProvider + useAuthms |
-| `vue-authms.ts` | Vue 3 with createAuthms plugin + composable |
-| `next-authms.ts` | Next.js App Router with middleware + provider |
+| `react-autional.ts` | React 18+ with AutionalProvider + useAutional |
+| `vue-autional.ts` | Vue 3 with createAutional plugin + composable |
+| `next-autional.ts` | Next.js App Router with middleware + provider |
 
 Each template contains the minimum code needed — replace `appId` and `issuer` with your
 values to start.

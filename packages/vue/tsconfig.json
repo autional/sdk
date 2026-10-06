@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@authms/core": ["../core/src/index.ts"]
+      "@autional/core": ["../core/src/index.ts"]
     }
   },
   "include": ["src"],

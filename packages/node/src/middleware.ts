@@ -1,14 +1,14 @@
 /**
- * AuthMS Node.js SDK — Express / Fastify 中间件
+ * Autional Node.js SDK — Express / Fastify 中间件
  *
  * 提供服务器端 JWT token 验证能力。
  * 使用方式:
- *   Express: app.use(authmsExpress({ issuer: '...', apiUrl: '...' }))
- *   Fastify: app.register(authmsFastify, { issuer: '...', apiUrl: '...' })
+ *   Express: app.use(autionalExpress({ issuer: '...', apiUrl: '...' }))
+ *   Fastify: app.register(autionalFastify, { issuer: '...', apiUrl: '...' })
  */
-import { AuthMS, browserPlatform, type AuthmsConfig } from '@authms/core';
+import { Autional, browserPlatform, type AutionalConfig } from '@autional/core';
 
-export interface NodeAuthmsConfig {
+export interface NodeAutionalConfig {
   issuer: string;
   apiUrl?: string;
   appId?: string;
@@ -19,8 +19,8 @@ export interface NodeAuthmsConfig {
 /**
  * Express 中间件——验证 Bearer token 并注入 req.user
  */
-export function authmsExpress(config: NodeAuthmsConfig) {
-  const authms = new AuthMS({
+export function autionalExpress(config: NodeAutionalConfig) {
+  const autional = new Autional({
     appId: config.appId || 'node-sdk',
     issuer: config.issuer,
     apiUrl: config.apiUrl,
@@ -28,7 +28,7 @@ export function authmsExpress(config: NodeAuthmsConfig) {
     syncTabs: false,
   });
 
-  authms.initialize().catch(() => {});
+  autional.initialize().catch(() => {});
 
   return async (req: any, _res: any, next: any) => {
     if (config.exclude?.some(p => req.path.startsWith(p))) {
@@ -44,8 +44,8 @@ export function authmsExpress(config: NodeAuthmsConfig) {
     }
 
     try {
-      const claims = authms.tokenManager.decodeToken(token);
-      if (claims && !authms.tokenManager.isTokenExpired(token)) {
+      const claims = autional.tokenManager.decodeToken(token);
+      if (claims && !autional.tokenManager.isTokenExpired(token)) {
         req.user = {
           id: claims.sub || claims.user_id,
           tenantId: claims.tenant_id,
@@ -65,8 +65,8 @@ export function authmsExpress(config: NodeAuthmsConfig) {
 /**
  * Fastify 插件——验证 Bearer token 并注入 request.user
  */
-export function authmsFastify(fastify: any, config: NodeAuthmsConfig, done: any) {
-  const authms = new AuthMS({
+export function autionalFastify(fastify: any, config: NodeAutionalConfig, done: any) {
+  const autional = new Autional({
     appId: config.appId || 'node-sdk',
     issuer: config.issuer,
     apiUrl: config.apiUrl,
@@ -74,7 +74,7 @@ export function authmsFastify(fastify: any, config: NodeAuthmsConfig, done: any)
     syncTabs: false,
   });
 
-  authms.initialize().catch(() => {});
+  autional.initialize().catch(() => {});
 
   fastify.decorateRequest('user', null);
 
@@ -92,8 +92,8 @@ export function authmsFastify(fastify: any, config: NodeAuthmsConfig, done: any)
     }
 
     try {
-      const claims = authms.tokenManager.decodeToken(token);
-      if (claims && !authms.tokenManager.isTokenExpired(token)) {
+      const claims = autional.tokenManager.decodeToken(token);
+      if (claims && !autional.tokenManager.isTokenExpired(token)) {
         request.user = {
           id: claims.sub || claims.user_id,
           tenantId: claims.tenant_id,

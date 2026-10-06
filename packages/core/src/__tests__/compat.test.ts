@@ -2,26 +2,26 @@
  * CJS/ESM Compatibility Test
  *
  * Verifies:
- * - require('@authms/core') returns all expected exports
- * - import from '@authms/core' is tree-shakeable
+ * - require('@autional/core') returns all expected exports
+ * - import from '@autional/core' is tree-shakeable
  * - CJS build produces valid exports
  */
 import { describe, it, expect } from 'vitest';
 
 // ESM imports (vitest native)
 import {
-  AuthMS, TokenManager, ApiClient, AuthClient, Discovery, TabSync,
+  Autional, TokenManager, ApiClient, AuthClient, Discovery, TabSync,
   browserPlatform, memoryPlatform,
-  AuthmsError, AuthmsAuthError, AuthmsNetworkError,
+  AutionalError, AutionalAuthError, AutionalNetworkError,
   ERROR_CODES,
   createPlatformBinding,
   processPasswordForTransmission, solveProofOfWork,
 } from '../index';
 
 describe('ESM Imports', () => {
-  it('imports AuthMS class', () => {
-    expect(AuthMS).toBeDefined();
-    expect(typeof AuthMS).toBe('function');
+  it('imports Autional class', () => {
+    expect(Autional).toBeDefined();
+    expect(typeof Autional).toBe('function');
   });
 
   it('imports TokenManager', () => {
@@ -51,9 +51,9 @@ describe('ESM Imports', () => {
   });
 
   it('imports error types', () => {
-    expect(AuthmsError).toBeDefined();
-    expect(AuthmsAuthError).toBeDefined();
-    expect(AuthmsNetworkError).toBeDefined();
+    expect(AutionalError).toBeDefined();
+    expect(AutionalAuthError).toBeDefined();
+    expect(AutionalNetworkError).toBeDefined();
   });
 
   it('imports ERROR_CODES', () => {

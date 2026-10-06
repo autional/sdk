@@ -55,7 +55,7 @@ export interface TokenClaims {
   [key: string]: unknown;
 }
 
-export type AuthmsEvent =
+export type AutionalEvent =
   | 'READY'
   | 'USER_CHANGED'
   | 'TOKEN_CHANGED'
@@ -118,7 +118,7 @@ export const ERROR_CODES = {
  * 已安装 API 包的类型占位接口。
  * 各 API 包通过 module augmentation 扩展此接口。
  *
- * 安装 @authms/api-identity 后：
- *   const { identity } = useAuthms().api;  // ← 类型安全
+ * 安装 @autional/api-identity 后：
+ *   const { identity } = useAutional().api;  // ← 类型安全
  */
 export interface RegisteredApis {}

@@ -1,5 +1,5 @@
 {
-  "name": "authms-demo",
+  "name": "autional-demo",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@authms/core": "workspace:*",
-    "@authms/react": "workspace:*",
-    "@authms/api-identity": "workspace:*",
+    "@autional/core": "workspace:*",
+    "@autional/react": "workspace:*",
+    "@autional/api-identity": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0"

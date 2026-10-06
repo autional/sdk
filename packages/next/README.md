@@ -4,9 +4,9 @@ Autional Next.js SDK — middleware, server-side session, and provider for Next.
 
 ## What's Inside
 
-- **`authmsMiddleware`** — edge middleware that redirects unauthenticated users from protected paths
+- **`autionalMiddleware`** — edge middleware that redirects unauthenticated users from protected paths
 - **`getServerSession`** — server-side session lookup via cookie token + `/auth/me` API call
-- **`AuthmsProvider`** — client component wrapper (re-exports from `@autional/react` with SSR support)
+- **`AutionalProvider`** — client component wrapper (re-exports from `@autional/react` with SSR support)
 
 ## Install
 
@@ -18,11 +18,11 @@ npm install @autional/core @autional/react @autional/next
 
 ```ts
 // middleware.ts
-import { authmsMiddleware } from '@autional/next';
+import { autionalMiddleware } from '@autional/next';
 
 export const config = { matcher: ['/dashboard/:path*', '/settings/:path*'] };
 
-export default authmsMiddleware({
+export default autionalMiddleware({
   protectedPaths: ['/dashboard/(.*)', '/settings/(.*)'],
   loginPath: '/login',
   publicPaths: ['/'],
@@ -31,15 +31,15 @@ export default authmsMiddleware({
 
 ```tsx
 // app/layout.tsx
-import { AuthmsProvider } from '@autional/next';
+import { AutionalProvider } from '@autional/next';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
       <body>
-        <AuthmsProvider appId="my-app" issuer="https://auth.iam.tianv.com">
+        <AutionalProvider appId="my-app" issuer="https://auth.iam.tianv.com">
           {children}
-        </AuthmsProvider>
+        </AutionalProvider>
       </body>
     </html>
   );
@@ -59,6 +59,6 @@ export default async function DashboardPage() {
 
 ## Project Setup
 
-Copy [`examples/next-authms.ts`](../../examples/next-authms.ts) to `src/authms.ts`, edit `appId` and `issuer`. All your components import from `./authms`.
+Copy [`examples/next-autional.ts`](../../examples/next-autional.ts) to `src/autional.ts`, edit `appId` and `issuer`. All your components import from `./autional`.
 
 See the [root SDK README](../../README.md) for full documentation.

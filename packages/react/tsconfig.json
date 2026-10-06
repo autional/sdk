@@ -3,7 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "paths": {
-      "@authms/core": ["../core/src/index.ts"]
+      "@autional/core": ["../core/src/index.ts"]
     }
   },
   "include": ["src"],

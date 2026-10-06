@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthms } from '../authms';
-import { getProfile } from '@authms/api-identity';
+import { useAutional } from '../autional';
+import { getProfile } from '@autional/api-identity';
 
 export function Dashboard() {
-  const { user, logout, getAccessToken, authConfig } = useAuthms();
+  const { user, logout, getAccessToken, authConfig } = useAutional();
   const navigate = useNavigate();
   const [token, setToken] = useState('');
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);

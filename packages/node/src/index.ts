@@ -1,2 +1,2 @@
-export { authmsExpress, authmsFastify, getUser } from './middleware';
-export type { NodeAuthmsConfig } from './middleware';
+export { autionalExpress, autionalFastify, getUser } from './middleware';
+export type { NodeAutionalConfig } from './middleware';

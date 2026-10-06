@@ -1,6 +1,6 @@
-import type { AuthmsPlatform } from './types';
+import type { AutionalPlatform } from './types';
 
-export const browserPlatform: AuthmsPlatform = {
+export const browserPlatform: AutionalPlatform = {
   storage: {
     getItem(key) {
       try { return localStorage.getItem(key); } catch { return null; }

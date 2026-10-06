@@ -1,7 +1,7 @@
 {
-  "name": "@authms/react-native",
+  "name": "@autional/react-native",
   "version": "0.2.1",
-  "description": "AuthMS React Native SDK — AuthmsProvider, useAuthms hook, and RequireAuth guard for iOS/Android",
+  "description": "Autional React Native SDK — AutionalProvider, useAutional hook, and RequireAuth guard for iOS/Android",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -14,11 +14,12 @@
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-native --external @authms/core --external @react-native-async-storage/async-storage",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-native --external @authms/core --external @react-native-async-storage/async-storage",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-native --external @autional/core --external @react-native-async-storage/async-storage",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-native --external @autional/core --external @react-native-async-storage/async-storage",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "prepublishOnly": "node ../../scripts/prepublish-guard.mjs"
   },
   "files": [
     "dist",
@@ -28,21 +29,20 @@
     "auth",
     "react-native",
     "authentication",
-    "authms",
+    "autional",
     "ios",
     "android"
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@authms/core": ">=0.1.0",
+    "@autional/core": ">=0.1.0",
     "react": ">=18.0.0",
     "react-native": ">=0.70.0"
   },
   "dependencies": {
-    "@authms/core": ">=0.1.0"
+    "@autional/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@authms/tsconfig": ">=0.1.0",
     "@react-native-async-storage/async-storage": "^1.23.0",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",

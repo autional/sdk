@@ -1,6 +1,6 @@
 // @ts-nocheck — auto-generated from swagger.json
-/** @authms/api-communication — auto-generated */
-import type { ApiClient } from '@authms/core';
+/** @autional/api-communication — auto-generated */
+import type { ApiClient } from '@autional/core';
 
 export function adminCommunicationLogs(client: ApiClient, data?: Record<string, unknown>) {
   return client.get(`/communication/api/v1/admin/communication/logs`, { params });

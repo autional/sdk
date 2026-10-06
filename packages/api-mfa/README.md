@@ -29,13 +29,13 @@ npm install @autional/core @autional/api-mfa
 import { Autional, browserPlatform } from '@autional/core';
 import { setupTotp, verifyTotp, enableTotp } from '@autional/api-mfa';
 
-const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
-await authms.initialize();
+const autional = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+await autional.initialize();
 
-const setup = await setupTotp(authms.api);
+const setup = await setupTotp(autional.api);
 // Show QR code to user, then verify:
-await verifyTotp(authms.api, { code: '123456' });
-await enableTotp(authms.api, { code: '123456' });
+await verifyTotp(autional.api, { code: '123456' });
+await enableTotp(autional.api, { code: '123456' });
 ```
 
 See the [root SDK README](../../README.md) for full documentation.

@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
-import { useAuthmsContext } from '@authms/react';
+import { useAutionalContext } from '@autional/react';
 
 interface MfaStatus {
   enrolled: boolean;
@@ -34,7 +34,7 @@ const styles = {
 };
 
 export function MfaGuard({ children }: { children: ReactNode }) {
-  const { authms } = useAuthmsContext();
+  const { autional } = useAutionalContext();
   const [status, setStatus] = useState<MfaStatus | null>(null);
   const [busy, setBusy] = useState(true);
   const [code, setCode] = useState('');
@@ -43,12 +43,12 @@ export function MfaGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    authms.api.get<MfaStatus>('/identity/api/v1/mfa/status')
+    autional.api.get<MfaStatus>('/identity/api/v1/mfa/status')
       .then((s) => { if (!cancelled) setStatus(s); })
       .catch(() => { if (!cancelled) setStatus({ enrolled: false, challenged: false }); })
       .finally(() => { if (!cancelled) setBusy(false); });
     return () => { cancelled = true; };
-  }, [authms]);
+  }, [autional]);
 
   if (busy) {
     return <div style={styles.overlay}><div style={styles.loading}>Loading...</div></div>;
@@ -67,7 +67,7 @@ export function MfaGuard({ children }: { children: ReactNode }) {
     setLoading(true);
     setError('');
     try {
-      await authms.api.post('/identity/api/v1/mfa/challenge/verify', { code });
+      await autional.api.post('/identity/api/v1/mfa/challenge/verify', { code });
       setStatus((prev) => prev ? { ...prev, challenged: true } : prev);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Challenge failed');

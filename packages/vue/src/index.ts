@@ -1,6 +1,6 @@
-export { createAuthms, getAuthms, AUTHMS_KEY } from './createAuthms';
-export type { VueAuthmsConfig } from './createAuthms';
-export { useAuthms } from './useAuthms';
-export type { UseAuthmsReturn } from './useAuthms';
+export { createAutional, getAutional, AUTIONAL_KEY } from './createAutional';
+export type { VueAutionalConfig } from './createAutional';
+export { useAutional } from './useAutional';
+export type { UseAutionalReturn } from './useAutional';
 export { vAuth } from './directive';
-export { authmsGuard } from './guard';
+export { autionalGuard } from './guard';

@@ -4,9 +4,9 @@
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "paths": {
-      "@authms/core": ["../packages/core/src/index.ts"],
-      "@authms/react": ["../packages/react/src/index.ts"],
-      "@authms/api-identity": ["../packages/api-identity/src/index.ts"]
+      "@autional/core": ["../packages/core/src/index.ts"],
+      "@autional/react": ["../packages/react/src/index.ts"],
+      "@autional/api-identity": ["../packages/api-identity/src/index.ts"]
     }
   },
   "include": ["src"],

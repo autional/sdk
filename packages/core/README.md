@@ -23,17 +23,17 @@ npm install @autional/core
 ```ts
 import { Autional, browserPlatform } from '@autional/core';
 
-const authms = new Autional({
+const autional = new Autional({
   appId: 'my-app',
   issuer: 'https://auth.iam.tianv.com',
   platform: browserPlatform,
 });
 
-await authms.initialize();
+await autional.initialize();
 
-await authms.login({ email: 'user@example.com', password: 's3cret' });
+await autional.login({ email: 'user@example.com', password: 's3cret' });
 
-const profile = await authms.api.get('/profile/api/v1/profiles/me');
+const profile = await autional.api.get('/profile/api/v1/profiles/me');
 console.log(profile);
 ```
 
@@ -52,6 +52,6 @@ The SDK reads the mode from `TenantAuthConfig.passwordPolicy.mode` and applies i
 
 ## Project Setup
 
-For framework integration, pick the example for your framework: [`examples/react-authms.ts`](../../examples/react-authms.ts), [`examples/vue-authms.ts`](../../examples/vue-authms.ts), or [`examples/next-authms.ts`](../../examples/next-authms.ts). Copy to `src/authms.ts`, edit `appId` and `issuer`.
+For framework integration, pick the example for your framework: [`examples/react-autional.ts`](../../examples/react-autional.ts), [`examples/vue-autional.ts`](../../examples/vue-autional.ts), or [`examples/next-autional.ts`](../../examples/next-autional.ts). Copy to `src/autional.ts`, edit `appId` and `issuer`.
 
 See the [root SDK README](../../README.md) for full documentation.

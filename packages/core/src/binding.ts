@@ -1,25 +1,25 @@
 /**
  * createPlatformBinding — 共享的 Core 绑定逻辑
  *
- * 用于各框架适配器，消除重复的 AuthMS 初始化/状态管理/事件订阅代码。
+ * 用于各框架适配器，消除重复的 Autional 初始化/状态管理/事件订阅代码。
  * 适配器只需将此 binding 包装成框架特定的组件/hook。
  */
-import { AuthMS, type AuthmsConfig } from './authms';
+import { Autional, type AutionalConfig } from './autional';
 import type { AuthResult, LoginRequest, OAuthOptions } from './types';
-import type { AuthmsPlatform } from './platform/types';
+import type { AutionalPlatform } from './platform/types';
 import { browserPlatform } from './platform/browser';
 
 export interface BindingConfig {
   appId: string;
   issuer: string;
   apiUrl?: string;
-  platform?: AuthmsPlatform;
+  platform?: AutionalPlatform;
   storagePrefix?: string;
   syncTabs?: boolean;
 }
 
 export interface PlatformBinding {
-  authms: AuthMS;
+  autional: Autional;
 
   /** 获取当前用户（由适配器调用） */
   getUser(): Record<string, unknown> | null;
@@ -62,7 +62,7 @@ export interface PlatformBinding {
 }
 
 export function createPlatformBinding(config: BindingConfig): PlatformBinding {
-  const coreConfig: AuthmsConfig = {
+  const coreConfig: AutionalConfig = {
     appId: config.appId,
     issuer: config.issuer,
     apiUrl: config.apiUrl,
@@ -71,7 +71,7 @@ export function createPlatformBinding(config: BindingConfig): PlatformBinding {
     syncTabs: config.syncTabs,
   };
 
-  const authms = new AuthMS(coreConfig);
+  const autional = new Autional(coreConfig);
 
   let user: Record<string, unknown> | null = null;
   let authConfig: Record<string, unknown> | null = null;
@@ -83,10 +83,10 @@ export function createPlatformBinding(config: BindingConfig): PlatformBinding {
   };
 
   // 初始化
-  authms.initialize().then(async () => {
-    user = authms.user as unknown as Record<string, unknown> | null;
+  autional.initialize().then(async () => {
+    user = autional.user as unknown as Record<string, unknown> | null;
     try {
-      authConfig = await authms.fetchAuthConfig();
+      authConfig = await autional.fetchAuthConfig();
     } catch {}
     ready = true;
     emitChange();
@@ -96,31 +96,31 @@ export function createPlatformBinding(config: BindingConfig): PlatformBinding {
   });
 
   // 订阅事件
-  authms.on('USER_CHANGED', () => {
-    user = authms.user as unknown as Record<string, unknown> | null;
+  autional.on('USER_CHANGED', () => {
+    user = autional.user as unknown as Record<string, unknown> | null;
     emitChange();
   });
 
   return {
-    authms,
+    autional,
     getUser: () => user,
     getAuthConfig: () => authConfig,
     isReady: () => ready,
-    isAuthenticated: () => authms.isAuthenticated(),
+    isAuthenticated: () => autional.isAuthenticated(),
     onChange: (handler) => {
       changeHandlers.add(handler);
       return () => changeHandlers.delete(handler);
     },
-    login: (c) => authms.login(c),
-    loginWithOAuth: (o) => authms.loginWithOAuth(o),
-    register: (d) => authms.register(d),
-    logout: () => authms.logout(),
-    getAccessToken: () => authms.getAccessToken(),
-    setTenantId: (id) => authms.setTenantId(id),
-    getTenantId: () => authms.getTenantId(),
+    login: (c) => autional.login(c),
+    loginWithOAuth: (o) => autional.loginWithOAuth(o),
+    register: (d) => autional.register(d),
+    logout: () => autional.logout(),
+    getAccessToken: () => autional.getAccessToken(),
+    setTenantId: (id) => autional.setTenantId(id),
+    getTenantId: () => autional.getTenantId(),
     dispose: () => {
       changeHandlers.clear();
-      authms.dispose();
+      autional.dispose();
     },
   };
 }

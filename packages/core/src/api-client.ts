@@ -1,6 +1,6 @@
 import type { HttpAdapter } from './platform/types';
 import type { TokenManager } from './token-manager';
-import { AuthmsError, AuthmsApiError, AuthmsAuthError, AuthmsNetworkError } from './errors';
+import { AutionalError, AutionalApiError, AutionalAuthError, AutionalNetworkError } from './errors';
 
 interface ApiClientConfig {
   baseUrl: string;
@@ -131,7 +131,7 @@ export class ApiClient {
           await new Promise(r => setTimeout(r, this.baseDelay * Math.pow(2, attempt)));
           continue;
         }
-        throw new AuthmsNetworkError(lastError.message || 'Network request failed after retries');
+        throw new AutionalNetworkError(lastError.message || 'Network request failed after retries');
       }
 
       // 5xx 重试, 4xx 不重试
@@ -149,8 +149,8 @@ export class ApiClient {
     }
 
     throw lastError
-      ? new AuthmsNetworkError(lastError.message)
-      : new AuthmsNetworkError('Request failed');
+      ? new AutionalNetworkError(lastError.message)
+      : new AutionalNetworkError('Request failed');
   }
 
   private async handle401<T>(url: string, requestInit: RequestInit): Promise<T> {
@@ -163,9 +163,9 @@ export class ApiClient {
           if (!this.redirectingToLogin) {
             this.redirectingToLogin = true;
             this.onForceLogout?.();
-            throw new AuthmsAuthError('SESSION_EXPIRED', 'Session expired, please login again', 401);
+            throw new AutionalAuthError('SESSION_EXPIRED', 'Session expired, please login again', 401);
           }
-          throw new AuthmsAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
+          throw new AutionalAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
         } finally {
           this.refreshPromise = null;
         }
@@ -182,7 +182,7 @@ export class ApiClient {
       return this.handleResponse<T>(response);
     }
 
-    throw new AuthmsAuthError('NOT_AUTHENTICATED', 'Not authenticated', 401);
+    throw new AutionalAuthError('NOT_AUTHENTICATED', 'Not authenticated', 401);
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
@@ -199,7 +199,7 @@ export class ApiClient {
     if (json && typeof json === 'object' && 'code' in json) {
       const code = String(json.code);
       if (json.code !== 0) {
-        throw new AuthmsApiError(
+        throw new AutionalApiError(
           code,
           (json.message as string) || 'API error',
           response.status,
@@ -216,10 +216,10 @@ export class ApiClient {
       const json = await response.json() as Record<string, unknown>;
       const code = String(json.code ?? response.status);
       const message = (json.message as string) || `HTTP ${response.status}`;
-      throw new AuthmsApiError(code, message, response.status);
+      throw new AutionalApiError(code, message, response.status);
     } catch (e) {
-      if (e instanceof AuthmsError) throw e;
-      throw new AuthmsNetworkError(`HTTP ${response.status}: ${response.statusText}`);
+      if (e instanceof AutionalError) throw e;
+      throw new AutionalNetworkError(`HTTP ${response.status}: ${response.statusText}`);
     }
   }
 }

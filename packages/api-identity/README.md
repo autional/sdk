@@ -40,13 +40,13 @@ npm install @autional/core @autional/api-identity
 import { Autional, browserPlatform } from '@autional/core';
 import { login, getProfile } from '@autional/api-identity';
 
-const authms = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
-await authms.initialize();
+const autional = new Autional({ appId: 'my-app', issuer: 'https://auth.iam.tianv.com', platform: browserPlatform });
+await autional.initialize();
 
-const result = await login(authms.api, { email: 'user@example.com', password: 's3cret' });
+const result = await login(autional.api, { email: 'user@example.com', password: 's3cret' });
 console.log(result.user);
 
-const profile = await getProfile(authms.api);
+const profile = await getProfile(autional.api);
 console.log(profile);
 ```
 

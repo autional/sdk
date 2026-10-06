@@ -1,12 +1,12 @@
-import type { AuthmsPlatform } from '@authms/core/platform';
+import type { AutionalPlatform } from '@autional/core/platform';
 
 export interface MiniAppGlobalData {
-  authms?: import('@authms/core').AuthMS & WechatExtensions;
+  autional?: import('@autional/core').Autional & WechatExtensions;
   [key: string]: unknown;
 }
 
 interface WechatExtensions {
-  loginWithWechat(): Promise<import('@authms/core').AuthResult>;
+  loginWithWechat(): Promise<import('@autional/core').AuthResult>;
   getPhoneNumber(e: WechatPhoneEvent): Promise<string>;
 }
 
@@ -25,14 +25,14 @@ export interface WechatPhoneEvent {
   };
 }
 
-export interface UseAuthmsReturn {
-  user: import('@authms/core').User | null;
+export interface UseAutionalReturn {
+  user: import('@autional/core').User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: import('@authms/core').LoginRequest) => Promise<import('@authms/core').AuthResult>;
+  login: (credentials: import('@autional/core').LoginRequest) => Promise<import('@autional/core').AuthResult>;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
-  loginWithWechat: () => Promise<import('@authms/core').AuthResult>;
+  loginWithWechat: () => Promise<import('@autional/core').AuthResult>;
 }
 
-export type { AuthmsPlatform };
+export type { AutionalPlatform };

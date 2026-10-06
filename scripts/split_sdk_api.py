@@ -138,8 +138,8 @@ def main():
             continue
 
         body = f"""// @ts-nocheck — auto-generated from swagger.json
-/** @authms/{pkg} — auto-generated */
-import type {{ ApiClient }} from '@authms/core';
+/** @autional/{pkg} — auto-generated */
+import type {{ ApiClient }} from '@autional/core';
 
 """
         for fn in fns:
@@ -151,7 +151,7 @@ import type {{ ApiClient }} from '@authms/core';
         if not os.path.isdir(pkg_dir):
             shutil.copytree(TEMPLATE, pkg_dir, ignore=shutil.ignore_patterns("src", "node_modules", "dist"))
             pj = json.load(open(os.path.join(pkg_dir, "package.json"), encoding="utf-8"))
-            pj["name"] = f"@authms/{pkg}"
+            pj["name"] = f"@autional/{pkg}"
             with open(os.path.join(pkg_dir, "package.json"), "w", encoding="utf-8") as f:
                 json.dump(pj, f, indent=2)
                 f.write("\n")

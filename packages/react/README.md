@@ -1,11 +1,11 @@
 # @autional/react
 
-Autional React SDK — `<AuthmsProvider>`, `useAuthms()` hook, and `<RequireAuth>` guard component.
+Autional React SDK — `<AutionalProvider>`, `useAutional()` hook, and `<RequireAuth>` guard component.
 
 ## What's Inside
 
-- **`AuthmsProvider`** — context provider that creates and initializes an `Autional` instance
-- **`useAuthms()`** — hook returning `{ authms, user, isLoading, isAuthenticated, login, logout }`
+- **`AutionalProvider`** — context provider that creates and initializes an `Autional` instance
+- **`useAutional()`** — hook returning `{ autional, user, isLoading, isAuthenticated, login, logout }`
 - **`RequireAuth`** — wrapper that redirects unauthenticated users to a login page
 
 ## Install
@@ -17,22 +17,22 @@ npm install @autional/core @autional/react
 ## Quick Start
 
 ```tsx
-import { AuthmsProvider } from '@autional/react';
+import { AutionalProvider } from '@autional/react';
 
 function App() {
   return (
-    <AuthmsProvider appId="my-app" issuer="https://auth.iam.tianv.com">
+    <AutionalProvider appId="my-app" issuer="https://auth.iam.tianv.com">
       <Dashboard />
-    </AuthmsProvider>
+    </AutionalProvider>
   );
 }
 ```
 
 ```tsx
-import { useAuthms, RequireAuth } from '@autional/react';
+import { useAutional, RequireAuth } from '@autional/react';
 
 function Dashboard() {
-  const { user, isLoading, login, logout } = useAuthms();
+  const { user, isLoading, login, logout } = useAutional();
 
   if (isLoading) return <div>Loading...</div>;
   if (!user) return <button onClick={() => login({ email: 'a@b.com', password: 'x' })}>Login</button>;
@@ -51,6 +51,6 @@ function Dashboard() {
 
 ## Project Setup
 
-Copy [`examples/react-authms.ts`](../../examples/react-authms.ts) to `src/authms.ts`, edit `appId` and `issuer`. All your components import from `'./authms'`.
+Copy [`examples/react-autional.ts`](../../examples/react-autional.ts) to `src/autional.ts`, edit `appId` and `issuer`. All your components import from `'./autional'`.
 
 See the [root SDK README](../../README.md) for full documentation.

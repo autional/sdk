@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthms } from '../authms';
+import { useAutional } from '../autional';
 
 export function Login() {
-  const { authConfig, login, loginWithOAuth, isLoading } = useAuthms();
+  const { authConfig, login, loginWithOAuth, isLoading } = useAutional();
   const navigate = useNavigate();
   const [identity, setIdentity] = useState('');
   const [password, setPassword] = useState('');
@@ -46,7 +46,7 @@ export function Login() {
     <div className="container">
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Sign In</h1>
       <p style={{ color: '#6b7280', marginBottom: 24 }}>
-        {(authConfig as any)?.displayName || 'AuthMS Demo'} — AI-powered authentication
+        {(authConfig as any)?.displayName || 'Autional Demo'} — AI-powered authentication
       </p>
 
       {/* Auth Config Info */}

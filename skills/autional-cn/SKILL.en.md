@@ -489,7 +489,7 @@ Note: users already registered in Autional are not migrated back into the local 
 - `https://www.autional.cn/ai/references/compliance-matrix.md` — compliance matrix (NIST / PCI / GDPR / HIPAA and more)
 - `https://www.autional.cn/ai/references/config-template.md` — config, env and AUTIONAL_SETUP.md templates
 - Human-readable tutorial: https://www.autional.cn/ai
-- Scaffold CLI (alternative to the manual phases): `npx -y @autional-cn/onboard --registry=https://registry.npmmirror.com`
+- Scaffold CLI (alternative to the manual phases): `npx -y @autional/onboard --registry=https://registry.npmmirror.com`
 - This file: https://www.autional.cn/ai/skill.en.md · checksum: https://www.autional.cn/ai/skill.en.md.sha256
 
 > Mirror (mainland): https://cdn.autional.cn/ai/latest/SKILL.en.md (Autional CDN) — keep the mirror in sync with the canonical URL above.

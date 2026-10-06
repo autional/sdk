@@ -1,6 +1,6 @@
 {
   "name": "@autional/next",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Autional Next.js SDK — middleware, server session, and provider for Next.js App Router",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

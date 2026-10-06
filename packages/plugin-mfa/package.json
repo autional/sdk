@@ -1,6 +1,6 @@
 {
   "name": "@autional/plugin-mfa",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Autional MFA Plugin — Multi-Factor Authentication UI components and flows for @autional/react",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

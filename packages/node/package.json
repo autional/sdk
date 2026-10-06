@@ -1,6 +1,6 @@
 {
   "name": "@autional/node",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Autional Node.js SDK — Express/Fastify middleware for token verification",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

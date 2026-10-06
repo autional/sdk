@@ -1,6 +1,6 @@
 {
   "name": "@autional/api-audit",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Autional Identity Service API — auto-generated TypeScript client",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

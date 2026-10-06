@@ -1,6 +1,6 @@
 {
   "name": "@autional/onboard",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Autional onboarding CLI — scaffold a React, Vue, or Next.js project",
   "bin": {
     "onboard": "./dist/index.js"

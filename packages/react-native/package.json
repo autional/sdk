@@ -1,6 +1,6 @@
 {
   "name": "@autional/react-native",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Autional React Native SDK — AutionalProvider, useAutional hook, and RequireAuth guard for iOS/Android",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

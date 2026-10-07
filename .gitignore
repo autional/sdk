@@ -3,3 +3,12 @@ dist
 .turbo
 .vite
 __pycache__
+*.tsbuildinfo
+
+# stray tsc in-place emits (builds run tsup/vite; typecheck uses --noEmit)
+demo/src/**/*.js
+demo/src/**/*.js.map
+demo/src/**/*.d.ts.map
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts.map

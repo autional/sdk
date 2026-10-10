@@ -35,6 +35,11 @@ function createToken(expInSeconds = 900): string {
   return `${header}.${payload}.sig`;
 }
 
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 const BASE_URL = 'https://api.example.com';
 
 const AUTH_CONFIG_KEY = `GET ${BASE_URL}/identity/api/v1/public/auth-config/default`;
@@ -86,7 +91,7 @@ describe('AuthClient', () => {
   let mockHttp: ReturnType<typeof createMockHttp>;
   let client: AuthClient;
 
-  function setupClient(responses: Record<string, unknown>) {
+  function setupClient(responses: Record<string, unknown>, options?: { tenantId?: string }) {
     mockHttp = createMockHttp(responses);
     storage = new MockStorage();
     tokenManager = new TokenManager(storage);
@@ -94,6 +99,7 @@ describe('AuthClient', () => {
       tokenManager,
       http: mockHttp,
       baseUrl: BASE_URL,
+      tenantId: options?.tenantId,
     });
   }
 
@@ -319,7 +325,7 @@ describe('AuthClient', () => {
   describe('changePassword', () => {
     const CHANGE_PASSWORD_KEY = `PUT ${BASE_URL}/identity/api/v1/auth/me/password`;
 
-    it('sends passwords as-is', async () => {
+    it('sends old_password/new_password with transmission in plain mode', async () => {
       setupClient({
         [AUTH_CONFIG_KEY]: plainAuthConfig(),
         [CHANGE_PASSWORD_KEY]: { data: {} },
@@ -329,9 +335,30 @@ describe('AuthClient', () => {
 
       const lastReq = mockHttp.getLastRequest()!;
       const body = parseBody(lastReq.body);
-      expect(body.current_password).toBe('oldpass');
-      expect(body.password).toBe('newpass123');
-      // 修改密码时不发送 password_transmission — 后端负责哈希
+      expect(body.old_password).toBe('oldpass');
+      expect(body.new_password).toBe('newpass123');
+      expect(body.password_transmission).toBe('plain');
+      // 旧契约字段名已废弃（服务端 dto.ChangePasswordRequest 只认 old_password/new_password）
+      expect(body.current_password).toBeUndefined();
+      expect(body.password).toBeUndefined();
+    });
+
+    it('hashes both passwords against tenant config in hash mode', async () => {
+      // 只注册租户级配置：若客户端按 default 取配置会命中 404 → 退化为 plain → 断言失败。
+      setupClient({
+        [AUTH_CONFIG_TENANT_KEY]: hashAuthConfig(),
+        [CHANGE_PASSWORD_KEY]: { data: {} },
+      }, { tenantId: 't1' });
+
+      await client.changePassword('oldpass', 'newpass123');
+
+      const lastReq = mockHttp.getLastRequest()!;
+      const body = parseBody(lastReq.body);
+      expect(body.old_password).toBe(await sha256Hex('oldpass|t1'));
+      expect(body.new_password).toBe(await sha256Hex('newpass123|t1'));
+      expect(body.old_password).toMatch(/^[0-9a-f]{64}$/);
+      expect(body.new_password).toMatch(/^[0-9a-f]{64}$/);
+      expect(body.password_transmission).toBe('hash');
     });
 
     it('throws AutionalAuthError on 4xx', async () => {

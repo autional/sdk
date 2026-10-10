@@ -192,27 +192,29 @@ export class AuthClient {
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    const authConfig = await this.fetchAuthConfig();
+    // 取登录侧同一租户的配置（此前不带 tenantId → default 配置，hash 输入会拼上错误 tenant id）
+    const authConfig = await this.fetchAuthConfig(this.tenantId || undefined);
 
-    const processed = await processPasswordForTransmission(
-      newPassword,
-      {
-        mode: authConfig.passwordPolicy.mode,
-        tenantId: authConfig.tenantId,
-        requireUpper: false,
-        minLength: 0,
-        publicKey: authConfig.transmissionPublicKey || '',
-      },
-      this.keyExchangeFn,
-    );
+    const policy = {
+      mode: authConfig.passwordPolicy.mode,
+      tenantId: authConfig.tenantId || this.tenantId || '',
+      requireUpper: false,
+      minLength: 0,
+      publicKey: authConfig.transmissionPublicKey || '',
+    };
+
+    // 新旧密码都必须按传输策略预处理：hash 模式下服务端直接以收到的值 verify/哈希，
+    // 只处理新密码会让旧密码校验恒失败（identity 侧 dto.ChangePasswordRequest 契约）。
+    const processedOld = await processPasswordForTransmission(currentPassword, policy, this.keyExchangeFn);
+    const processedNew = await processPasswordForTransmission(newPassword, policy, this.keyExchangeFn);
 
     const body: Record<string, unknown> = {
-      current_password: currentPassword,
-      password: processed.password,
-      password_transmission: processed.passwordTransmission,
+      old_password: processedOld.password,
+      new_password: processedNew.password,
+      password_transmission: processedNew.passwordTransmission,
     };
-    if (processed.keyExchangeId) body.key_exchange_id = processed.keyExchangeId;
-    if (processed.clientPubKey) body.client_pub_key = processed.clientPubKey;
+    if (processedNew.keyExchangeId) body.key_exchange_id = processedNew.keyExchangeId;
+    if (processedNew.clientPubKey) body.client_pub_key = processedNew.clientPubKey;
 
     const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/me/password`, {
       method: 'PUT',

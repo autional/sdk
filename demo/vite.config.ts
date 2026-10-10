@@ -19,7 +19,8 @@ export default defineConfig({
     proxy: {
       '/.well-known': { target: 'http://localhost:11080', changeOrigin: true },
       '/identity': { target: 'http://localhost:11080', changeOrigin: true, rewrite: (path) => path.replace(/^\/identity/, '/bff/identity') },
-      '/oauth': { target: 'http://localhost:11080', changeOrigin: true, rewrite: (path) => path.replace(/^\/oauth/, '/bff/oauth') },
+      // 只代理 API 形状路径；否则会吞掉 SPA 路由 /oauth/callback（SDK 约定回调路径）
+      '/oauth/api': { target: 'http://localhost:11080', changeOrigin: true, rewrite: (path) => path.replace(/^\/oauth/, '/bff/oauth') },
       '/billing': { target: 'http://localhost:11080', changeOrigin: true, rewrite: (path) => path.replace(/^\/billing/, '/bff/billing') },
       '/mfa': { target: 'http://localhost:11080', changeOrigin: true, rewrite: (path) => path.replace(/^\/mfa/, '/bff/mfa') },
       '/tenant': { target: 'http://localhost:11080', changeOrigin: true, rewrite: (path) => path.replace(/^\/tenant/, '/bff/tenant') },

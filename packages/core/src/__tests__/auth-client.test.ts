@@ -513,6 +513,27 @@ describe('AuthClient', () => {
       expect(loadPkceSession()).toBeNull();
     });
 
+    it('shares one token exchange across concurrent calls with the same code (StrictMode double-effect)', async () => {
+      const at = createToken(3600);
+      stubBrowserWindow();
+      seedSession();
+      setupClient({
+        [TOKEN_KEY]: { access_token: at, refresh_token: 'rt', expires_in: 3600, token_type: 'Bearer' },
+        [USERINFO_KEY]: { sub: 'user-9', email: 'u9@example.com' },
+      });
+
+      const url = 'https://app.example.com/oauth/callback?code=abc&state=test-state';
+      const [r1, r2] = await Promise.all([
+        client.handleOAuthCallback(url),
+        client.handleOAuthCallback(url),
+      ]);
+
+      expect(r1.accessToken).toBe(at);
+      expect(r2.accessToken).toBe(at);
+      const tokenReqs = mockHttp.getRequests().filter((r) => r.url.endsWith('/oauth/api/v1/oauth/token'));
+      expect(tokenReqs.length).toBe(1);
+    });
+
     it('rejects state mismatch before any token exchange', async () => {
       stubBrowserWindow();
       seedSession();

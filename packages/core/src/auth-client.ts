@@ -36,6 +36,8 @@ export class AuthClient {
   private keyExchangeFn?: KeyExchangeFn;
   private appId: string;
   private configCache: Map<string, { data: TenantAuthConfig; at: number }> = new Map();
+  /** 同一授权码的在飞换票（React StrictMode 等会并发触发两次回调） */
+  private inflightCallback: { code: string; promise: Promise<AuthResult> } | null = null;
   readonly tenantId: string;
 
   constructor(config: AuthClientConfig) {
@@ -299,6 +301,22 @@ export class AuthClient {
     const code = urlObj.searchParams.get('code');
     if (!code) throw new AutionalAuthError('OAUTH_FAILED', 'No authorization code in callback URL', 400);
 
+    // 授权码一次性：StrictMode/双挂载并发调用时复用同一在飞换票，避免第二次撞「already used」
+    if (this.inflightCallback && this.inflightCallback.code === code) {
+      return this.inflightCallback.promise;
+    }
+    const promise = this.exchangeOAuthCode(urlObj, code);
+    this.inflightCallback = { code, promise };
+    try {
+      return await promise;
+    } finally {
+      if (this.inflightCallback && this.inflightCallback.code === code) {
+        this.inflightCallback = null;
+      }
+    }
+  }
+
+  private async exchangeOAuthCode(urlObj: URL, code: string): Promise<AuthResult> {
     const pending = loadPkceSession();
     if (!pending) {
       throw new AutionalAuthError('OAUTH_SESSION_LOST', 'PKCE session not found — loginWithOAuth must run in this tab before the callback', 400);

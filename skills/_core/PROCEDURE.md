@@ -101,15 +101,18 @@ Autional 为应用提供身份层。本 Skill 把单机应用（或没有账号�
 
 1. Execute Phases 0 → 8 in order. Before each phase, announce "Phase N starting". After each phase, show results and wait for the user's confirmation before continuing.
 2. On a code error: `git checkout -- <file>` to restore that file, fix, retry. If a whole phase fails: restore every file you changed in it, restart the phase.
-3. All changes happen on an isolated branch (`feature/autional`). No git? Fall back to per-file backups (`cp file file.autional-backup`).
+3. All changes happen on an isolated branch (`feature/autional`). Detect the repo's default branch first — `git symbolic-ref --short refs/remotes/origin/HEAD`, fallback `main`, then `master` — and branch from it. No git? Fall back to per-file backups (`cp file file.autional-backup`).
 4. Never run `git reset --hard`. Restore files individually with `git checkout -- <file>`.
-5. Before touching anything: `git stash --include-untracked` to preserve the user's work; restore it with `git stash pop` at the end (hand conflicts to the user).
-6. Never read the existing contents of the user's `.env` — only append your own keys. Never read or dump the user's user-table data.
-7. The admin password is displayed **once**. Never write it into a code or config file.
-8. All injected code is MIT-compatible; do not introduce GPL dependencies. Do not remove or alter the user's existing license.
-9. After changes, `npm run build` (or the project's build command) must pass; on failure, restore the changed files immediately.
-10. Write `AUTIONAL_CHANGES.md` recording every file/package you changed.
-11. Retry without a hard limit on tenant-name collisions and test failures — except network unreachability and invalid credentials, which must surface to the user instead of silently retrying.
+5. Dirty working tree? **Stop and ask the user.** Never stash or commit their work silently. Options: [A] the user commits or stashes it (recommended); [B] you run `git stash --include-untracked` only after explicit consent, and restore it with `git stash pop` at the end (hand conflicts to the user); [C] the user handles it another way (another clone/worktree, …) and tells you when to proceed.
+6. Leave a checkpoint commit at every phase boundary (`git add -A && git commit -m "checkpoint: Phase N"`), so every finished phase can be returned to.
+7. **Never merge into the default branch and never `git push` without the user's explicit choice at the Phase 8 gate.** Until then the default branch stays exactly as it was before the integration.
+8. Never read the existing contents of the user's `.env` — only append your own keys. Never read or dump the user's user-table data.
+9. The admin password is displayed **once**. Never write it into a code or config file.
+10. All injected code is MIT-compatible; do not introduce GPL dependencies. Do not remove or alter the user's existing license.
+11. After changes, `npm run build` (or the project's build command) must pass; on failure, restore the changed files immediately.
+12. Write `AUTIONAL_CHANGES.md` recording every file/package you changed.
+13. Retry without a hard limit on tenant-name collisions and test failures — except network unreachability and invalid credentials, which must surface to the user instead of silently retrying.
+14. Degrade transparently: if your environment cannot run a command, print the exact command for the user and continue with what you can; if the user asks for plan-only, output the plan and commands and execute nothing.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## 硬性规则——不得跳过
@@ -118,15 +121,18 @@ Autional 为应用提供身份层。本 Skill 把单机应用（或没有账号�
 
 1. 按 Phase 0 → 8 顺序执行。每个 Phase 开始前声明「Phase N 开始」。结束后展示结果，等用户确认再继续。
 2. 改代码出错 → `git checkout -- <file>` 恢复该文件 → 修正 → 重试。整个 Phase 失败 → 恢复该 Phase 改过的所有文件 → 从头重来。
-3. 所有改动在独立分支（`feature/autional`）上进行。没有 git → 降级为逐文件备份（`cp file file.autional-backup`）。
+3. 所有改动在独立分支（`feature/autional`）上进行。先探测仓库默认分支——`git symbolic-ref --short refs/remotes/origin/HEAD`，失败回退 `main`、再 `master`——从它建分支。没有 git → 降级为逐文件备份（`cp file file.autional-backup`）。
 4. 永不使用 `git reset --hard`。一律 `git checkout -- <file>` 逐文件恢复。
-5. 动手前 `git stash --include-untracked` 保存用户当前工作；结束后 `git stash pop` 恢复（冲突交给用户处理）。
-6. 永不读取用户 `.env` 原有内容——只追加自己的字段。永不读取/导出用户表数据。
-7. 管理员密码**只显示一次**。绝不写入代码或配置文件。
-8. 注入的代码全部 MIT 兼容；不引入 GPL 依赖。不删除、不修改用户原有 license。
-9. 改后必须 `npm run build`（或项目等效构建命令）通过；失败立即逐文件恢复。
-10. 输出 `AUTIONAL_CHANGES.md` 记录所有变更。
-11. 租户名冲突、测试失败不设重试上限；网络不可达与凭证错误除外——必须上报用户，不得静默重试。
+5. 工作区不干净？**停下，先问用户。** 绝不静默 stash 或提交用户的工作。选项：[A] 用户自己落 commit 或 stash（推荐）；[B] 经用户明确同意后由你执行 `git stash --include-untracked`，收尾时必须 `git stash pop` 还原（冲突交给用户）；[C] 用户自行处理（另开 clone/worktree 等），处理完再继续。
+6. 每个 Phase 边界在接入分支上留一个 checkpoint 提交（`git add -A && git commit -m "checkpoint: Phase N"`），保证随时能退回上一个完成的 Phase。
+7. **未经用户在 Phase 8 出口门的明确选择，绝不合并进默认分支、绝不 `git push`。** 在此之前，默认分支必须与接入前保持一致。
+8. 永不读取用户 `.env` 原有内容——只追加自己的字段。永不读取/导出用户表数据。
+9. 管理员密码**只显示一次**。绝不写入代码或配置文件。
+10. 注入的代码全部 MIT 兼容；不引入 GPL 依赖。不删除、不修改用户原有 license。
+11. 改后必须 `npm run build`（或项目等效构建命令）通过；失败立即逐文件恢复。
+12. 输出 `AUTIONAL_CHANGES.md` 记录所有变更。
+13. 租户名冲突、测试失败不设重试上限；网络不可达与凭证错误除外——必须上报用户，不得静默重试。
+14. 降级要透明：环境跑不了某条命令 → 把完整命令打印给用户执行，其余继续；用户要求只出方案（plan-only）→ 只输出方案与命令，不执行任何操作。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -142,22 +148,33 @@ Require: `node` ≥ 18, a package manager (`npm`/`pnpm`/`yarn` — detect from l
 1. No git? → fall back to file-backup mode (cp file file.autional-backup before each change).
 2. Not a repo? → git init && echo "node_modules/" > .gitignore
 3. Missing identity? → git config user.name "Autional Onboarding" / user.email "onboarding@localhost"
-4. Save work:   git stash --include-untracked
-5. Isolate:     git checkout -b feature/autional  (branch exists → git checkout feature/autional)
-6. Recovery paths:
+4. Default branch: git symbolic-ref --short refs/remotes/origin/HEAD
+   (no remote or no ref → try main, then master)
+5. Working tree clean? → go to step 6.
+   Dirty? → STOP and ask the user. Never stash silently. Options:
+     [A] user commits or stashes their work now (recommended)
+     [B] you run git stash --include-untracked — only after explicit consent;
+         you must restore it with git stash pop at the end
+     [C] user handles it their own way (another clone/worktree, …) — wait for their go-ahead
+6. Isolate:  git checkout -b feature/autional <default>  (branch exists → git checkout feature/autional)
+7. Checkpoint at every phase boundary: git add -A && git commit -m "checkpoint: Phase N"
+8. Recovery paths:
    one file  → git checkout -- <file>
    one phase → git checkout -- <all files changed in this phase>
-   abandon   → git checkout main && git stash pop
-   success   → git add -A && git commit -m "feat: Autional integration"
-               git checkout main && git merge feature/autional && git stash pop
+   abandon   → restore every file changed in the current phase (git checkout -- <files>),
+               git checkout <default>,
+               keep or delete feature/autional (user's call),
+               then git stash pop if and only if step 5 [B] stashed user work
 ```
 
 ### 0.3 Risk disclosure (mandatory)
 
 ```
 This procedure will modify project files (list shown in Phase 5.0).
-Your work is preserved via git stash before anything starts.
-You can say "abandon" at any time and everything is restored.
+All changes happen on an isolated branch; the default branch stays untouched
+until you explicitly approve a merge at the end.
+Your existing work is handled first (0.2 step 5) — nothing is stashed or committed without your consent.
+You can say "abandon" at any time and the project is restored.
 Continue? [Continue] [Cancel]
 ```
 <!-- /lang:en -->
@@ -174,22 +191,32 @@ Continue? [Continue] [Cancel]
 1. 没有 git？→ 降级为文件备份模式（每次改动前 cp file file.autional-backup）。
 2. 未初始化？→ git init && echo "node_modules/" > .gitignore
 3. 缺身份？   → git config user.name "Autional Onboarding" / user.email "onboarding@localhost"
-4. 保存工作： git stash --include-untracked
-5. 隔离分支： git checkout -b feature/autional（已存在 → git checkout feature/autional）
-6. 回退路径：
+4. 默认分支： git symbolic-ref --short refs/remotes/origin/HEAD
+   （无远端或无该 ref → 依次尝试 main、master）
+5. 工作区干净？→ 跳到第 6 步。
+   不干净 → 停下问用户，绝不静默 stash。选项：
+     [A] 用户自己落 commit 或 stash（推荐）
+     [B] 经用户明确同意后由你执行 git stash --include-untracked；
+         收尾时必须 git stash pop 还原
+     [C] 用户自行处理（另开 clone/worktree 等）——等用户确认再继续
+6. 隔离分支： git checkout -b feature/autional <默认分支>（已存在 → git checkout feature/autional）
+7. 每个 Phase 边界落 checkpoint： git add -A && git commit -m "checkpoint: Phase N"
+8. 回退路径：
    单个文件 → git checkout -- <file>
    整个 Phase → git checkout -- <本 Phase 改过的所有文件>
-   放弃接入 → git checkout main && git stash pop
-   接入成功 → git add -A && git commit -m "feat: Autional integration"
-             git checkout main && git merge feature/autional && git stash pop
+   放弃接入 → 恢复本 Phase 改过的所有文件（git checkout -- <files>），
+             git checkout <默认分支>，
+             保留或删除 feature/autional（由用户定），
+             仅当第 5 步走了 [B] 才 git stash pop 还原用户工作
 ```
 
 ### 0.3 风险告知（强制）
 
 ```
 本流程将修改你的项目文件（清单见 Phase 5.0）。
-开始前会通过 git stash 保存你的现有工作。
-随时可以说「放弃接入」，一切恢复原状。
+所有改动先落在独立分支；默认分支在你最终明确同意合并前保持原样。
+你的现有工作先被妥善处理（0.2 第 5 步）——未经你同意，不 stash、不提交。
+随时可以说「放弃接入」，项目会恢复原状。
 继续？[继续] [取消]
 ```
 <!-- /lang:zh -->
@@ -260,6 +287,35 @@ core + framework package adds ≈ 15 KB (≈ 5 KB gzipped).
 First load: +≈ 50 ms (OIDC discovery, cached afterwards). Token refresh only on 401.
 Identical weight to the auth code it replaces — plus security updates you no longer maintain.
 ```
+
+### 1.6 App-data isolation check (read-only)
+
+Login is only half of "multi-user". Check where the app keeps its **application data** (notes, todos, documents…) and whether that data is isolated per account:
+
+```
+1. Locate the data layer: localStorage / IndexedDB / SQLite / a backend API.
+2. Are storage keys scoped per user?  "notes" (shared) vs "notes:<userId>" (isolated).
+3. Are backend rows scoped per user?  a user_id / owner_id column, or none?
+4. Once login works (Phase 7): log out, log in as another account — does the data change?
+```
+
+Report honestly:
+
+```
+Data isolation: ISOLATED / NOT ISOLATED / NOT APPLICABLE (no app data yet)
+Where: <storage keys or tables>
+What another login sees: <a fresh account's empty state | the same shared data>
+```
+
+If NOT isolated, present options — **do not touch the data layer on your own; any change happens only after the user explicitly approves it**:
+
+```
+[A] Namespace the existing storage per user id (small; local-first apps)
+[B] Move app data behind a backend with per-user scoping (larger; enables multi-device)
+[C] Keep as-is for now (e.g. single-machine demo) — record the finding instead
+```
+
+Record the finding and the user's decision in `AUTIONAL_CHANGES.md`. An approved change is extra scope: list it in the Phase 5.0 preview and keep it on the same branch.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 1 · 系统分析（只读）
@@ -327,6 +383,35 @@ core + 框架包 增加约 15 KB（gzip 后约 5 KB）。
 首屏 +约 50 ms（OIDC discovery，之后走缓存）。Token 刷新仅 401 时触发。
 与被替换掉的认证代码等重——还免去了后续安全维护。
 ```
+
+### 1.6 应用数据隔离检查（只读）
+
+登录只是「多用户」的一半。检查应用的**业务数据**（笔记、待办、文档……）存在哪里、是否按账号隔离：
+
+```
+1. 定位数据层：localStorage / IndexedDB / SQLite / 后端 API。
+2. 存储键是否按用户区分？  "notes"（共享）vs "notes:<userId>"（隔离）。
+3. 后端行是否带用户维度？  有 user_id / owner_id 列，还是完全没有？
+4. 登录打通后（Phase 7）：登出、换一个账号登录——数据变了吗？
+```
+
+如实报告：
+
+```
+数据隔离：已隔离 / 未隔离 / 不适用（应用尚无业务数据）
+位置：<存储键或表>
+换账号所见：<新账号的空状态 | 与之前完全相同的共享数据>
+```
+
+如果「未隔离」，给出选项——**不要自作主张动数据层；任何整改动作必须经用户明确同意后才执行**：
+
+```
+[A] 现有存储按用户 id 做键名空间（小改；本地优先应用）
+[B] 业务数据迁到带用户维度的后端（较大；可跨设备）
+[C] 暂不处理（如单机演示）——把结论记录下来即可
+```
+
+结论（与用户的选择）写入 `AUTIONAL_CHANGES.md`。用户批准的整改属于附加范围：列入 Phase 5.0 改动预览，留在同一分支上。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -707,7 +792,7 @@ After login, users manage their own account:
 ```
 npm run build (or the project's build command)
   → pass ✅ → Phase 6
-  → fail ❌ → git stash → analyze → fix → retry
+  → fail ❌ → checkpoint commit → analyze → fix → retry
   → 3 consecutive failures → git checkout -- <changed files> → analyze → fix → retry
 If the project has `npm test`, run it; fix only failures caused by this integration.
 ```
@@ -758,7 +843,7 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 ```
 npm run build（或项目等效构建命令）
   → 通过 ✅ → 进入 Phase 6
-  → 失败 ❌ → git stash → 分析 → 修复 → 重试
+  → 失败 ❌ → 落 checkpoint 提交 → 分析 → 修复 → 重试
   → 连续 3 次失败 → git checkout -- <改动文件> → 分析 → 修复 → 重试
 若项目有 `npm test`，一并运行；只修本次接入导致的失败。
 ```
@@ -879,6 +964,29 @@ Common operations: add user → Admin › Users › Add; reset password → Admi
   5. Production: make sure the app origin is allowed for the app in the developer portal
   6. After a few days: check login success rate and token-refresh metrics
 ```
+
+### 8.4 Branch delivery gate (explicit confirmation required)
+
+```
+Integration complete on branch feature/autional. Nothing has been merged.
+
+Deliverables:
+  branch:   feature/autional — <N> checkpoint commits ahead of <default>
+  changes:  <diffstat summary>
+  evidence: build <pass/fail> · unit tests <pass/fail> · integration tests <pass/fail>
+
+Choose:
+  [A] Merge into <default>
+  [B] Keep the branch for review — merge later yourself
+  [C] Discard the branch
+
+Then return to the default branch; restore stashed user work if any (0.2 step 5 [B]):
+  [A] git checkout <default> && git merge --no-ff feature/autional && git stash pop
+  [B] git checkout <default> && git stash pop          (feature/autional stays)
+  [C] git checkout <default> && git branch -D feature/autional && git stash pop
+  (conflicts on git stash pop → hand to the user)
+Never merge, push, or delete the branch before the user explicitly picks an option.
+```
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 8 · 收尾
@@ -912,6 +1020,29 @@ Common operations: add user → Admin › Users › Add; reset password → Admi
   4. npm run dev → 跑通 登录 → Dashboard → 登出
   5. 生产环境：在开发者门户为该应用放行你的站点 origin
   6. 数日后：检查登录成功率与 Token 刷新指标
+```
+
+### 8.4 分支交付出口门（必须显式确认）
+
+```
+接入已在 feature/autional 分支上完成，尚未合并。
+
+交付物：
+  分支：   feature/autional——领先 <默认分支> <N> 个 checkpoint 提交
+  改动：   <diffstat 摘要>
+  证据：   构建 <通过/失败> · 单元测试 <通过/失败> · 集成测试 <通过/失败>
+
+请选择：
+  [A] 合并进 <默认分支>
+  [B] 保留分支再检视——之后你自己合并
+  [C] 丢弃分支
+
+之后回到默认分支；若曾代管用户工作（0.2 第 5 步 [B]）则还原：
+  [A] git checkout <默认分支> && git merge --no-ff feature/autional && git stash pop
+  [B] git checkout <默认分支> && git stash pop          （feature/autional 保留）
+  [C] git checkout <默认分支> && git branch -D feature/autional && git stash pop
+  （git stash pop 冲突 → 交给用户处理）
+未经用户明确选择，绝不合并、不 push、不删分支。
 ```
 <!-- /lang:zh -->
 
@@ -1066,7 +1197,7 @@ git checkout <登录页>   # 若用了选项 A
 
 ```
 Phases:
-  ☐ Phase 0 preparation (branch isolation active)
+  ☐ Phase 0 preparation (default branch detected; dirty-tree decision recorded; isolation branch active)
   ☐ Phase 1 analysis
   ☐ Phase 2 strategy confirmed by the user
   ☐ Phase 3 tenant + app + credentials saved
@@ -1086,6 +1217,13 @@ Artifacts:
   ☐ AUTIONAL_CHANGES.md exists
   ☐ npm run dev boots the app
 
+Workspace + delivery:
+  ☐ checkpoints committed at each phase boundary
+  ☐ default branch untouched (no merge / no push without the exit-gate choice)
+  ☐ stashed user work restored (git stash pop), or conflicts handed to the user
+  ☐ data-isolation finding disclosed; any change only with explicit user consent
+  ☐ exit gate answered: merge / keep / discard
+
 Final summary to the user:
   App ID: <appId> · Issuer: {{ISSUER}} · Admin: <admin email>
   Login page: <url>/login · Start: npm run dev · Docs: AUTIONAL_SETUP.md
@@ -1096,7 +1234,7 @@ Final summary to the user:
 
 ```
 Phase：
-  ☐ Phase 0 前置准备（分支隔离生效）
+  ☐ Phase 0 前置准备（默认分支已探测；脏树处置已记录；分支隔离生效）
   ☐ Phase 1 系统分析
   ☐ Phase 2 策略已获用户确认
   ☐ Phase 3 租户 + 应用 + 凭证已保存
@@ -1115,6 +1253,13 @@ Phase：
   ☐ 管理员密码已提醒「只显示一次」
   ☐ AUTIONAL_CHANGES.md 存在
   ☐ npm run dev 可启动
+
+工作区与交付：
+  ☐ 各 Phase 边界已落 checkpoint
+  ☐ 默认分支保持原样（未经出口门选择不合并、不 push）
+  ☐ 代管的用户工作已还原（git stash pop），或冲突已交给用户
+  ☐ 数据隔离结论已披露；整改仅在用户明确同意后进行
+  ☐ 出口门已答复：合并 / 保留 / 丢弃
 
 向用户输出最终摘要：
   App ID: <appId> · Issuer: {{ISSUER}} · 管理员: <管理员邮箱>

@@ -14,6 +14,30 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-11] core@2bfed789ef9f —— SSO 接入对齐（第三轮内容发布）
+
+**内容**（sdk `1f5af5b` + `d0c66bd`）：
+
+- 新增 §5.2b「SSO 登录——用 Autional 登录」接入步骤（公开客户端 + PKCE；authorize 整页跳转；SDK `loginWithOAuth` / `handleOAuthCallback` 自动换票；登录表单与全部社交登录保留在 Autional 授权页）。
+- 配置模板 / 合规矩阵修正：`apiUrl` 补网关 `/bff` 前缀（`d0c66bd`；配套 SDK `handleOAuthCallback` 并发幂等修复）。
+
+**生成器修复**（sdk `3213050`）：`build-skills.mjs` 读 `_core` 源归一 CRLF→LF（`readCore`）——根治 G3 跨平台假红（Windows autocrlf 检出散列 ≠ CI LF 散列）；`coreHash` 与产物字节保真自此与平台无关。
+
+| 区 | CDN 版本 | 交付物（字节） | SKILL 主文件 sha256（前 8） |
+|----|----------|----------------|------------------------------|
+| com | `v0.1.0-6cdb6716` | SKILL.md 27975 / SKILL.zh.md 26626 / references 1514 + 2915 | `2cbec429` |
+| cn  | `v0.1.0-ecb907ae` | SKILL.md 26789 / SKILL.en.md 28187 / references 2042 + 2970 | `8bcc891f` |
+
+**发布记录**：
+
+- 站点快照：web `f3e94ed`（双站 `public/ai/` 镜像 + `.sha256` 刷新）。
+- CDN 上架：`f3b4024` —— 8 文件 `git hash-object --no-filters` 与 sdk `f690c38:skills/**` blob **全等**；区域指针 `latest.com.json → 6cdb6716`、`latest.cn.json → ecb907ae`；`vercel.json` rewrite 跟版。
+- 复验：**T4 全绿 34/34**（CDN 直链 8 + latest 别名 8 + 双站资产 8 + `.sha256` 6 + 指针 2 + `/ai` 页 2）。鲜度标记：EN `5.2b · SSO login` / ZH `5.2b · SSO 登录` 命中。计数口径勘正见 `RELEASING.md` §6。完整 sha256 与矩阵见 workspace `docs/positioning/12-skill-reachability-registry.md` §14。
+
+**备注**：
+
+- 配套线：服务端 SSO 修复（oauth `1950a7d` + core `v1.0.36` 等三仓）与 SDK `@autional/core@0.3.2`（OAuth 换票契约修复，npmjs）——skill 正文的 SSO 步骤以该组合为真机验证基线（dev E2E 三腿 18/18 · 12/12 · 9/9）。
+
 ## [2026-10-10] core@ffb54a28b76c —— 工作区协议强化（第二轮内容发布）
 
 **内容**（sdk `eb7aa9d`，分支 `task/skill-workspace-protocol`）：硬性规则 10→14 条。

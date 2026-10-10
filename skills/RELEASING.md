@@ -2,7 +2,7 @@
 
 > 对象：本目录 skill 内容线（`_core/` 单源 → `autional-{com,cn}/` 交付物）与 npm 交付线（`@autional/onboard`）。
 > 每轮发布的交付物记录 → `CHANGELOG.md`；线上可达性矩阵与实测散列 → 工作区 `docs/positioning/12-skill-reachability-registry.md`。
-> 最近执行：2026-10-10（工作区协议强化版；com `v0.1.0-d7f3c177` / cn `v0.1.0-64120c4b`；复验 30/30）。
+> 最近执行：2026-10-11（SSO 接入对齐波；com `v0.1.0-6cdb6716` / cn `v0.1.0-ecb907ae`；复验 34/34）。
 
 ## 0. 一图总览
 
@@ -120,7 +120,7 @@ commit（镜像 + `.sha256`）→ push `main` → 双 Vercel 生产部署。
 ### 4.1 计算内容指纹（版本号 = `v0.1.0-<8hex>`）
 
 配方（= ui 仓 build-cdn 同款）：`sha256(entries.map(rel + NUL + "sha384-" + sha384b64).sort().join("\n")).slice(0, 8)`；
-`rel` = 版本目录相对路径，`bytes` = **git blob 原始字节**。脚本（已验证可复现 2026-10-10 两区版本号）：
+`rel` = 版本目录相对路径，`bytes` = **git blob 原始字节**。脚本（已验证可复现：2026-10-10、2026-10-11 两轮四版本号）：
 
 ```bash
 cd <sdk>
@@ -199,17 +199,19 @@ commit + push `main` → 双 Vercel 生产部署 → 复验（§6）。
 > 细则与波次记录：工作区 `docs/NPM-SCOPE-UNIFICATION-PLAN.md`（波 2 / N-02/N-04/N-05/N-06）。
 > ⚠ 若变更牵涉 npm 包名或接入命令（skill 正文引用了发布事实），**先完成 npm 发布，再生成并发布 skill 内容**（N-04）。
 
-## 6. 全链复验（T4 模板，30 项）
+## 6. 全链复验（T4 模板，34 项）
 
 | 链 | 项数 | 判据 |
 |----|------|------|
 | CDN 版本直链（2 区 × 4 文件） | 8 | 落盘散列 == §4.3 blob；头 = immutable + CORS `*` + text/markdown |
-| CDN latest 别名（2 区：SKILL + 次级 + refs） | 6 | latest 路径内容 == 版本直链 |
+| CDN latest 别名（2 区 × 4 文件逐查） | 8 | latest 路径内容 == 版本直链 |
 | 双站资产（skill ×4 + references ×4） | 8 | 落盘散列 == sdk / 镜像真源 |
 | 双站 `.sha256`（skill.md + 双语言镜像） | 6 | 内容 = `<hash>␣␣<名>`，hash == 对应文件线上散列 |
 | 站点指针 `cdn.autional.{com,cn}/ai/latest.json` | 2 | 200 且 version = 新区版本 |
 | 双站 `/ai` 页 | 2 | 200 + 构建期内联鲜度标记命中 |
-| **合计** | **30** | 全绿 |
+| **合计** | **34** | 全绿 |
+
+> 计数勘正（2026-10-11）：此前记「合计 30」为行合计笔误（行和实为 32）；latest 别名自本轮起按区 × 4 文件逐查（+2），合计 = 34。
 
 ```bash
 # 落盘散列（⚠ 禁 curl | sha256sum——本机管道散列曾两次误值，见 registry §1）
@@ -232,7 +234,7 @@ git -C <sdk> cat-file blob HEAD:skills/autional-com/SKILL.md > ref.md && sha256s
 | 落点 | 内容 |
 |------|------|
 | `skills/CHANGELOG.md`（本目录） | 新区版本 + 文件字节 / sha256 前 8 + 发布记录（站点快照 commit、CDN commit、复验结果） |
-| 工作区 `docs/positioning/12-skill-reachability-registry.md` §12 | 版本与配方、完整 sha256、复验矩阵、站点映射 |
+| 工作区 `docs/positioning/12-skill-reachability-registry.md` §14（当前；历史波见 §12） | 版本与配方、完整 sha256、复验矩阵、站点映射 |
 | 工作区 12 号 §13（度量台账） | 快照行随发布更新（遥测另立） |
 | 双站 `/ai` 页 | 构建期注入的鲜度标记（发布后抽验） |
 

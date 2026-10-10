@@ -61,6 +61,7 @@ export class Autional {
       http: config.platform.http,
       baseUrl: apiUrl,
       tenantId: this.tenantId,
+      appId: config.appId,
     });
 
     this.api = new ApiClient({

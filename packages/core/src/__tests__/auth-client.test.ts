@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { TokenManager } from '../token-manager';
 import { AuthClient } from '../auth-client';
 import { AutionalAuthError } from '../errors';
+import { loadPkceSession, savePkceSession } from '../pkce';
 import type { StorageAdapter } from '../platform/types';
 
 class MockStorage implements StorageAdapter {
@@ -11,12 +12,14 @@ class MockStorage implements StorageAdapter {
   removeItem(k: string) { this.store.delete(k); }
 }
 
+interface RecordedRequest { url: string; method: string; body: string; headers: Record<string, string> }
+
 function createMockHttp(responses: Record<string, unknown>) {
-  let lastRequest: { url: string; method: string; body: string; headers?: Record<string, string> } | null = null;
+  const requests: RecordedRequest[] = [];
   return {
     request: async (url: string, init?: RequestInit) => {
       const method = init?.method || 'GET';
-      lastRequest = { url, method, body: (init?.body as string) || '', headers: (init?.headers as Record<string, string>) || {} };
+      requests.push({ url, method, body: (init?.body as string) || '', headers: (init?.headers as Record<string, string>) || {} });
       const key = `${method} ${url}`;
       const res = responses[key];
       if (!res) {
@@ -25,8 +28,24 @@ function createMockHttp(responses: Record<string, unknown>) {
       const status = (res as any).__status || 200;
       return new Response(JSON.stringify(res), { status, headers: { 'Content-Type': 'application/json' } });
     },
-    getLastRequest: () => lastRequest,
+    getRequests: () => requests,
+    getLastRequest: () => requests.length ? requests[requests.length - 1] : null,
   };
+}
+
+/** 模拟浏览器 window（location + sessionStorage），location.href 赋值仅记录不跳转 */
+function stubBrowserWindow(origin = 'https://app.example.com') {
+  const sessionStore = new Map<string, string>();
+  const win = {
+    location: { origin, href: '' },
+    sessionStorage: {
+      getItem: (k: string) => sessionStore.get(k) ?? null,
+      setItem: (k: string, v: string) => { sessionStore.set(k, v); },
+      removeItem: (k: string) => { sessionStore.delete(k); },
+    },
+  };
+  vi.stubGlobal('window', win);
+  return win;
 }
 
 function createToken(expInSeconds = 900): string {
@@ -91,7 +110,7 @@ describe('AuthClient', () => {
   let mockHttp: ReturnType<typeof createMockHttp>;
   let client: AuthClient;
 
-  function setupClient(responses: Record<string, unknown>, options?: { tenantId?: string }) {
+  function setupClient(responses: Record<string, unknown>, options?: { tenantId?: string; appId?: string }) {
     mockHttp = createMockHttp(responses);
     storage = new MockStorage();
     tokenManager = new TokenManager(storage);
@@ -100,8 +119,13 @@ describe('AuthClient', () => {
       http: mockHttp,
       baseUrl: BASE_URL,
       tenantId: options?.tenantId,
+      appId: options?.appId,
     });
   }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
   function parseBody(body: string): Record<string, unknown> {
     return JSON.parse(body) as Record<string, unknown>;
@@ -378,15 +402,194 @@ describe('AuthClient', () => {
       setupClient({});
 
       await expect(
-        client.loginWithOAuth({ provider: 'google' }),
+        client.loginWithOAuth({}),
       ).rejects.toThrow(AutionalAuthError);
 
       await expect(
-        client.loginWithOAuth({ provider: 'google' }),
+        client.loginWithOAuth({}),
       ).rejects.toMatchObject({
         name: 'AutionalAuthError',
         code: 'NOT_BROWSER',
       });
+    });
+
+    it('throws OAUTH_CLIENT_ID_REQUIRED without clientId or appId', async () => {
+      stubBrowserWindow();
+      setupClient({});
+
+      await expect(
+        client.loginWithOAuth({}),
+      ).rejects.toMatchObject({ code: 'OAUTH_CLIENT_ID_REQUIRED' });
+    });
+
+    it('redirects to auth-domain authorize endpoint with PKCE params', async () => {
+      const win = stubBrowserWindow();
+      setupClient({}, { appId: 'app-1' });
+
+      await client.loginWithOAuth({});
+
+      const url = new URL(win.location.href);
+      expect(url.origin).toBe('https://auth.example.com');
+      expect(url.pathname).toBe('/oauth/api/v1/oauth/authorize');
+      const p = url.searchParams;
+      expect(p.get('response_type')).toBe('code');
+      expect(p.get('client_id')).toBe('app-1');
+      expect(p.get('redirect_uri')).toBe('https://app.example.com/oauth/callback');
+      expect(p.get('scope')).toBe('openid profile email');
+      expect(p.get('code_challenge_method')).toBe('S256');
+      expect(p.get('code_challenge')).toMatch(/^[A-Za-z0-9_-]{43}$/);
+      expect(p.get('state')).toBeTruthy();
+
+      const pending = loadPkceSession()!;
+      expect(pending).not.toBeNull();
+      expect(pending.state).toBe(p.get('state'));
+      expect(pending.clientId).toBe('app-1');
+      expect(pending.redirectUri).toBe('https://app.example.com/oauth/callback');
+    });
+
+    it('honours clientId / redirectUri / scope / authorizeUrl / extraParams overrides', async () => {
+      const win = stubBrowserWindow();
+      setupClient({});
+
+      await client.loginWithOAuth({
+        clientId: 'c9',
+        redirectUri: 'https://app.example.com/cb',
+        scope: 'openid',
+        authorizeUrl: 'https://sso.example.org/oauth/api/v1/oauth/authorize',
+        extraParams: { prompt: 'consent' },
+      });
+
+      const url = new URL(win.location.href);
+      expect(url.origin).toBe('https://sso.example.org');
+      expect(url.searchParams.get('client_id')).toBe('c9');
+      expect(url.searchParams.get('redirect_uri')).toBe('https://app.example.com/cb');
+      expect(url.searchParams.get('scope')).toBe('openid');
+      expect(url.searchParams.get('prompt')).toBe('consent');
+    });
+  });
+
+  describe('handleOAuthCallback', () => {
+    const TOKEN_KEY = `POST ${BASE_URL}/oauth/api/v1/oauth/token`;
+    const USERINFO_KEY = `GET ${BASE_URL}/oauth/api/v1/oauth/userinfo`;
+
+    function seedSession(overrides?: Partial<{ verifier: string; state: string; redirectUri: string; clientId: string }>) {
+      savePkceSession({
+        verifier: 'test-verifier',
+        state: 'test-state',
+        redirectUri: 'https://app.example.com/oauth/callback',
+        clientId: 'app-1',
+        ...overrides,
+      });
+    }
+
+    it('exchanges code with client_id + code_verifier and loads userinfo', async () => {
+      const at = createToken(3600);
+      stubBrowserWindow();
+      seedSession();
+      setupClient({
+        [TOKEN_KEY]: { access_token: at, refresh_token: 'rt', expires_in: 3600, token_type: 'Bearer' },
+        [USERINFO_KEY]: { sub: 'user-9', email: 'u9@example.com' },
+      });
+
+      const result = await client.handleOAuthCallback('https://app.example.com/oauth/callback?code=abc&state=test-state');
+
+      expect(result.accessToken).toBe(at);
+      expect(result.user.id).toBe('user-9');
+      expect(result.user.email).toBe('u9@example.com');
+
+      const tokenReq = mockHttp.getRequests().find((r) => r.url.endsWith('/oauth/api/v1/oauth/token'))!;
+      const form = new URLSearchParams(tokenReq.body);
+      expect(form.get('grant_type')).toBe('authorization_code');
+      expect(form.get('code')).toBe('abc');
+      expect(form.get('client_id')).toBe('app-1');
+      expect(form.get('code_verifier')).toBe('test-verifier');
+      expect(form.get('redirect_uri')).toBe('https://app.example.com/oauth/callback');
+
+      const userinfoReq = mockHttp.getRequests().find((r) => r.url.endsWith('/oauth/api/v1/oauth/userinfo'))!;
+      expect(userinfoReq.headers['Authorization']).toBe(`Bearer ${at}`);
+
+      expect(tokenManager.getAuthMode()).toBe('sso');
+      expect(tokenManager.getOAuthClientId()).toBe('app-1');
+      expect(loadPkceSession()).toBeNull();
+    });
+
+    it('rejects state mismatch before any token exchange', async () => {
+      stubBrowserWindow();
+      seedSession();
+      setupClient({});
+
+      await expect(
+        client.handleOAuthCallback('https://app.example.com/oauth/callback?code=abc&state=evil'),
+      ).rejects.toMatchObject({ code: 'OAUTH_STATE_MISMATCH' });
+
+      expect(mockHttp.getRequests().length).toBe(0);
+    });
+
+    it('throws with error from callback URL', async () => {
+      stubBrowserWindow();
+      setupClient({});
+
+      await expect(
+        client.handleOAuthCallback('https://app.example.com/oauth/callback?error=access_denied&error_description=User%20denied'),
+      ).rejects.toMatchObject({ code: 'access_denied', message: 'User denied' });
+    });
+
+    it('throws OAUTH_SESSION_LOST without pending session', async () => {
+      stubBrowserWindow();
+      setupClient({});
+
+      await expect(
+        client.handleOAuthCallback('https://app.example.com/oauth/callback?code=abc&state=test-state'),
+      ).rejects.toMatchObject({ code: 'OAUTH_SESSION_LOST' });
+    });
+
+    it('surfaces server error_description on failed exchange', async () => {
+      stubBrowserWindow();
+      seedSession();
+      setupClient({
+        [TOKEN_KEY]: { error: 'invalid_grant', error_description: 'code expired', __status: 401 },
+      });
+
+      await expect(
+        client.handleOAuthCallback('https://app.example.com/oauth/callback?code=abc&state=test-state'),
+      ).rejects.toMatchObject({ code: 'invalid_grant', message: 'code expired', status: 401 });
+    });
+  });
+
+  describe('refreshToken (SSO mode)', () => {
+    const SSO_REFRESH_KEY = `POST ${BASE_URL}/oauth/api/v1/oauth/refresh`;
+
+    it('dispatches to oauth refresh endpoint when authMode is sso', async () => {
+      const newAt = createToken(900);
+      setupClient({
+        [SSO_REFRESH_KEY]: { access_token: newAt, refresh_token: 'new_rt', expires_in: 900 },
+      });
+      tokenManager.setTokens(createToken(), 'old_rt', 900);
+      tokenManager.setAuthMode('sso', 'app-1');
+
+      await client.refreshToken();
+
+      expect(tokenManager.getRefreshToken()).toBe('new_rt');
+      expect(tokenManager.getAccessToken()).toBe(newAt);
+      expect(tokenManager.getAuthMode()).toBe('sso');
+
+      const req = mockHttp.getLastRequest()!;
+      expect(req.url).toBe(`${BASE_URL}/oauth/api/v1/oauth/refresh`);
+      const form = new URLSearchParams(req.body);
+      expect(form.get('grant_type')).toBe('refresh_token');
+      expect(form.get('refresh_token')).toBe('old_rt');
+      expect(form.get('client_id')).toBe('app-1');
+    });
+
+    it('clears tokens and throws REFRESH_FAILED on SSO refresh failure', async () => {
+      setupClient({
+        [SSO_REFRESH_KEY]: { error: 'invalid_grant', error_description: 'refresh token expired', __status: 400 },
+      });
+      tokenManager.setTokens(createToken(), 'old_rt', 900);
+      tokenManager.setAuthMode('sso', 'app-1');
+
+      await expect(client.refreshToken()).rejects.toMatchObject({ code: 'REFRESH_FAILED', status: 401 });
+      expect(tokenManager.getRefreshToken()).toBeNull();
     });
   });
 

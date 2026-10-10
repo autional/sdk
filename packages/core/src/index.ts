@@ -19,6 +19,16 @@ export {
   type KeyExchangeFn,
 } from './crypto';
 export {
+  generatePkce,
+  generateState,
+  buildAuthorizeUrl,
+  resolveSsoAuthorizeUrl,
+  savePkceSession,
+  loadPkceSession,
+  clearPkceSession,
+} from './pkce';
+export type { PkceChallenge, PkceSession } from './pkce';
+export {
   AutionalError,
   AutionalAuthError,
   AutionalNetworkError,
@@ -31,6 +41,7 @@ export type {
   LoginRequest,
   RegisterRequest,
   OAuthOptions,
+  AuthMode,
   TokenClaims,
   AutionalEvent,
   SecurityAlert,

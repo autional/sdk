@@ -2,7 +2,7 @@
   "region": "cn",
   "siteHost": "www.autional.cn",
   "issuer": "https://api.autional.cn",
-  "apiUrl": "https://api.autional.cn",
+  "apiUrl": "https://api.autional.cn/bff",
   "npmScope": "@autional",
   "npmRegistry": "https://registry.npmmirror.com",
   "onboardCmd": "npx -y @autional/onboard --registry=https://registry.npmmirror.com",

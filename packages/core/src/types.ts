@@ -36,11 +36,20 @@ export interface RegisterRequest {
   name?: string;
 }
 
+/** 会话获取方式：password = 账号密码（identity），sso = OAuth 授权码 + PKCE（oauth 服务） */
+export type AuthMode = 'password' | 'sso';
+
 export interface OAuthOptions {
-  provider: string;
+  /** OAuth client_id（默认取 SDK 配置的 appId） */
+  clientId?: string;
+  /** 回调地址（默认 window.location.origin + '/oauth/callback'） */
   redirectUri?: string;
-  /** 租户 ID（可选，默认从 SDK init 时确定）*/
-  tenantId?: string;
+  /** 请求 scope（默认 'openid profile email'） */
+  scope?: string;
+  /** SSO 授权入口覆盖（默认由 apiUrl 推导 auth.<root> 域） */
+  authorizeUrl?: string;
+  /** 附加授权参数（如 prompt、login_hint、nonce） */
+  extraParams?: Record<string, string>;
 }
 
 export interface TokenClaims {

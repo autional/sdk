@@ -4,10 +4,14 @@ import type {
   AuthResult, LoginRequest, RegisterRequest, OAuthOptions,
   TenantAuthConfig, PasswordPolicyConfig,
 } from './types';
-import { AutionalAuthError, AutionalNetworkError } from './errors';
+import { AutionalAuthError } from './errors';
 import { processPasswordForTransmission } from './crypto/password-transmission';
 import { solveProofOfWork } from './crypto/pow-solver';
 import type { KeyExchangeFn } from './crypto/password-transmission';
+import {
+  buildAuthorizeUrl, clearPkceSession, generatePkce, generateState,
+  loadPkceSession, resolveSsoAuthorizeUrl, savePkceSession,
+} from './pkce';
 
 interface AuthClientConfig {
   tokenManager: TokenManager;
@@ -16,6 +20,8 @@ interface AuthClientConfig {
   keyExchangeFn?: KeyExchangeFn;
   /** 租户 ID（init 时确定，后续所有操作复用）*/
   tenantId?: string;
+  /** 应用 ID = OAuth client_id（SSO 登录时使用） */
+  appId?: string;
   /** 端点覆盖（留空使用默认路径）。后续从 auth-config 读取。 */
   endpoints?: Record<string, string>;
 }
@@ -28,7 +34,10 @@ export class AuthClient {
   private http: AutionalPlatform['http'];
   private baseUrl: string;
   private keyExchangeFn?: KeyExchangeFn;
+  private appId: string;
   private configCache: Map<string, { data: TenantAuthConfig; at: number }> = new Map();
+  /** 同一授权码的在飞换票（React StrictMode 等会并发触发两次回调） */
+  private inflightCallback: { code: string; promise: Promise<AuthResult> } | null = null;
   readonly tenantId: string;
 
   constructor(config: AuthClientConfig) {
@@ -36,6 +45,7 @@ export class AuthClient {
     this.http = config.http;
     this.baseUrl = config.baseUrl;
     this.keyExchangeFn = config.keyExchangeFn;
+    this.appId = config.appId || '';
     this.tenantId = config.tenantId || '';
   }
 
@@ -232,42 +242,155 @@ export class AuthClient {
     }
   }
 
-  async loginWithOAuth(options: OAuthOptions): Promise<void> {
-    const redirectUri = options.redirectUri || (typeof window !== 'undefined' ? window.location.origin + '/oauth/callback' : '');
-    const params = new URLSearchParams({ provider: options.provider, redirect_uri: redirectUri });
-    // 携带 tenant_id（如已确定），方便多租户 issuer 路由
-    const tenantId = options.tenantId || this.tenantId;
-    if (tenantId) {
-      params.set('tenant_id', tenantId);
-    }
-    if (typeof window !== 'undefined') {
-      window.location.href = `${this.baseUrl}/oauth/api/v1/oauth/${options.provider}/authorize?${params.toString()}`;
-    } else {
+  /**
+   * SSO 登录：整页跳转 Autional 授权端点（auth 域）。
+   * 需要应用注册回调地址（redirectUri）；回调页调用 handleOAuthCallback 完成换票。
+   */
+  async loginWithOAuth(options: OAuthOptions = {}): Promise<void> {
+    if (typeof window === 'undefined') {
       throw new AutionalAuthError('NOT_BROWSER', 'OAuth login requires a browser environment', 400);
+    }
+    if (typeof crypto === 'undefined' || !crypto.subtle) {
+      throw new AutionalAuthError('PKCE_UNAVAILABLE', 'Web Crypto API is unavailable — PKCE requires a secure (HTTPS) context', 400);
+    }
+    const clientId = options.clientId || this.appId;
+    if (!clientId) {
+      throw new AutionalAuthError('OAUTH_CLIENT_ID_REQUIRED', 'clientId is required — pass it in options or set appId in SDK config', 400);
+    }
+    const redirectUri = options.redirectUri || this.defaultRedirectUri();
+    const authorizeBase = options.authorizeUrl || resolveSsoAuthorizeUrl(this.baseUrl);
+
+    const { verifier, challenge } = await generatePkce();
+    const state = generateState();
+    savePkceSession({ verifier, state, redirectUri, clientId });
+
+    const params: Record<string, string> = {
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: options.scope || 'openid profile email',
+      state,
+      code_challenge: challenge,
+      code_challenge_method: 'S256',
+      ...options.extraParams,
+    };
+    window.location.href = buildAuthorizeUrl(authorizeBase, params);
+  }
+
+  /**
+   * 处理授权回调：校验 state → 用 PKCE verifier 换取令牌。
+   * 必须在 loginWithOAuth 的同一标签页调用（verifier 存 sessionStorage）。
+   */
+  async handleOAuthCallback(url: string): Promise<AuthResult> {
+    let urlObj: URL;
+    try {
+      urlObj = new URL(url);
+    } catch {
+      throw new AutionalAuthError('OAUTH_FAILED', 'Invalid callback URL', 400);
+    }
+
+    const errorParam = urlObj.searchParams.get('error');
+    if (errorParam) {
+      throw new AutionalAuthError(
+        errorParam,
+        urlObj.searchParams.get('error_description') || 'OAuth authorization failed',
+        400,
+      );
+    }
+
+    const code = urlObj.searchParams.get('code');
+    if (!code) throw new AutionalAuthError('OAUTH_FAILED', 'No authorization code in callback URL', 400);
+
+    // 授权码一次性：StrictMode/双挂载并发调用时复用同一在飞换票，避免第二次撞「already used」
+    if (this.inflightCallback && this.inflightCallback.code === code) {
+      return this.inflightCallback.promise;
+    }
+    const promise = this.exchangeOAuthCode(urlObj, code);
+    this.inflightCallback = { code, promise };
+    try {
+      return await promise;
+    } finally {
+      if (this.inflightCallback && this.inflightCallback.code === code) {
+        this.inflightCallback = null;
+      }
     }
   }
 
-  async handleOAuthCallback(url: string): Promise<AuthResult> {
-    const urlObj = new URL(url);
-    const code = urlObj.searchParams.get('code');
-    const state = urlObj.searchParams.get('state');
-    if (!code) throw new AutionalAuthError('OAUTH_FAILED', 'No authorization code in callback URL', 400);
+  private async exchangeOAuthCode(urlObj: URL, code: string): Promise<AuthResult> {
+    const pending = loadPkceSession();
+    if (!pending) {
+      throw new AutionalAuthError('OAUTH_SESSION_LOST', 'PKCE session not found — loginWithOAuth must run in this tab before the callback', 400);
+    }
+    const state = urlObj.searchParams.get('state') || '';
+    if (state !== pending.state) {
+      throw new AutionalAuthError('OAUTH_STATE_MISMATCH', 'OAuth state mismatch — possible CSRF attempt', 400);
+    }
+
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: pending.clientId,
+      redirect_uri: pending.redirectUri || this.defaultRedirectUri(),
+      code_verifier: pending.verifier,
+    });
 
     const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code', code, state: state ?? '',
-        redirect_uri: typeof window !== 'undefined' ? window.location.origin + '/oauth/callback' : '',
-      }).toString(),
+      body: body.toString(),
     });
 
-    if (!response.ok) throw new AutionalNetworkError(`OAuth token exchange failed (${response.status})`);
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.error ?? errJson.code ?? response.status),
+        String(errJson.error_description ?? errJson.message ?? `OAuth token exchange failed (${response.status})`),
+        response.status,
+      );
+    }
+
     const json = await response.json() as Record<string, unknown>;
-    return this.handleAuthResponse(json);
+    const result = this.handleAuthResponse(json);
+    this.tokenManager.setAuthMode('sso', pending.clientId);
+    try {
+      const info = await this.fetchUserInfo();
+      if (info) {
+        result.user = info as AuthResult['user'];
+        this.tokenManager.setUser(info);
+      }
+    } catch {
+      // userinfo 失败不阻断登录 — token 已到手，用户信息可稍后重试
+    }
+    await this.tokenManager.persist();
+    clearPkceSession();
+    return result;
+  }
+
+  /** OIDC userinfo（SSO 会话下获取用户信息） */
+  async fetchUserInfo(): Promise<Record<string, unknown> | null> {
+    const token = this.tokenManager.getAccessToken();
+    if (!token) return null;
+    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/userinfo`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    const json = await response.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    if (data.sub && !data.id) data.id = data.sub;
+    this.tokenManager.setUser(data);
+    return data;
+  }
+
+  private defaultRedirectUri(): string {
+    return typeof window !== 'undefined' ? `${window.location.origin}/oauth/callback` : '';
   }
 
   async refreshToken(): Promise<void> {
+    if (this.tokenManager.getAuthMode() === 'sso') {
+      return this.refreshSsoToken();
+    }
+
     const refreshToken = this.tokenManager.getRefreshToken();
     if (!refreshToken) throw new AutionalAuthError('NO_REFRESH_TOKEN', 'No refresh token available', 401);
 
@@ -301,12 +424,50 @@ export class AuthClient {
     this.tokenManager.persist();
   }
 
+  /** SSO 会话刷新：走 oauth 服务刷新端点（公开客户端凭 client_id 即可） */
+  private async refreshSsoToken(): Promise<void> {
+    const refreshToken = this.tokenManager.getRefreshToken();
+    if (!refreshToken) throw new AutionalAuthError('NO_REFRESH_TOKEN', 'No refresh token available', 401);
+
+    const clientId = this.tokenManager.getOAuthClientId() || this.appId;
+    const params: Record<string, string> = {
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    };
+    if (clientId) params['client_id'] = clientId;
+
+    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(params).toString(),
+    });
+
+    if (!response.ok) {
+      this.tokenManager.clear();
+      this.tokenManager.persist();
+      throw new AutionalAuthError('REFRESH_FAILED', 'SSO token refresh failed', 401);
+    }
+
+    const json = await response.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    this.tokenManager.setTokens(
+      data.access_token as string,
+      (data.refresh_token as string) || refreshToken,
+      (data.expires_in as number) || 900,
+    );
+    if (data.user) this.tokenManager.setUser(data.user as Record<string, unknown>);
+    this.tokenManager.persist();
+  }
+
   async logout(): Promise<void> {
     const accessToken = this.tokenManager.getAccessToken();
     const refreshToken = this.tokenManager.getRefreshToken();
+    const authMode = this.tokenManager.getAuthMode();
     this.tokenManager.clear();
     this.tokenManager.persist();
-    if (accessToken) {
+    // SSO 会话的令牌由 oauth 服务签发，identity logout 端点不适用；
+    // RP-Initiated Logout（auth 域 /oauth/logout）需整页跳转，由应用自行发起。
+    if (accessToken && authMode !== 'sso') {
       this.http.request(`${this.baseUrl}/identity/api/v1/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },

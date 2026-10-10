@@ -1,5 +1,5 @@
 import type { StorageAdapter } from './platform/types';
-import type { TokenClaims } from './types';
+import type { AuthMode, TokenClaims } from './types';
 
 interface TokenStore {
   accessToken: string | null;
@@ -7,6 +7,8 @@ interface TokenStore {
   user: Record<string, unknown> | null;
   tenantId: string | null;
   expiresAt: number | null;
+  authMode: AuthMode | null;
+  oauthClientId: string | null;
 }
 
 const STORAGE_PREFIX = 'autional_';
@@ -34,6 +36,8 @@ export class TokenManager {
       user: null,
       tenantId: null,
       expiresAt: null,
+      authMode: null,
+      oauthClientId: null,
     };
   }
 
@@ -101,6 +105,21 @@ export class TokenManager {
 
   setTenantId(tenantId: string | null): void {
     this.store.tenantId = tenantId;
+  }
+
+  setAuthMode(mode: AuthMode, oauthClientId?: string): void {
+    this.store.authMode = mode;
+    if (oauthClientId !== undefined) {
+      this.store.oauthClientId = oauthClientId;
+    }
+  }
+
+  getAuthMode(): AuthMode | null {
+    return this.store.authMode;
+  }
+
+  getOAuthClientId(): string | null {
+    return this.store.oauthClientId;
   }
 
   clear(): void {

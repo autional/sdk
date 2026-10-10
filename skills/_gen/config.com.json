@@ -2,7 +2,7 @@
   "region": "com",
   "siteHost": "www.autional.com",
   "issuer": "https://api.autional.com",
-  "apiUrl": "https://api.autional.com",
+  "apiUrl": "https://api.autional.com/bff",
   "npmScope": "@autional",
   "npmRegistry": "",
   "onboardCmd": "npx @autional/onboard",

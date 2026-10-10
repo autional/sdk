@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAutional, RequireAuth } from './autional';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { OAuthCallback } from './pages/OAuthCallback';
 
 export function App() {
   const { isAuthenticated } = useAutional();
@@ -10,6 +11,7 @@ export function App() {
     <Routes>
       <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route
         path="/dashboard"
         element={

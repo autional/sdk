@@ -7,7 +7,7 @@
  *   3. 改 appId 和 issuer
  *   4. 项目中永远 import from './autional'
  */
-import { AutionalProvider, useAutional, RequireAuth } from '@autional/react';
+import { AutionalProvider, useAutional, useAutionalContext, RequireAuth } from '@autional/react';
 
 export const autionalConfig = {
   appId: import.meta.env.VITE_AUTIONAL_APP_ID || 'demo-app',
@@ -18,4 +18,4 @@ export const autionalConfig = {
   syncTabs: false,
 };
 
-export { AutionalProvider, useAutional, RequireAuth };
+export { AutionalProvider, useAutional, useAutionalContext, RequireAuth };

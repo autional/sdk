@@ -30,7 +30,9 @@
  *   bare substrings ".com"/".cn" — the .cn build legitimately references
  *   registry.npmmirror.com. Add new regional domains here explicitly instead of loosening.
  *
- * Determinism: no timestamps anywhere; identical inputs → byte-identical outputs (idempotent).
+ * Determinism: no timestamps anywhere; LF-canonical (Windows autocrlf CRLF checkouts are
+ * normalized on read) — identical inputs → byte-identical outputs (idempotent), matching
+ * the git blob bytes regardless of platform.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
@@ -65,13 +67,18 @@ function fail(msg) {
   throw new Error(msg);
 }
 
+/** LF-canonical read of a _core source (must match the git blob bytes on every platform). */
+function readCore(rel) {
+  return readFileSync(join(CORE_DIR, rel), 'utf8').replace(/\r\n/g, '\n');
+}
+
 function coreHash() {
   const refs = readdirSync(join(CORE_DIR, 'references')).sort().map((f) => `references/${f}`);
   const files = [...refs, 'PROCEDURE.md'];
   const h = createHash('sha256');
   for (const rel of files) {
     h.update(`--- ${rel} ---\n`);
-    h.update(readFileSync(join(CORE_DIR, rel)));
+    h.update(readCore(rel));
     h.update('\n');
   }
   return h.digest('hex').slice(0, 12);
@@ -233,9 +240,9 @@ function buildReferenceDoc(config, rel, template, vars, hash, lang) {
 // ---- main ----
 
 const hash = coreHash();
-const procedureTemplate = readFileSync(join(CORE_DIR, 'PROCEDURE.md'), 'utf8');
+const procedureTemplate = readCore('PROCEDURE.md');
 const refNames = readdirSync(join(CORE_DIR, 'references')).sort();
-const refTemplates = refNames.map((f) => [f, readFileSync(join(CORE_DIR, 'references', f), 'utf8')]);
+const refTemplates = refNames.map((f) => [f, readCore(`references/${f}`)]);
 
 const configs = readdirSync(__dirname)
   .filter((f) => /^config\.[a-z]+\.json$/.test(f))
@@ -271,7 +278,7 @@ let stale = 0;
 let written = 0;
 
 for (const item of planned) {
-  const disk = existsSync(item.path) ? readFileSync(item.path, 'utf8') : null;
+  const disk = existsSync(item.path) ? readFileSync(item.path, 'utf8').replace(/\r\n/g, '\n') : null;
   const same = disk === item.content;
   if (!same) stale += 1;
   if (CHECK_ONLY) {

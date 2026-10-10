@@ -11,7 +11,6 @@ export function Login() {
   const [submitting, setSubmitting] = useState(false);
 
   const loginMethods = (authConfig as any)?.loginMethods || ['password'];
-  const oauthProviders = (authConfig as any)?.oauthProviders || [];
   const passwordPolicy = (authConfig as any)?.passwordPolicy || {};
   const transmissionMode = passwordPolicy.passwordTransmission || 'plain';
   const captchaProvider = (authConfig as any)?.captchaProvider || 'none';
@@ -34,8 +33,9 @@ export function Login() {
     }
   };
 
-  const handleOAuth = (provider: string) => {
-    loginWithOAuth({ provider });
+  const handleOAuth = () => {
+    // SSO 登录：跳转 Autional auth 域，社交登录（GitHub 等）在 IdP 登录页内选择
+    loginWithOAuth({});
   };
 
   if (isLoading) {
@@ -87,18 +87,14 @@ export function Login() {
         </form>
       )}
 
-      {/* OAuth Buttons */}
-      {oauthProviders.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <p style={{ textAlign: 'center', color: '#9ca3af', marginBottom: 12 }}>or continue with</p>
-          {oauthProviders.map((provider: string) => (
-            <button key={provider} className="btn btn-oauth" onClick={() => handleOAuth(provider)}>
-              <span style={{ fontSize: 18 }}>{getOAuthIcon(provider)}</span>
-              Continue with {provider.charAt(0).toUpperCase() + provider.slice(1)}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* SSO（Autional IdP + PKCE） */}
+      <div style={{ marginTop: 20 }}>
+        <p style={{ textAlign: 'center', color: '#9ca3af', marginBottom: 12 }}>or continue with</p>
+        <button className="btn btn-oauth" onClick={handleOAuth}>
+          <span style={{ fontSize: 18 }}>🔗</span>
+          Autional SSO
+        </button>
+      </div>
 
       {/* Magic Link */}
       {loginMethods.includes('magic_link') && (
@@ -125,9 +121,4 @@ export function Login() {
       </div>
     </div>
   );
-}
-
-function getOAuthIcon(provider: string): string {
-  const icons: Record<string, string> = { google: '🔵', github: '⚫', wechat: '🟢', apple: '⚪' };
-  return icons[provider] || '🔗';
 }

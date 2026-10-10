@@ -671,6 +671,24 @@ Detect the existing login page, then:
 
 Label each option with invasiveness / gain / rollback difficulty.
 
+### 5.2b · SSO login — "Continue with Autional"
+
+The app shows one "Continue with Autional" button; the login form and all social providers live on the Autional auth page. Use it when several apps must share one user pool, or when the app should not implement password/social login itself.
+
+1. **Register the app** (developer portal {{PORTAL_DEVELOPER}} → OAuth clients): note the `client_id` (this is the SDK `appId`); set the app's public callback URL as `redirect_uri` (e.g. `https://app.example.com/oauth/callback`); add the app's origin to the client's `cors_origins` (e.g. `https://app.example.com`). **CORS registration is mandatory** — without it the browser blocks the token exchange.
+2. **Login button**:
+   ```ts
+   await autional.loginWithOAuth({});   // client_id = appId; PKCE (S256) + state handled by the SDK
+   ```
+   Optional: `redirectUri`, `scope`, `extraParams` (e.g. `{ prompt: 'consent' }`), `authorizeUrl` override.
+3. **Callback route** at the same path as `redirect_uri`:
+   ```ts
+   const { user } = await autional.handleOAuthCallback(window.location.href);
+   ```
+   The SDK verifies `state`, exchanges the code with the stored PKCE verifier (no client_secret — public client), fetches userinfo, and stores the session in SSO mode (token refresh then goes to the OAuth refresh endpoint automatically).
+
+Social providers (Google / WeChat / …) are configured once on the Autional side; all apps share the same authorize entry.
+
 ### 5.3 Existing user table
 
 ```
@@ -734,6 +752,24 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 ```
 
 每个选项标注：侵入程度 / 收益 / 回退难度。
+
+### 5.2b · SSO 登录——「用 Autional 登录」
+
+应用只放一个「用 Autional 登录」按钮；登录表单与全部社交登录都留在 Autional 授权页。适合多应用共用一个用户池，或不想自己实现密码/社交登录的应用。
+
+1. **注册应用**（开发者门户 {{PORTAL_DEVELOPER}} → OAuth 客户端）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。
+2. **登录按钮**：
+   ```ts
+   await autional.loginWithOAuth({});   // client_id = appId；PKCE（S256）+ state 由 SDK 处理
+   ```
+   可选：`redirectUri`、`scope`、`extraParams`（如 `{ prompt: 'consent' }`）、`authorizeUrl` 覆盖。
+3. **回调路由**（路径与 `redirect_uri` 一致）：
+   ```ts
+   const { user } = await autional.handleOAuthCallback(window.location.href);
+   ```
+   SDK 校验 `state`、用留存的 PKCE verifier 换票（无 client_secret——公开客户端）、拉取 userinfo，并把会话记为 SSO 模式（后续刷新自动走 OAuth 刷新端点）。
+
+社交登录（Google / 微信等）在 Autional 侧一次配置；所有应用共用同一个授权入口。
 
 ### 5.3 存量用户表
 

@@ -14,6 +14,35 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-11] core@87c827301112 —— 接入摩擦 F5–F7 并入（第四轮内容发布）
+
+**内容**（sdk `aef3527`；`_core` PROCEDURE 6 处 + config-template 2 处）：
+
+- §5.2b 补「同源代理形态必须显式引脚 `authorizeUrl`」段（EN/ZH + ts 示例）：默认授权地址只把 `api.` 主机改写为 `auth.`（如 `api.autional.{{REGION}}` → `auth.autional.{{REGION}}`）；其余主机（同源 `/bff` 代理、自定义网关）原样保留 → 落到 API 平面（不提供登录界面）。
+- §2.3 补「登录页零输入项」排查段：`login_methods` 死路（声明的方法无对应 provider）→ 经 tenant auth-policy 修复（`PUT /admin/tenants/:id/auth-policy`，`login_methods` 为 JSON 字符串）；identity `PUT /admin/security/auth-config` 的 200 不可信（可静默成功无实效）。
+- EN/ZH 边界表各补 2 行：① 登录页零输入项（同上修复路径）；② 授权页挂起 ~30s 落品牌门户 = 本区 auth 主机后端代理故障 → 跨区对照（换 `auth.autional.{{REGION}}` 区后缀）并引脚健康区 `authorizeUrl`。
+- 配置模板 EN/ZH 补 `authorizeUrl` 注释块（同源代理形态引脚示例）。
+
+**触发**：takenote SSO 改造真机摩擦实证（F5 代理形态授权地址落 API 平面 / F6 .com auth `/bff` 502 / F7 `login_methods` 死路 + identity 假成功；台账 fork `e829964` / lab `221ecb3`，真机 12/12）。
+
+| 区 | CDN 版本 | 交付物（字节） | SKILL 主文件 sha256（前 8） |
+|----|----------|----------------|------------------------------|
+| com | `v0.1.0-6039ff74` | SKILL.md 29652 / SKILL.zh.md 28093 / references 1514 + 3306 | `c59e6d7b` |
+| cn  | `v0.1.0-343fde3d` | SKILL.md 28252 / SKILL.en.md 29860 / references 2042 + 3323 | `46e8abcb` |
+
+**发布记录**：
+
+- 站点快照：web `033ae05`（双站 `public/ai/` 镜像 + `.sha256` 刷新）。
+- CDN 上架：`2b0ace1` —— 8 文件 `git hash-object --no-filters` 与 sdk `aef3527:skills/**` blob **全等**；区域指针 `latest.com.json → 6039ff74`、`latest.cn.json → 343fde3d`；`vercel.json` rewrite 跟版。
+- 复验：**T4 全绿 34/34**（CDN 直链 8 + latest 别名 8 + 双站资产 8 + `.sha256` 6 + 指针 2 + `/ai` 页 2）。鲜度标记：EN `Same-origin proxy forms must pin` / ZH `同源代理形态必须显式引脚` 命中。完整 sha256 与矩阵见 workspace `docs/positioning/12-skill-reachability-registry.md` §15。
+- CI：`skills-gate`（Skills Consistency Gate）success（`aef3527`，推送 `4bedde2..aef3527`）。
+
+**备注**：
+
+- 本轮为内容指引变更（非工作区协议/门禁行为变更）→ T3 干跑按 `RELEASING.md` §2.3 范围判定跳过。
+- 生成机制零改动：新增示例复用既有 `{{REGION}}` 变量内联（G2 区纯净门自动保证两区渲染互不串区）。
+- npm 交付线（`@autional/onboard`）本轮无变更。
+
 ## [2026-10-11] core@2bfed789ef9f —— SSO 接入对齐（第三轮内容发布）
 
 **内容**（sdk `1f5af5b` + `d0c66bd`）：

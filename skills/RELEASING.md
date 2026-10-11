@@ -2,7 +2,7 @@
 
 > 对象：本目录 skill 内容线（`_core/` 单源 → `autional-{com,cn}/` 交付物）与 npm 交付线（`@autional/onboard`）。
 > 每轮发布的交付物记录 → `CHANGELOG.md`；线上可达性矩阵与实测散列 → 工作区 `docs/positioning/12-skill-reachability-registry.md`。
-> 最近执行：2026-10-11（SSO 接入对齐波；com `v0.1.0-6cdb6716` / cn `v0.1.0-ecb907ae`；复验 34/34）。
+> 最近执行：2026-10-11（接入摩擦 F5–F7 并入波；com `v0.1.0-6039ff74` / cn `v0.1.0-343fde3d`；复验 34/34）。
 
 ## 0. 一图总览
 
@@ -17,7 +17,7 @@ skills/autional-{com,cn}/（生成物；与 _core 同提交）
    └─ 通道 C npm ─────► @autional/onboard（npmjs）／@autional-cn/onboard（npmmirror）——独立版本列车
    │
    ▼
-全链复验（T4 矩阵 30 项）────► 记录回填（CHANGELOG.md + registry §12）
+全链复验（T4 矩阵 34 项）────► 记录回填（CHANGELOG.md + registry §15）
 ```
 
 三条交付通道 = 同一内容、三个去处；按 region 二选一。通道 A/B 属 skill 内容线（同一次内容变更一起发），通道 C 独立。
@@ -234,7 +234,7 @@ git -C <sdk> cat-file blob HEAD:skills/autional-com/SKILL.md > ref.md && sha256s
 | 落点 | 内容 |
 |------|------|
 | `skills/CHANGELOG.md`（本目录） | 新区版本 + 文件字节 / sha256 前 8 + 发布记录（站点快照 commit、CDN commit、复验结果） |
-| 工作区 `docs/positioning/12-skill-reachability-registry.md` §14（当前；历史波见 §12） | 版本与配方、完整 sha256、复验矩阵、站点映射 |
+| 工作区 `docs/positioning/12-skill-reachability-registry.md` §15（当前；历史波见 §12–§14） | 版本与配方、完整 sha256、复验矩阵、站点映射 |
 | 工作区 12 号 §13（度量台账） | 快照行随发布更新（遥测另立） |
 | 双站 `/ai` 页 | 构建期注入的鲜度标记（发布后抽验） |
 

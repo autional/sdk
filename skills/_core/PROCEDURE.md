@@ -435,6 +435,8 @@ Match the user's scenario against the full matrix in `{{REFS_BASE}}/compliance-m
 ### 2.3 Login methods
 
 Recommend from the user's audience: password (default), magic link, OAuth, SMS code. Enterprise → password + SSO; consumer → password + OAuth + SMS.
+
+After the auth policy is written, re-open the login page and confirm the intended inputs render. Zero input fields = the tenant's `login_methods` is the dead end (a declared method with no matching provider); fix it via the tenant auth policy (`PUT /admin/tenants/:id/auth-policy` — `login_methods` is a JSON string), then read the login page again to verify. Do not trust a 200 from identity `PUT /admin/security/auth-config` — it can succeed silently without changing anything.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 2 · 策略推荐（选项 + 确认）
@@ -457,6 +459,8 @@ Recommend from the user's audience: password (default), magic link, OAuth, SMS c
 ### 2.3 登录方式
 
 按用户群体推荐：password（默认）、magic link、OAuth、短信验证码。企业 → password + SSO；消费者 → password + OAuth + 短信。
+
+写完认证策略后，回开登录页确认目标输入项已渲染。零输入项 = 租户 `login_methods` 死路（声明的方法没配对应 provider）；经租户认证策略修复（`PUT /admin/tenants/:id/auth-policy`——`login_methods` 为 JSON 字符串），再回读登录页验证。不要相信 identity `PUT /admin/security/auth-config` 的 200——它可能静默成功但什么都没改。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -681,6 +685,12 @@ The app shows one "Continue with Autional" button; the login form and all social
    await autional.loginWithOAuth({});   // client_id = appId; PKCE (S256) + state handled by the SDK
    ```
    Optional: `redirectUri`, `scope`, `extraParams` (e.g. `{ prompt: 'consent' }`), `authorizeUrl` override.
+   **Same-origin proxy forms must pin `authorizeUrl`.** The default authorize URL only rewrites an `api.` host into `auth.` (e.g. `api.autional.{{REGION}}` → `auth.autional.{{REGION}}`); any other host — a same-origin `/bff` proxy, a custom gateway — carries through unchanged and lands on the API plane, which serves no login UI. Pin the auth plane explicitly:
+   ```ts
+   await autional.loginWithOAuth({
+     authorizeUrl: 'https://auth.autional.{{REGION}}/oauth/api/v1/oauth/authorize',
+   });
+   ```
 3. **Callback route** at the same path as `redirect_uri`:
    ```ts
    const { user } = await autional.handleOAuthCallback(window.location.href);
@@ -763,6 +773,12 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
    await autional.loginWithOAuth({});   // client_id = appId；PKCE（S256）+ state 由 SDK 处理
    ```
    可选：`redirectUri`、`scope`、`extraParams`（如 `{ prompt: 'consent' }`）、`authorizeUrl` 覆盖。
+   **同源代理形态必须显式引脚 `authorizeUrl`。** 默认授权地址只把 `api.` 主机改写为 `auth.`（如 `api.autional.{{REGION}}` → `auth.autional.{{REGION}}`）；其余主机——同源 `/bff` 代理、自定义网关——原样保留，落到 API 平面（不提供登录界面）。显式引脚 auth 平面：
+   ```ts
+   await autional.loginWithOAuth({
+     authorizeUrl: 'https://auth.autional.{{REGION}}/oauth/api/v1/oauth/authorize',
+   });
+   ```
 3. **回调路由**（路径与 `redirect_uri` 一致）：
    ```ts
    const { user } = await autional.handleOAuthCallback(window.location.href);
@@ -1131,6 +1147,8 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Tenant name unavailable 100× | suggest a new naming strategy |
 | User refuses to replace the login page | guard-only mode (5.2 option C) |
 | Several projects, one tenant | skip Phase 3, reuse appId + issuer |
+| Login page renders zero input fields (or only an OAuth card) | tenant auth-policy dead end: `login_methods` declares a method with no matching provider configured → write the tenant auth policy (`PUT /admin/tenants/:id/auth-policy`; `login_methods` is a JSON string), then re-read the login page — a 200 from identity `PUT /admin/security/auth-config` does not prove the change took effect |
+| Authorize page hangs (~30 s), then lands on the brand portal with no login form | this region's auth host is unhealthy (its backend proxy is failing) → cross-check the other region (swap the region suffix in `auth.autional.{{REGION}}`); pin the healthy region's `authorizeUrl` (5.2b) and report the outage |
 
 ### Existing tenant (skip Phase 3)
 
@@ -1167,6 +1185,8 @@ Note: users already registered in Autional are not migrated back into the local 
 | 租户名 100 次不可用 | 建议更换命名策略 |
 | 用户拒绝替换登录页 | 仅加守卫模式（5.2 选项 C） |
 | 多项目共用一个租户 | 跳过 Phase 3，复用 appId + issuer |
+| 登录页零输入项（或只有 OAuth 卡片） | 租户 auth-policy 死路：`login_methods` 声明的方法没配对应 provider → 写租户认证策略（`PUT /admin/tenants/:id/auth-policy`；`login_methods` 为 JSON 字符串），再回读登录页——identity `PUT /admin/security/auth-config` 返回 200 不代表生效 |
+| 授权页挂起（约 30 秒）后落到品牌门户、无登录表单 | 本区 auth 主机不健康（后端代理故障）→ 对照另一区（替换 `auth.autional.{{REGION}}` 中的区后缀）；引脚健康区的 `authorizeUrl`（5.2b）并上报故障 |
 
 ### 已有租户（跳过 Phase 3）
 

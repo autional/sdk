@@ -30,6 +30,13 @@ export const autionalConfig = {
   syncTabs: true,
 };
 
+// Same-origin proxy form (apiUrl on your own origin, e.g. a /bff reverse proxy)?
+// The default authorize URL only rewrites an "api." host into "auth." — any other host
+// carries through and lands on the API plane, which serves no login UI. Pin the auth plane:
+//   await autional.loginWithOAuth({
+//     authorizeUrl: 'https://auth.autional.{{REGION}}/oauth/api/v1/oauth/authorize',
+//   });
+
 export { AutionalProvider, useAutional, RequireAuth };
 ```
 
@@ -74,6 +81,12 @@ export const autionalConfig = {
   apiUrl: '{{API_URL}}',
   syncTabs: true,
 };
+
+// 同源代理形态（apiUrl 指向自己的源，如 /bff 反代）？
+// 默认授权地址只把 "api." 主机改写为 "auth."——其余主机原样保留，落到 API 平面（无登录界面）。引脚 auth 平面：
+//   await autional.loginWithOAuth({
+//     authorizeUrl: 'https://auth.autional.{{REGION}}/oauth/api/v1/oauth/authorize',
+//   });
 
 export { AutionalProvider, useAutional, RequireAuth };
 ```

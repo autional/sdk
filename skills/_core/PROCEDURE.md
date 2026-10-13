@@ -699,6 +699,47 @@ The app shows one "Continue with Autional" button; the login form and all social
 
 Social providers (Google / WeChat / …) are configured once on the Autional side; all apps share the same authorize entry.
 
+### 5.2c · Logout — end the SSO session, not just the local copy
+
+A local-only logout is a half logout. Clearing the app's own tokens leaves the Autional session alive: the next "Continue with Autional" click signs the same user straight back in — and switching accounts takes an incognito window. OIDC standardizes the real thing as RP-Initiated Logout; do not invent a private logout endpoint. The flow is two steps, in this order:
+
+1. **Clear the local session** — `await autional.logout()`: memory + persisted tokens, plus any cookie your app mirrors the token into.
+2. **Full-page redirect to the OP's `end_session_endpoint`** — a browser navigation, not an XHR:
+
+   ```
+   GET {{ISSUER}}/oauth/api/v1/oauth/logout
+       ?id_token_hint=<id_token>              (Recommended — omit when expired)
+       &client_id=<client_id>
+       &post_logout_redirect_uri=<app URL>    (must be pre-registered — 5.2b step 1)
+       &state=<random string>
+   ```
+
+   | Parameter | Value | Why it matters |
+   |---|---|---|
+   | `id_token_hint` | the `id_token` from the login response | Lets the OP verify — and end — the right session. Omitting it is allowed; an **expired** token must be omitted — the OP rejects it (400). |
+   | `client_id` | your SDK `appId` | The OP resolves the client for the redirect whitelist. |
+   | `post_logout_redirect_uri` | where the user lands afterwards | Must be registered on the client; an unregistered URL is ignored (no open redirect). |
+   | `state` | random string | Echoed back on the landing URL — the same CSRF pattern as login. |
+
+When the session is in SSO mode and the discovery document announces an `end_session_endpoint`, `autional.logout()` performs both steps for you (optional `postLogoutRedirectUri` / `state`; defaults: the app origin and a generated value). If the endpoint is not available, logout falls back to clearing locally only.
+
+Apps whose stored session may not survive a reload (for example the novel demo: an SSR proxy that re-seeds localStorage from a cookie on every load) should not rely on step 2 happening automatically — build the URL with `buildEndSessionUrl(endpoint, params)` (or `URLSearchParams`) and redirect unconditionally after the local clear:
+
+```ts
+const logoutUrl = `{{ISSUER}}/oauth/api/v1/oauth/logout?` + new URLSearchParams({
+  ...(idToken && !expired(idToken) ? { id_token_hint: idToken } : {}),
+  client_id: appId,
+  post_logout_redirect_uri: window.location.origin + '/',
+  state: crypto.randomUUID(),
+});
+await autional.logout();            // step 1 — clear local + cookie mirror
+window.location.assign(logoutUrl);  // step 2 — always
+```
+
+What the user sees: with a valid `id_token_hint` the OP revokes the session and redirects to `post_logout_redirect_uri` (with `state` appended) — provided that URI is registered, otherwise it returns a plain `logged_out` response. Without a hint in a browser navigation, the OP shows a logout **confirmation page** first, then redirects. A machine caller without a hint and without a session gets 401.
+
+> **No page transition is possible.** The endpoint lives on the API host (`{{ISSUER}}`), so logout always leaves your app for another origin — the browser shows its own loading state. Give local feedback before navigating (disable the button, set a pending label, fade the shell): that is all the UI can do.
+
 ### 5.3 Existing user table
 
 ```
@@ -786,6 +827,47 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
    SDK 校验 `state`、用留存的 PKCE verifier 换票（无 client_secret——公开客户端）、拉取 userinfo，并把会话记为 SSO 模式（后续刷新自动走 OAuth 刷新端点）。
 
 社交登录（Google / 微信等）在 Autional 侧一次配置；所有应用共用同一个授权入口。
+
+### 5.2c · 登出——终结 SSO 会话，而非只清本域
+
+只清本域的「登出」是半截登出：应用的 Token 清了，Autional 会话还活着——下次点「用 Autional 登录」会静默回到同一用户，不换无痕窗口就换不了账号。标准做法是 OIDC RP-Initiated Logout，不要自造私有登出端点。流程分两步，顺序不可换：
+
+1. **先清本域** —— `await autional.logout()`：内存 + 持久化 Token，以及应用自己镜像的会话 cookie。
+2. **整页跳 OP 的 `end_session_endpoint`** —— 是浏览器导航，不是 XHR：
+
+   ```
+   GET {{ISSUER}}/oauth/api/v1/oauth/logout
+       ?id_token_hint=<id_token>              （Recommended——过期时省略）
+       &client_id=<client_id>
+       &post_logout_redirect_uri=<应用回跳地址> （须预注册——5.2b 第 1 步）
+       &state=<随机串>
+   ```
+
+   | 参数 | 取值 | 为什么重要 |
+   |---|---|---|
+   | `id_token_hint` | 登录响应里的 `id_token` | 供 OP 定位并终结正确会话。可以省略；**过期**的必须省略——OP 会拒绝（400）。 |
+   | `client_id` | SDK 的 `appId` | OP 据此解析客户端，做回跳白名单校验。 |
+   | `post_logout_redirect_uri` | 登出后落地地址 | 须在客户端预注册；未注册的会被忽略（不开放重定向）。 |
+   | `state` | 随机串 | 回跳地址上原样带回——与登录同一套 CSRF 惯例。 |
+
+会话为 SSO 模式且 discovery 文档声明了 `end_session_endpoint` 时，`autional.logout()` 会替你完成两步（可选 `postLogoutRedirectUri` / `state`；默认=应用源与自动生成的随机值）。端点不可得时，logout 退化为仅清本域。
+
+本地会话在刷新后可能不完整的应用（例如 novel 演示的 SSR 代理形态：每次加载都从 cookie 重新播种 localStorage）不要依赖第 2 步自动发生——用 `buildEndSessionUrl(endpoint, params)`（或 `URLSearchParams`）自建 URL，清完本域后无条件整页跳：
+
+```ts
+const logoutUrl = `{{ISSUER}}/oauth/api/v1/oauth/logout?` + new URLSearchParams({
+  ...(idToken && !expired(idToken) ? { id_token_hint: idToken } : {}),
+  client_id: appId,
+  post_logout_redirect_uri: window.location.origin + '/',
+  state: crypto.randomUUID(),
+});
+await autional.logout();            // 第 1 步——清本域 + cookie 镜像
+window.location.assign(logoutUrl);  // 第 2 步——无条件
+```
+
+用户看到什么：带有效 `id_token_hint` 时，OP 吊销会话后跳到 `post_logout_redirect_uri`（`state` 原样回拼）——前提是该 URI 已注册，否则返回一个纯 `logged_out` 响应。浏览器导航无 hint 时，OP 先显示登出**确认页**，用户确认后再跳；机器流无 hint 且无会话则 401。
+
+> **整页跳转没有过渡动画。** 端点在 API 域（`{{ISSUER}}`），登出必然跨域离开应用——浏览器自行显示加载状态。跳转前给本地反馈（禁用按钮、pending 文案、外壳淡出）就是 UI 的全部能做的事。
 
 ### 5.3 存量用户表
 
@@ -939,7 +1021,7 @@ Run against the live endpoints:
 3. Login     — sdk.login() returns a token set
 4. Profile   — sdk.getProfile() returns the registered user
 5. Refresh   — sdk.refreshToken() rotates the token set
-6. Logout    — sdk.logout() clears the session
+6. Logout    — sdk.logout() ends the OP session, landing on the logout endpoint (5.2c)
 7. Revoked   — the old access token is rejected (401 on a protected call)
 8. Config    — fetchAuthConfig() returns the tenant policy chosen in Phase 2
 ```
@@ -966,7 +1048,7 @@ Only network unreachability and invalid credentials stop the automatic retry loo
 3. Login     — sdk.login() 拿到 Token
 4. Profile   — sdk.getProfile() 返回刚注册的用户
 5. Refresh   — sdk.refreshToken() 轮换 Token
-6. Logout    — sdk.logout() 清理会话
+6. Logout    — sdk.logout() 终结 OP 会话并落到登出端点（5.2c）
 7. Revoked   — 旧 Token 被拒绝（受保护调用返回 401）
 8. Config    — fetchAuthConfig() 返回 Phase 2 选定的租户策略
 ```
@@ -1112,7 +1194,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Wrong password | friendly error, no crash | integration test |
 | CAPTCHA | 3 failures → challenge → retry | integration test |
 
-**Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout actually revokes · refresh-replay detected · CAPTCHA slows brute force.
+**Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout ends the OP session, not just the local copy (5.2c) · refresh-replay detected · CAPTCHA slows brute force.
 
 **Config**: .env.local gitignored · password shown once · AUTIONAL_SETUP.md generated · summary contains everything.
 <!-- /lang:en -->
@@ -1130,7 +1212,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | 错误密码 | 友好报错，不崩 | 集成测试 |
 | CAPTCHA | 3 次失败 → 挑战 → 重试 | 集成测试 |
 
-**安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出真撤销 · 刷新重放可检测 · CAPTCHA 抗爆破。
+**安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出终结 OP 会话（非仅清本域——5.2c）· 刷新重放可检测 · CAPTCHA 抗爆破。
 
 **配置**：.env.local 已 gitignore · 密码只显示一次 · AUTIONAL_SETUP.md 已生成 · 摘要信息完整。
 <!-- /lang:zh -->

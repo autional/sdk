@@ -19,3 +19,7 @@ export const autionalConfig = {
 export const autionalPlugin = createAutional(autionalConfig);
 
 export { useAutional, autionalGuard };
+
+// 登出（RP-Initiated Logout）：const { logout } = useAutional(); await logout();
+// SSO 会话由 SDK 整页跳转 end_session_endpoint 终结 OP 会话；identity 会话清本地。
+// 只清本域的「登出」是半截登出——详见接入 skill §5.2c。

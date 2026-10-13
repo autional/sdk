@@ -65,17 +65,29 @@ function scaffoldReact(projectDir: string, answers: Answers) {
 
   ensureDir(srcDir);
 
-  const appTsx = `import { BrowserRouter, Routes, Route } from 'react-router-dom';
+  const appTsx = `import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { AutionalProvider } from '@autional/react';
-import { RequireAuth } from '@autional/react';
+import { RequireAuth, useAutional } from '@autional/react';
 import LoginPage from './pages/Login';
 import OAuthCallbackPage from './pages/OAuthCallback';
 
 function HomePage() {
+  const { logout } = useAutional();
+  const navigate = useNavigate();
   return (
     <div>
       <h1>Welcome to {appName}</h1>
       <p>You are logged in.</p>
+      <button
+        type="button"
+        onClick={async () => {
+          // RP-Initiated Logout：SSO 会话由 SDK 整页跳转终结 OP 会话；identity 会话清本地。
+          await logout();
+          navigate('/login', { replace: true });
+        }}
+      >
+        Sign Out
+      </button>
     </div>
   );
 }
@@ -206,10 +218,12 @@ function scaffoldVue(projectDir: string, answers: Answers) {
   const mainTs = `import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import App from './App.vue';
+import HomePage from './pages/Home.vue';
 import LoginPage from './pages/Login.vue';
 import OAuthCallbackPage from './pages/OAuthCallback.vue';
 
 const routes = [
+  { path: '/', component: HomePage },
   { path: '/login', component: LoginPage },
   { path: '/oauth/callback', component: OAuthCallbackPage },
 ];
@@ -269,6 +283,57 @@ onMounted(async () => {
 `;
 
   writeIfNotExists(path.join(srcDir, 'pages', 'OAuthCallback.vue'), oauthCallbackVue);
+
+  const homeVue = `<template>
+  <div style="max-width: 400px; margin: 80px auto; padding: 24px;">
+    <h1>Welcome to ${answers.projectName}</h1>
+    <p>You are logged in.</p>
+    <button type="button" :disabled="loading" @click="handleLogout"
+      style="width: 100%; padding: 10px; margin-top: 12px;">
+      {{ loading ? 'Signing out...' : 'Sign Out' }}
+    </button>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, inject, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { Autional, browserPlatform } from '@autional/core';
+
+const config = inject<{ appId: string; issuer: string; apiUrl?: string }>('autionalConfig');
+if (!config) throw new Error('autionalConfig not provided');
+
+const client = new Autional({
+  appId: config.appId,
+  issuer: config.issuer,
+  apiUrl: config.apiUrl,
+  platform: browserPlatform,
+});
+
+const router = useRouter();
+const loading = ref(false);
+
+onMounted(async () => {
+  // 恢复持久化会话 + OIDC discovery（end_session_endpoint 供登出整页跳转）
+  try {
+    await client.initialize();
+  } catch {
+    /* initialize 失败不阻塞页面 */
+  }
+  if (!client.isAuthenticated()) {
+    await router.replace('/login');
+  }
+});
+
+async function handleLogout() {
+  loading.value = true;
+  // RP-Initiated Logout：SSO 会话由 SDK 整页跳转终结 OP 会话；identity 会话清本地。
+  await client.logout();
+  await router.replace('/login');
+}
+</script>
+`;
+  writeIfNotExists(path.join(srcDir, 'pages', 'Home.vue'), homeVue);
 
   const appVue = `<template>
   <router-view />
@@ -343,14 +408,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   writeIfNotExists(path.join(srcDir, 'app', 'layout.tsx'), layoutTsx);
 
-  const pageTsx = `import { RequireAuth } from '@autional/react';
+  const pageTsx = `'use client';
+
+import { useRouter } from 'next/navigation';
+import { RequireAuth, useAutional } from '@autional/react';
 
 export default function HomePage() {
+  const { logout } = useAutional();
+  const router = useRouter();
   return (
     <RequireAuth roles={['super_admin', 'admin']}>
       <div>
         <h1>Welcome to ${answers.projectName}</h1>
         <p>You are logged in.</p>
+        <button
+          type="button"
+          onClick={async () => {
+            // RP-Initiated Logout：SSO 会话由 SDK 整页跳转终结 OP 会话；identity 会话清本地。
+            await logout();
+            router.replace('/login');
+          }}
+        >
+          Sign Out
+        </button>
       </div>
     </RequireAuth>
   );
@@ -1004,7 +1084,7 @@ ${answers.services.map(s => `| \`${envPrefix}AUTIONAL_${s.toUpperCase()}_ENABLED
 
 ## SSO
 
-The scaffold wires the full SSO chain: \`loginWithOAuth\` (login page) → \`/oauth/callback\` route → \`handleOAuthCallback\` (token exchange).
+The scaffold wires the full SSO chain: \`loginWithOAuth\` (login page) → \`/oauth/callback\` route → \`handleOAuthCallback\` (token exchange) → \`logout\` (home page, RP-Initiated Logout — terminates the OP session, not just local state).
 
 Using a same-origin \`/bff\` reverse proxy instead of the region API URL? The default
 authorize URL only rewrites an \`api.\` host into \`auth.\` — pin it explicitly:

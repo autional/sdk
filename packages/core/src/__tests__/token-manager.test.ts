@@ -76,6 +76,39 @@ describe('TokenManager', () => {
     expect(tm2.getUser()).toEqual({ id: 'user-1', name: 'Test' });
   });
 
+  // ── id_token（TASK-LS-07 / AC-LS-021）─────────────────────────
+  it('should store, retrieve and clear id_token', () => {
+    expect(tm.getIdToken()).toBeNull();
+    tm.setIdToken('idt-1');
+    expect(tm.getIdToken()).toBe('idt-1');
+    tm.setIdToken(null);
+    expect(tm.getIdToken()).toBeNull();
+    tm.setIdToken('idt-2');
+    tm.clear();
+    expect(tm.getIdToken()).toBeNull();
+  });
+
+  it('should persist and reload id_token with tokens', async () => {
+    const accessToken = createToken();
+    tm.setTokens(accessToken, 'refresh-1', 900);
+    tm.setIdToken('idt-1');
+    await tm.persist();
+
+    const tm2 = new TokenManager(storage);
+    await tm2.load();
+    expect(tm2.getIdToken()).toBe('idt-1');
+    expect(tm2.getAccessToken()).toBe(accessToken);
+  });
+
+  it('should tolerate legacy stored payload without id_token (missing key → null)', async () => {
+    // 旧版 SDK 持久化的 store 无 idToken 字段 — 加载不得报错，读取得 null
+    storage.setItem('autional_tokens', JSON.stringify({ accessToken: createToken(), refreshToken: 'legacy-rt' }));
+    const tm2 = new TokenManager(storage);
+    await tm2.load();
+    expect(tm2.getIdToken()).toBeNull();
+    expect(tm2.getRefreshToken()).toBe('legacy-rt');
+  });
+
   it('should notify listeners on token change', () => {
     const calls: (string | null)[] = [];
     const unsub = tm.onTokenChange((t) => calls.push(t));

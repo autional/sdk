@@ -103,3 +103,28 @@ export function buildAuthorizeUrl(authorizeUrl: string, params: Record<string, s
   const search = new URLSearchParams(params).toString();
   return search ? `${authorizeUrl}?${search}` : authorizeUrl;
 }
+
+/** RP-Initiated Logout（OIDC end_session_endpoint）参数 */
+export interface EndSessionParams {
+  /** OIDC id_token_hint —— 过期/解码失败的 hint 会被服务端拒绝（400），调用方须先判断后传入 */
+  idTokenHint?: string;
+  clientId?: string;
+  postLogoutRedirectUri?: string;
+  state?: string;
+}
+
+/**
+ * 构造 RP-Initiated Logout 跳转 URL（OIDC end_session_endpoint）。
+ * 空值参数跳过；endpoint 已含 query 时用 & 拼接。所有值经 URLSearchParams 编码。
+ */
+export function buildEndSessionUrl(endSessionEndpoint: string, params: EndSessionParams): string {
+  const search = new URLSearchParams();
+  if (params.idTokenHint) search.set('id_token_hint', params.idTokenHint);
+  if (params.clientId) search.set('client_id', params.clientId);
+  if (params.postLogoutRedirectUri) search.set('post_logout_redirect_uri', params.postLogoutRedirectUri);
+  if (params.state) search.set('state', params.state);
+  const qs = search.toString();
+  if (!qs) return endSessionEndpoint;
+  const separator = endSessionEndpoint.includes('?') ? '&' : '?';
+  return `${endSessionEndpoint}${separator}${qs}`;
+}

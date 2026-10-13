@@ -52,6 +52,14 @@ export interface OAuthOptions {
   extraParams?: Record<string, string>;
 }
 
+/** RP-Initiated Logout 选项（SSO 会话 logout 整页跳转 end_session_endpoint 时使用） */
+export interface LogoutOptions {
+  /** 登出后回跳地址（默认 window.location.origin + '/'） */
+  postLogoutRedirectUri?: string;
+  /** 透传 state（默认 SDK 生成随机值）；与门户登出 state 语义独立 */
+  state?: string;
+}
+
 export interface TokenClaims {
   sub?: string;
   user_id?: string;

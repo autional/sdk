@@ -8,7 +8,7 @@ import type { AutionalPlatform } from './platform/types';
 import type { AutionalPlugin } from './plugin';
 import type {
   User, AuthResult, LoginRequest, RegisterRequest,
-  OAuthOptions, AutionalEvent, SecurityAlert, TenantAuthConfig,
+  OAuthOptions, LogoutOptions, AutionalEvent, SecurityAlert, TenantAuthConfig,
 } from './types';
 
 export interface AutionalConfig {
@@ -62,6 +62,7 @@ export class Autional {
       baseUrl: apiUrl,
       tenantId: this.tenantId,
       appId: config.appId,
+      discovery: this.discovery,
     });
 
     this.api = new ApiClient({
@@ -241,8 +242,8 @@ export class Autional {
     return result;
   }
 
-  async logout(): Promise<void> {
-    await this.authClient.logout();
+  async logout(options?: LogoutOptions): Promise<void> {
+    await this.authClient.logout(options);
     this._userCache = null;
     this.emit('LOGGED_OUT');
     this.emit('USER_CHANGED');

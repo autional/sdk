@@ -1,7 +1,8 @@
 import type { AutionalPlatform } from './platform/types';
 import type { TokenManager } from './token-manager';
+import type { Discovery } from './discovery';
 import type {
-  AuthResult, LoginRequest, RegisterRequest, OAuthOptions,
+  AuthResult, LoginRequest, RegisterRequest, OAuthOptions, LogoutOptions,
   TenantAuthConfig, PasswordPolicyConfig,
 } from './types';
 import { AutionalAuthError } from './errors';
@@ -9,7 +10,7 @@ import { processPasswordForTransmission } from './crypto/password-transmission';
 import { solveProofOfWork } from './crypto/pow-solver';
 import type { KeyExchangeFn } from './crypto/password-transmission';
 import {
-  buildAuthorizeUrl, clearPkceSession, generatePkce, generateState,
+  buildAuthorizeUrl, buildEndSessionUrl, clearPkceSession, generatePkce, generateState,
   loadPkceSession, resolveSsoAuthorizeUrl, savePkceSession,
 } from './pkce';
 
@@ -24,6 +25,8 @@ interface AuthClientConfig {
   appId?: string;
   /** 端点覆盖（留空使用默认路径）。后续从 auth-config 读取。 */
   endpoints?: Record<string, string>;
+  /** OIDC Discovery（SSO 会话 logout 用 end_session_endpoint；缺省时不升级跳转） */
+  discovery?: Discovery;
 }
 
 const MAX_CAPTCHA_RETRIES = 3;
@@ -35,6 +38,7 @@ export class AuthClient {
   private baseUrl: string;
   private keyExchangeFn?: KeyExchangeFn;
   private appId: string;
+  private discovery?: Discovery;
   private configCache: Map<string, { data: TenantAuthConfig; at: number }> = new Map();
   /** 同一授权码的在飞换票（React StrictMode 等会并发触发两次回调） */
   private inflightCallback: { code: string; promise: Promise<AuthResult> } | null = null;
@@ -46,6 +50,7 @@ export class AuthClient {
     this.baseUrl = config.baseUrl;
     this.keyExchangeFn = config.keyExchangeFn;
     this.appId = config.appId || '';
+    this.discovery = config.discovery;
     this.tenantId = config.tenantId || '';
   }
 
@@ -459,14 +464,24 @@ export class AuthClient {
     this.tokenManager.persist();
   }
 
-  async logout(): Promise<void> {
+  /**
+   * 登出。先清本地，再按会话模式分流：
+   * - identity（password）会话：fire-and-forget POST 吊销 refresh token；
+   * - SSO（sso）会话：RP-Initiated Logout —— 整页跳转 discovery 的 end_session_endpoint
+   *   （id_token_hint[未过期时] + client_id + post_logout_redirect_uri + state）。
+   *   endpoint 不可得（未注入 discovery / 未发现）→ fallback：仅清本地 + 既有行为。
+   *
+   * 过期/解码失败的 id_token_hint 会被服务端拒绝（400），故省略该参数。
+   */
+  async logout(options: LogoutOptions = {}): Promise<void> {
     const accessToken = this.tokenManager.getAccessToken();
     const refreshToken = this.tokenManager.getRefreshToken();
     const authMode = this.tokenManager.getAuthMode();
+    const idToken = this.tokenManager.getIdToken();
+    const clientId = this.tokenManager.getOAuthClientId() || this.appId;
     this.tokenManager.clear();
     this.tokenManager.persist();
-    // SSO 会话的令牌由 oauth 服务签发，identity logout 端点不适用；
-    // RP-Initiated Logout（auth 域 /oauth/logout）需整页跳转，由应用自行发起。
+    // SSO 会话的令牌由 oauth 服务签发，identity logout 端点不适用。
     if (accessToken && authMode !== 'sso') {
       this.http.request(`${this.baseUrl}/identity/api/v1/auth/logout`, {
         method: 'POST',
@@ -475,6 +490,19 @@ export class AuthClient {
       }).catch(() => {});
     }
     if (typeof window !== 'undefined') window.localStorage.removeItem('autional_auth_tokens');
+
+    // SSO 会话：RP-Initiated Logout 整页跳转（服务端据回流决定 302 确认页/落点）
+    if (authMode === 'sso' && typeof window !== 'undefined') {
+      const endSessionEndpoint = this.discovery?.getEndSessionEndpoint();
+      if (!endSessionEndpoint) return;
+      const usableHint = idToken && !this.tokenManager.isTokenExpired(idToken) ? idToken : undefined;
+      window.location.href = buildEndSessionUrl(endSessionEndpoint, {
+        idTokenHint: usableHint,
+        clientId: clientId || undefined,
+        postLogoutRedirectUri: options.postLogoutRedirectUri || `${window.location.origin}/`,
+        state: options.state || generateState(),
+      });
+    }
   }
 
   async getProfile(): Promise<Record<string, unknown> | null> {
@@ -587,6 +615,9 @@ export class AuthClient {
       user: (data.user as AuthResult['user']) || { id: data.user_id as string || '' },
     };
     this.tokenManager.setTokens(result.accessToken, result.refreshToken, result.expiresIn);
+    // id_token 仅 OIDC 授权码流返回（SSO 会话）；identity/register 响应无此字段 → 显式清空，
+    // 避免上一段 SSO 会话的 id_token 残留成 stale hint。
+    this.tokenManager.setIdToken((data.id_token as string) || null);
     this.tokenManager.setUser(result.user as Record<string, unknown>);
     this.tokenManager.persist();
     return result;

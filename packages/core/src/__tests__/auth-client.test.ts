@@ -3,6 +3,7 @@ import { TokenManager } from '../token-manager';
 import { AuthClient } from '../auth-client';
 import { AutionalAuthError } from '../errors';
 import { loadPkceSession, savePkceSession } from '../pkce';
+import type { Discovery } from '../discovery';
 import type { StorageAdapter } from '../platform/types';
 
 class MockStorage implements StorageAdapter {
@@ -33,15 +34,21 @@ function createMockHttp(responses: Record<string, unknown>) {
   };
 }
 
-/** 模拟浏览器 window（location + sessionStorage），location.href 赋值仅记录不跳转 */
+/** 模拟浏览器 window（location + sessionStorage + localStorage），location.href 赋值仅记录不跳转 */
 function stubBrowserWindow(origin = 'https://app.example.com') {
   const sessionStore = new Map<string, string>();
+  const localStore = new Map<string, string>();
   const win = {
     location: { origin, href: '' },
     sessionStorage: {
       getItem: (k: string) => sessionStore.get(k) ?? null,
       setItem: (k: string, v: string) => { sessionStore.set(k, v); },
       removeItem: (k: string) => { sessionStore.delete(k); },
+    },
+    localStorage: {
+      getItem: (k: string) => localStore.get(k) ?? null,
+      setItem: (k: string, v: string) => { localStore.set(k, v); },
+      removeItem: (k: string) => { localStore.delete(k); },
     },
   };
   vi.stubGlobal('window', win);
@@ -52,6 +59,11 @@ function createToken(expInSeconds = 900): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const payload = btoa(JSON.stringify({ sub: 'user-1', user_id: 'user-1', tenant_id: 'tenant-1', exp: Math.floor(Date.now() / 1000) + expInSeconds }));
   return `${header}.${payload}.sig`;
+}
+
+/** 最小 Discovery 桩：只提供 SSO logout 需要的 end_session_endpoint */
+function stubDiscovery(endSessionEndpoint: string | null): Discovery {
+  return { getEndSessionEndpoint: () => endSessionEndpoint } as unknown as Discovery;
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -110,7 +122,7 @@ describe('AuthClient', () => {
   let mockHttp: ReturnType<typeof createMockHttp>;
   let client: AuthClient;
 
-  function setupClient(responses: Record<string, unknown>, options?: { tenantId?: string; appId?: string }) {
+  function setupClient(responses: Record<string, unknown>, options?: { tenantId?: string; appId?: string; discovery?: Discovery }) {
     mockHttp = createMockHttp(responses);
     storage = new MockStorage();
     tokenManager = new TokenManager(storage);
@@ -120,6 +132,7 @@ describe('AuthClient', () => {
       baseUrl: BASE_URL,
       tenantId: options?.tenantId,
       appId: options?.appId,
+      discovery: options?.discovery,
     });
   }
 
@@ -186,6 +199,18 @@ describe('AuthClient', () => {
         status: 401,
       });
     });
+
+    it('identity 登录响应无 id_token → 清空残留的 stale idToken（TASK-LS-07）', async () => {
+      setupClient({
+        [AUTH_CONFIG_KEY]: plainAuthConfig(),
+        [LOGIN_KEY]: LOGIN_SUCCESS_RESPONSE,
+      });
+      tokenManager.setIdToken('stale-idt');
+
+      await client.login({ email: 'test@example.com', password: 'testpass' });
+
+      expect(tokenManager.getIdToken()).toBeNull();
+    });
   });
 
   describe('register', () => {
@@ -233,7 +258,7 @@ describe('AuthClient', () => {
       const validToken = createToken(900);
       tokenManager.setTokens(validToken, 'rt', 900);
       const capturedHeaders: Record<string, string> = {};
-      
+
       const http = {
         request: async (url: string, init?: RequestInit) => {
           Object.assign(capturedHeaders, init?.headers || {});
@@ -244,6 +269,135 @@ describe('AuthClient', () => {
       const testClient = new AuthClient({ tokenManager, http, baseUrl: BASE_URL });
       await testClient.logout();
       expect(capturedHeaders['Authorization']).toBe(`Bearer ${validToken}`);
+    });
+
+    // ── TASK-LS-07 / AC-LS-022: RP-Initiated Logout 矩阵 ──────────────
+    const END_SESSION = 'https://auth.example.com/oauth/api/v1/oauth/logout';
+
+    it('SSO 会话: 整页跳 end_session_endpoint（hint + client_id + post_logout_redirect_uri + state），不发 identity POST', async () => {
+      const win = stubBrowserWindow('https://app.example.com');
+      const idToken = createToken(900);
+      setupClient({}, { appId: 'app-1', discovery: stubDiscovery(END_SESSION) });
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken(idToken);
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout();
+
+      const url = new URL(win.location.href);
+      expect(url.origin).toBe('https://auth.example.com');
+      expect(url.pathname).toBe('/oauth/api/v1/oauth/logout');
+      expect(url.searchParams.get('id_token_hint')).toBe(idToken);
+      expect(url.searchParams.get('client_id')).toBe('cid-1');
+      expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://app.example.com/');
+      expect(url.searchParams.get('state')).toBeTruthy();
+      // 先清本地：三态全清
+      expect(tokenManager.getAccessToken()).toBeNull();
+      expect(tokenManager.getRefreshToken()).toBeNull();
+      expect(tokenManager.getIdToken()).toBeNull();
+      // SSO 会话不走 identity logout 端点
+      expect(mockHttp.getRequests()).toHaveLength(0);
+    });
+
+    it('SSO 会话: 过期 id_token_hint 省略（服务端拒绝过期 hint，400）', async () => {
+      const win = stubBrowserWindow('https://app.example.com');
+      setupClient({}, { discovery: stubDiscovery(END_SESSION) });
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken(createToken(-120));
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout();
+
+      const url = new URL(win.location.href);
+      expect(url.searchParams.has('id_token_hint')).toBe(false);
+      expect(url.searchParams.get('client_id')).toBe('cid-1');
+      expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://app.example.com/');
+    });
+
+    it('SSO 会话: 解码失败的 id_token 亦省略 hint（视同过期）', async () => {
+      const win = stubBrowserWindow('https://app.example.com');
+      setupClient({}, { discovery: stubDiscovery(END_SESSION) });
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken('not-a-jwt');
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout();
+
+      const url = new URL(win.location.href);
+      expect(url.searchParams.has('id_token_hint')).toBe(false);
+    });
+
+    it('SSO 会话: postLogoutRedirectUri / state 选项覆盖（值原样编码往返）', async () => {
+      const win = stubBrowserWindow();
+      setupClient({}, { discovery: stubDiscovery(END_SESSION) });
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken(createToken(900));
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout({ postLogoutRedirectUri: 'https://app.example.com/done?x=1&y=2', state: 'st-42' });
+
+      const url = new URL(win.location.href);
+      expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://app.example.com/done?x=1&y=2');
+      expect(url.searchParams.get('state')).toBe('st-42');
+    });
+
+    it('SSO 会话: discovery 未注入 → fallback（仅清本地，不跳转）', async () => {
+      const win = stubBrowserWindow();
+      setupClient({});
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken(createToken(900));
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout();
+
+      expect(win.location.href).toBe('');
+      expect(tokenManager.getAccessToken()).toBeNull();
+      expect(tokenManager.getRefreshToken()).toBeNull();
+      expect(tokenManager.getIdToken()).toBeNull();
+    });
+
+    it('SSO 会话: end_session_endpoint 缺失 → fallback（不跳转）', async () => {
+      const win = stubBrowserWindow();
+      setupClient({}, { discovery: stubDiscovery(null) });
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken(createToken(900));
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout();
+
+      expect(win.location.href).toBe('');
+    });
+
+    it('SSO 会话: endpoint 已含 query 时用 & 拼接', async () => {
+      const win = stubBrowserWindow();
+      setupClient({}, { discovery: stubDiscovery('https://auth.example.com/logout?realm=c1') });
+      tokenManager.setTokens(createToken(900), 'rt-1', 900);
+      tokenManager.setIdToken(createToken(900));
+      tokenManager.setAuthMode('sso', 'cid-1');
+
+      await client.logout();
+
+      expect(win.location.href.startsWith('https://auth.example.com/logout?realm=c1&')).toBe(true);
+      const url = new URL(win.location.href);
+      expect(url.searchParams.get('realm')).toBe('c1');
+      expect(url.searchParams.get('client_id')).toBe('cid-1');
+    });
+
+    it('identity 会话: 保持 POST 吊销（即便 discovery 可得也不整页跳转）', async () => {
+      const win = stubBrowserWindow();
+      setupClient({ [LOGOUT_KEY]: { data: {} } }, { discovery: stubDiscovery(END_SESSION) });
+      const validToken = createToken(900);
+      tokenManager.setTokens(validToken, 'rt-1', 900);
+      tokenManager.setIdToken(createToken(900));
+
+      await client.logout();
+
+      expect(win.location.href).toBe('');
+      const req = mockHttp.getLastRequest()!;
+      expect(req.url).toBe(`${BASE_URL}/identity/api/v1/auth/logout`);
+      expect(req.method).toBe('POST');
+      expect(req.headers['Authorization']).toBe(`Bearer ${validToken}`);
+      expect(parseBody(req.body).refresh_token).toBe('rt-1');
     });
   });
 
@@ -511,6 +665,21 @@ describe('AuthClient', () => {
       expect(tokenManager.getAuthMode()).toBe('sso');
       expect(tokenManager.getOAuthClientId()).toBe('app-1');
       expect(loadPkceSession()).toBeNull();
+    });
+
+    it('stores id_token from token response (RP-Initiated Logout hint source)', async () => {
+      const at = createToken(3600);
+      stubBrowserWindow();
+      seedSession();
+      setupClient({
+        [TOKEN_KEY]: { access_token: at, refresh_token: 'rt', id_token: 'idt-xyz', expires_in: 3600, token_type: 'Bearer' },
+        [USERINFO_KEY]: { sub: 'user-9' },
+      });
+
+      await client.handleOAuthCallback('https://app.example.com/oauth/callback?code=abc&state=test-state');
+
+      expect(tokenManager.getIdToken()).toBe('idt-xyz');
+      expect(tokenManager.getAuthMode()).toBe('sso');
     });
 
     it('shares one token exchange across concurrent calls with the same code (StrictMode double-effect)', async () => {

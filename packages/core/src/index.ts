@@ -22,12 +22,13 @@ export {
   generatePkce,
   generateState,
   buildAuthorizeUrl,
+  buildEndSessionUrl,
   resolveSsoAuthorizeUrl,
   savePkceSession,
   loadPkceSession,
   clearPkceSession,
 } from './pkce';
-export type { PkceChallenge, PkceSession } from './pkce';
+export type { PkceChallenge, PkceSession, EndSessionParams } from './pkce';
 export {
   AutionalError,
   AutionalAuthError,
@@ -41,6 +42,7 @@ export type {
   LoginRequest,
   RegisterRequest,
   OAuthOptions,
+  LogoutOptions,
   AuthMode,
   TokenClaims,
   AutionalEvent,

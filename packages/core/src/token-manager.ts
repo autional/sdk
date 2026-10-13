@@ -4,6 +4,8 @@ import type { AuthMode, TokenClaims } from './types';
 interface TokenStore {
   accessToken: string | null;
   refreshToken: string | null;
+  /** OIDC id_token —— RP-Initiated Logout 的 id_token_hint 来源（与 AT/RT 同级持久化） */
+  idToken: string | null;
   user: Record<string, unknown> | null;
   tenantId: string | null;
   expiresAt: number | null;
@@ -33,6 +35,7 @@ export class TokenManager {
     return {
       accessToken: null,
       refreshToken: null,
+      idToken: null,
       user: null,
       tenantId: null,
       expiresAt: null,
@@ -76,6 +79,15 @@ export class TokenManager {
     return this.store.refreshToken;
   }
 
+  /**
+   * OIDC id_token（RP-Initiated Logout 的 id_token_hint 来源）。
+   * 不做过期过滤 —— 由调用方（logout）判断：过期 hint 会被服务端拒绝（400），须省略。
+   * 旧版持久化载荷无此字段 → 返回 null。
+   */
+  getIdToken(): string | null {
+    return this.store.idToken ?? null;
+  }
+
   getUser(): Record<string, unknown> | null {
     return this.store.user;
   }
@@ -97,6 +109,10 @@ export class TokenManager {
     this.store.refreshToken = refreshToken;
     this.store.expiresAt = Date.now() + expiresIn * 1000;
     this.notifyListeners(accessToken);
+  }
+
+  setIdToken(idToken: string | null): void {
+    this.store.idToken = idToken;
   }
 
   setUser(user: Record<string, unknown>): void {

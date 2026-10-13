@@ -1,6 +1,8 @@
 ---
-"@autional/core": minor
+"@autional/core": patch
 ---
+
+> 定级说明（照 sso-oauth-alignment 先例）：minor 会触发 0.x peer 依赖级联（~40 包 → 1.0.0），远超本轮范围；logout 为增强性变更（SSO 会话补全链注销 + 新增可选参数），identity 路径行为不变。
 
 登出升级：RP-Initiated Logout（OIDC end_session_endpoint）：
 

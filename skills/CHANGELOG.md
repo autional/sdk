@@ -14,6 +14,58 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-14] core@3bc775d388f6 —— 行业缺口三波并入（多标签会话 / RFC 7009 / B2C 暴露 / 预刷新 / 设备流 / DPoP / 租户 slug）
+
+**内容**（sdk `11a3335`；`_core` PROCEDURE 6 处 + config-template 2 处）：
+
+- 头行补「Tenant links:」提示（EN/ZH）：租户 slug 决定控制台门户链接形态。
+- §3.2 配置清单补 `tenantSlug`（共享 issuer 下门户路由所需）。
+- §5.2 登出段补 RFC 7009 令牌撤销：`logout()` 在重定向前撤销 access/refresh（限时 1.5 s）。
+- §5.2 补多标签会话段：`syncTabs` 默认开；刷新成功广播 `TOKEN_REFRESHED`（旧 refresh token 复用会触服务端整族撤销）；登出与复用检测广播 `LOGOUT`。
+- §5.4 API 勘正：`revokeSession()` / `revokeOtherSessions()`（替换旧 `deleteSession`）+ step-up 说明（`X-StepUp-Token`，仅 `plain` / `hash` 传输模式）。
+- §8.2 门户 slug 表：Admin/User/Security 拼 `/{TENANT_SLUG}/`；Developer/Status 全局站。config-template EN/ZH 补 `tenantSlug`。
+
+**触发**：SDK 行业缺口扫描（10 主流 SDK 对照 + RFC 10017/ASVS）→ 三波实施（波 1 多标签会话/RFC 7009/sessionStorage platform；波 2 B2C 方法暴露 ×7；波 3 预刷新/step-up/设备流/DPoP）+ 租户 slug 全链修复 + 独立复查四阻断处置。
+
+| 区 | CDN 版本 | 交付物（字节） | SKILL 主文件 sha256（前 8） |
+|----|----------|----------------|------------------------------|
+| com | `v0.1.0-cc5e0ce9` | SKILL.md 34573 / SKILL.zh.md 32584 / references 1514 + 3705 | `abfee91f` |
+| cn  | `v0.1.0-82a72c38` | SKILL.md 32740 / SKILL.en.md 34778 / references 2042 + 3727 | `0a56cf9c` |
+
+**发布记录**：
+
+- 站点快照：web `ee93070`（双站 `public/ai/` 镜像 + `.sha256` 刷新；`9cef1cb..ee93070`）。
+- CDN 上架：`9d6546c` —— 8 文件 `git hash-object --no-filters` 与 sdk `fea14af:skills/**` blob **全等**；区域指针 `latest.com.json → cc5e0ce9`、`latest.cn.json → 82a72c38`；`vercel.json` rewrite 跟版。
+- 复验：**T4 全绿 34/34**（CDN 直链 8 + latest 别名 8 + 双站资产 8 + `.sha256` 6 + 指针 2 + `/ai` 页 2）。鲜度标记：双站 `/ai` 页内联 `core@3bc775d388f6` 指纹命中。完整 sha256 与矩阵见 workspace `docs/positioning/12-skill-reachability-registry.md` §18。
+- npm 交付线：`@autional/core@0.3.4`（本波 changeset `fea14af`；npmjs `latest = next = 0.3.4` + npmmirror 同步）+ 机械连带 `@autional/onboard@0.4.1`（CLI 登出指引 `112d402` 已提交未发布，被 changeset publish 顺带发出；两 registry 同 tag）。git tags：`@autional/core@0.3.4` / `@autional/onboard@0.4.1` 已推 origin。
+
+**备注**：
+
+- npm 2026 staged publishing 政策首遇（bypass-2FA granular token 默认 stage-only：`PUT 202` → ~1–2 min auto-finalize 上线；stage 窗口内重发同版本报 `E409` 属正常保护；`npm stage` 命令族需 CLI ≥ 11.15）。
+- 本轮为内容指引变更（非工作区协议/门禁行为变更）→ T3 干跑按 `RELEASING.md` §2.3 范围判定跳过。
+- 生成机制零改动；两区渲染由既有 G2 区纯净门保证。
+
+## [2026-10-14] core@8de9d33f2536 —— 登出章节 5.2c（RP-Initiated Logout；E9 波）
+
+**内容**（sdk `30037c3`）：`_core` PROCEDURE 新增 §5.2c「登出章节」：
+
+- 两步序：先撤销令牌（RFC 7009）再跳 `end_session_endpoint`。
+- 参数表：`post_logout_redirect_uri`（须在应用中预登记）/ `client_id` / `id_token_hint`。
+- SDK `buildEndSessionUrl` 强制跳转；确认页与无过渡预期（跳转前落地确认页属正常）。
+
+**触发**：E9 登出线 —— SDK 登出能力补全（CLI 脚手架 + examples 登出示例）+ skill 登出章节随线发布。
+
+| 区 | CDN 版本 | 交付物（字节） | SKILL 主文件 sha256（前 8） |
+|----|----------|----------------|------------------------------|
+| com | `v0.1.0-0f60b7cc` | SKILL.md 33136 / SKILL.zh.md 31244 / references 1514 + 3306 | `6a7589f7` |
+| cn  | `v0.1.0-2f32e31e` | SKILL.md 31400 / SKILL.en.md 33341 / references 2042 + 3323 | `d4e63101` |
+
+**发布记录**：
+
+- 站点快照：web `34f87d1`（双站 `public/ai/` 刷新，8 文件 +94/−12）。
+- CDN 上架：`47c89b7` —— 8 文件与 sdk `30037c3:skills/**` blob 逐字节全等；区域指针 `latest.com.json → 0f60b7cc`、`latest.cn.json → 2f32e31e`；`vercel.json` rewrite 跟版。
+- 复核（回填补录）：版本直链 `cdn.autional.{com,cn}` 双区 SKILL.md 2/2 → 200 且逐字节 == sdk blob（immutable 目录事后复核）；当时未跑全量 T4。记录见 registry §17。
+
 ## [2026-10-11] core@87c827301112 —— 接入摩擦 F5–F7 并入（第四轮内容发布）
 
 **内容**（sdk `aef3527`；`_core` PROCEDURE 6 处 + config-template 2 处）：
@@ -102,6 +154,8 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 | 包 | 版本 | 时间 | 备注 |
 |----|------|------|------|
+| `@autional/onboard` | `0.4.1` | 2026-10-14 | sdk `112d402`（CLI 登出指引）；随 `core@0.3.4` changeset publish 机械连带发布（详见 2026-10-14 条目） |
+| `@autional/onboard` | `0.4.0` | 2026-10-11 | sdk `be7debd`（区域感知 + SSO 脚手架 + `/bff`；registry §16）；dist-tags `latest` = `next` = `0.4.0` |
 | `@autional/onboard` | `0.3.0` | 2026-10-06 | sdk `97331d8`（波 2 发版列车，31 包升版；tag-first next→latest）；dist-tags `latest` = `next` = `0.3.0`（此前 0.1.0，2026-10-05） |
 | `@autional-cn/onboard` | `0.1.0` | 2026-10-05 | .cn 走 npmmirror 镜像 |
 

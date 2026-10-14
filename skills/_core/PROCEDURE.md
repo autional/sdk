@@ -12,6 +12,7 @@ Add Autional multi-user identity to an existing app — guided onboarding that t
 > **Issuer:** {{ISSUER}}
 > **API:** {{API_URL}}
 > **Portals:** {{PORTAL_ADMIN}} · {{PORTAL_USER}} · {{PORTAL_SECURITY}} · {{PORTAL_DEVELOPER}} · {{PORTAL_STATUS}}
+> **Tenant links:** Admin/User/Security portals are tenant-scoped — append `/{TENANT_SLUG}/` after the host (see §8.2). Developer/Status are global sites.
 > **Reference files (read them, absolute URLs):**
 > - {{REFS_BASE}}/compliance-matrix.md
 > - {{REFS_BASE}}/config-template.md
@@ -25,6 +26,7 @@ Add Autional multi-user identity to an existing app — guided onboarding that t
 > **Issuer:** {{ISSUER}}
 > **API:** {{API_URL}}
 > **门户：** {{PORTAL_ADMIN}} · {{PORTAL_USER}} · {{PORTAL_SECURITY}} · {{PORTAL_DEVELOPER}} · {{PORTAL_STATUS}}
+> **租户链接：** 管理后台/用户门户/安全仪表盘按租户路由——主机名后拼 `/{TENANT_SLUG}/`（见 §8.2）。开发者门户/系统状态为全局站点。
 > **参考文件（请读取，绝对 URL）：**
 > - {{REFS_BASE}}/compliance-matrix.md
 > - {{REFS_BASE}}/config-template.md
@@ -482,7 +484,7 @@ For [A]/[B]: if the installed SDK client exposes `createTrialTenant(...)` / an i
 
 ```
 - Admin password: shown ONCE. Tell the user to save it in their password manager now. Never write it to code or config files.
-- tenantId / appId / issuer / api URL: public configuration — write to .env (public block) and src/autional.ts.
+- tenantId / appId / issuer / api URL / tenant slug: public configuration — write to .env (public block) and src/autional.ts. The slug drives tenant-scoped portal links (see 8.2).
 ```
 
 ### 3.3 Test accounts
@@ -512,7 +514,7 @@ Record the test accounts in `AUTIONAL_SETUP.md` (passwords shown once).
 
 ```
 - 管理员密码：只显示一次。让用户立刻存入密码管理器。绝不写入代码或配置文件。
-- tenantId / appId / issuer / api URL：公开配置——写入 .env（公开块）与 src/autional.ts。
+- tenantId / appId / issuer / api URL / 租户 slug：公开配置——写入 .env（公开块）与 src/autional.ts。slug 用于拼接带租户的门户链接（见 8.2）。
 ```
 
 ### 3.3 测试账号
@@ -721,7 +723,7 @@ A local-only logout is a half logout. Clearing the app's own tokens leaves the A
    | `post_logout_redirect_uri` | where the user lands afterwards | Must be registered on the client; an unregistered URL is ignored (no open redirect). |
    | `state` | random string | Echoed back on the landing URL — the same CSRF pattern as login. |
 
-When the session is in SSO mode and the discovery document announces an `end_session_endpoint`, `autional.logout()` performs both steps for you (optional `postLogoutRedirectUri` / `state`; defaults: the app origin and a generated value). If the endpoint is not available, logout falls back to clearing locally only.
+When the session is in SSO mode and the discovery document announces an `end_session_endpoint`, `autional.logout()` performs both steps for you (optional `postLogoutRedirectUri` / `state`; defaults: the app origin and a generated value). Before redirecting, it also revokes the current access/refresh tokens at the discovery `revocation_endpoint` (RFC 7009) — time-boxed at 1.5 s, so an unreachable endpoint never blocks the logout. If the endpoint is not available, logout falls back to clearing locally only.
 
 Apps whose stored session may not survive a reload (for example the novel demo: an SSR proxy that re-seeds localStorage from a cookie on every load) should not rely on step 2 happening automatically — build the URL with `buildEndSessionUrl(endpoint, params)` (or `URLSearchParams`) and redirect unconditionally after the local clear:
 
@@ -739,6 +741,8 @@ window.location.assign(logoutUrl);  // step 2 — always
 What the user sees: with a valid `id_token_hint` the OP revokes the session and redirects to `post_logout_redirect_uri` (with `state` appended) — provided that URI is registered, otherwise it returns a plain `logged_out` response. Without a hint in a browser navigation, the OP shows a logout **confirmation page** first, then redirects. A machine caller without a hint and without a session gets 401.
 
 > **No page transition is possible.** The endpoint lives on the API host (`{{ISSUER}}`), so logout always leaves your app for another origin — the browser shows its own loading state. Give local feedback before navigating (disable the button, set a pending label, fade the shell): that is all the UI can do.
+
+> **Multi-tab:** with `syncTabs` on (the default), logout and token refresh broadcast across tabs. A refresh in one tab makes the others re-read storage instead of reusing a stale refresh token — the server treats reuse as compromise and revokes the whole token family. Keep the default.
 
 ### 5.3 Existing user table
 
@@ -850,7 +854,7 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
    | `post_logout_redirect_uri` | 登出后落地地址 | 须在客户端预注册；未注册的会被忽略（不开放重定向）。 |
    | `state` | 随机串 | 回跳地址上原样带回——与登录同一套 CSRF 惯例。 |
 
-会话为 SSO 模式且 discovery 文档声明了 `end_session_endpoint` 时，`autional.logout()` 会替你完成两步（可选 `postLogoutRedirectUri` / `state`；默认=应用源与自动生成的随机值）。端点不可得时，logout 退化为仅清本域。
+会话为 SSO 模式且 discovery 文档声明了 `end_session_endpoint` 时，`autional.logout()` 会替你完成两步（可选 `postLogoutRedirectUri` / `state`；默认=应用源与自动生成的随机值）。跳转前还会先向 discovery 的 `revocation_endpoint` 撤销当前 access/refresh 令牌（RFC 7009）——限时 1.5 秒，端点不可达也不会阻塞登出。端点不可得时，logout 退化为仅清本域。
 
 本地会话在刷新后可能不完整的应用（例如 novel 演示的 SSR 代理形态：每次加载都从 cookie 重新播种 localStorage）不要依赖第 2 步自动发生——用 `buildEndSessionUrl(endpoint, params)`（或 `URLSearchParams`）自建 URL，清完本域后无条件整页跳：
 
@@ -868,6 +872,8 @@ window.location.assign(logoutUrl);  // 第 2 步——无条件
 用户看到什么：带有效 `id_token_hint` 时，OP 吊销会话后跳到 `post_logout_redirect_uri`（`state` 原样回拼）——前提是该 URI 已注册，否则返回一个纯 `logged_out` 响应。浏览器导航无 hint 时，OP 先显示登出**确认页**，用户确认后再跳；机器流无 hint 且无会话则 401。
 
 > **整页跳转没有过渡动画。** 端点在 API 域（`{{ISSUER}}`），登出必然跨域离开应用——浏览器自行显示加载状态。跳转前给本地反馈（禁用按钮、pending 文案、外壳淡出）就是 UI 的全部能做的事。
+
+> **多标签页：** `syncTabs` 默认开启——登出与令牌刷新跨标签广播：一个标签页刷新后，其他标签页重读存储，不会拿旧 refresh token 重复刷新（服务端判定复用即撤销整族令牌）。保持默认即可。
 
 ### 5.3 存量用户表
 
@@ -918,8 +924,10 @@ After login, users manage their own account:
 | Change password | `changePassword()` | /settings/password |
 | Profile | `getProfile()` / `updateProfile()` | /settings/profile |
 | Forgot password | `forgotPassword()` / `resetPassword()` | /forgot-password |
-| Devices/sessions | `getSessions()` / `deleteSession()` | /settings/sessions |
+| Devices/sessions | `getSessions()` / `revokeSession()` / `revokeOtherSessions()` | /settings/sessions |
 | Delete account | `deleteAccount()` | /settings/delete |
+
+> Sensitive operations (`deleteAccount()`) run step-up re-authentication internally (`X-StepUp-Token`; call `reauthenticate()` directly for custom flows); these endpoints currently support `plain` / `hash` transmission modes only.
 
 ### 5.5 Build verification (mandatory)
 
@@ -969,8 +977,10 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 | 修改密码 | `changePassword()` | /settings/password |
 | 个人资料 | `getProfile()` / `updateProfile()` | /settings/profile |
 | 忘记密码 | `forgotPassword()` / `resetPassword()` | /forgot-password |
-| 设备/会话 | `getSessions()` / `deleteSession()` | /settings/sessions |
+| 设备/会话 | `getSessions()` / `revokeSession()` / `revokeOtherSessions()` | /settings/sessions |
 | 注销账号 | `deleteAccount()` | /settings/delete |
+
+> 敏感操作（`deleteAccount()`）内部自动完成 step-up 重认证（`X-StepUp-Token`；自定义流程可直接调 `reauthenticate()`）；此类端点当前仅支持 `plain` / `hash` 传输模式。
 
 ### 5.5 构建验证（强制）
 
@@ -1077,13 +1087,15 @@ Modified: .env (public keys) · .gitignore · app entry · login page · README.
 
 ### 8.2 Portal guide (for AUTIONAL_SETUP.md)
 
+Console portals are tenant-scoped — always write links with the tenant slug (`/{TENANT_SLUG}/`, from the tenant created in Phase 3, or the first path segment of a path-style issuer). A bare portal root drops the user on the tenant picker ("find your tenant") — the exact friction this skill exists to remove. Developer/Status are global sites: never append a slug to them.
+
 | Portal | Address | Who | What |
 |---|---|---|---|
-| Admin | {{PORTAL_ADMIN}} | administrator | users / roles / security policy / audit log |
-| User | {{PORTAL_USER}} | end users | change password / devices / MFA |
-| Security | {{PORTAL_SECURITY}} | security ops | anomaly detection / login trends / log export |
-| Developer | {{PORTAL_DEVELOPER}} | developer | API docs / OAuth clients / app settings |
-| Status | {{PORTAL_STATUS}} | everyone | service health |
+| Admin | {{PORTAL_ADMIN}}/{TENANT_SLUG}/ | administrator | users / roles / security policy / audit log |
+| User | {{PORTAL_USER}}/{TENANT_SLUG}/ | end users | change password / devices / MFA |
+| Security | {{PORTAL_SECURITY}}/{TENANT_SLUG}/ | security ops | anomaly detection / login trends / log export |
+| Developer | {{PORTAL_DEVELOPER}} | developer | API docs / OAuth clients / app settings (global — no slug) |
+| Status | {{PORTAL_STATUS}} | everyone | service health (global — no slug) |
 
 Common operations: add user → Admin › Users › Add; reset password → Admin › Users › user › Reset; security policy → Admin › Security settings; create app → Admin › Apps (or Developer portal); audit log → Admin › Audit.
 
@@ -1134,13 +1146,15 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 
 ### 8.2 Portal 指引（写入 AUTIONAL_SETUP.md）
 
+控制台门户按租户路由 —— 链接一律拼租户 slug（`/{TENANT_SLUG}/`，取自 Phase 3 创建的租户，或 path-style issuer 的首段路径）。裸门户根会把用户丢到「选择租户」页 —— 这正是本 skill 要消除的摩擦。开发者门户/系统状态是全局站点：绝不拼 slug。
+
 | Portal | 地址 | 谁用 | 做什么 |
 |---|---|---|---|
-| 管理后台 | {{PORTAL_ADMIN}} | 管理员 | 用户/角色/安全策略/审计日志 |
-| 用户门户 | {{PORTAL_USER}} | 普通用户 | 改密码/设备/MFA |
-| 安全仪表盘 | {{PORTAL_SECURITY}} | 安全运营 | 异常检测/登录趋势/日志导出 |
-| 开发者门户 | {{PORTAL_DEVELOPER}} | 开发者 | API 文档/OAuth 客户端/应用设置 |
-| 系统状态 | {{PORTAL_STATUS}} | 所有人 | 服务运行状况 |
+| 管理后台 | {{PORTAL_ADMIN}}/{TENANT_SLUG}/ | 管理员 | 用户/角色/安全策略/审计日志 |
+| 用户门户 | {{PORTAL_USER}}/{TENANT_SLUG}/ | 普通用户 | 改密码/设备/MFA |
+| 安全仪表盘 | {{PORTAL_SECURITY}}/{TENANT_SLUG}/ | 安全运营 | 异常检测/登录趋势/日志导出 |
+| 开发者门户 | {{PORTAL_DEVELOPER}} | 开发者 | API 文档/OAuth 客户端/应用设置（全局——无 slug） |
+| 系统状态 | {{PORTAL_STATUS}} | 所有人 | 服务运行状况（全局——无 slug） |
 
 常用操作：添加用户 → 管理后台 › 用户管理 › 添加；重置密码 → 管理后台 › 用户管理 › 用户 › 重置；安全策略 → 管理后台 › 安全设置；创建应用 → 管理后台 › 应用管理（或开发者门户）；审计日志 → 管理后台 › 审计。
 

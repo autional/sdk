@@ -10,8 +10,10 @@ export { AuthClient } from './auth-client';
 export { Discovery } from './discovery';
 export { TabSync } from './sync';
 export type { AutionalPlugin } from './plugin';
-export { browserPlatform, memoryPlatform } from './platform';
+export { browserPlatform, sessionStoragePlatform, memoryPlatform } from './platform';
 export type { AutionalPlatform, StorageAdapter, HttpAdapter, CryptoAdapter } from './platform';
+export { extractTenantSlugFromIssuer, buildPortalUrl } from './portal';
+export type { PortalName } from './portal';
 export {
   processPasswordForTransmission,
   solveProofOfWork,
@@ -24,11 +26,13 @@ export {
   buildAuthorizeUrl,
   buildEndSessionUrl,
   resolveSsoAuthorizeUrl,
+  resolveAuthOrigin,
   savePkceSession,
   loadPkceSession,
   clearPkceSession,
 } from './pkce';
 export type { PkceChallenge, PkceSession, EndSessionParams } from './pkce';
+export { DpopManager } from './dpop';
 export {
   AutionalError,
   AutionalAuthError,
@@ -43,6 +47,16 @@ export type {
   RegisterRequest,
   OAuthOptions,
   LogoutOptions,
+  RevokeTokensOptions,
+  ResetPasswordRequest,
+  SessionInfo,
+  SessionList,
+  ProfileUpdate,
+  ReauthenticateResult,
+  DeleteAccountOptions,
+  TrialTenantResult,
+  DeviceCodeInfo,
+  DeviceLoginOptions,
   AuthMode,
   TokenClaims,
   AutionalEvent,

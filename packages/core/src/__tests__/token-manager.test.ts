@@ -134,4 +134,31 @@ describe('TokenManager', () => {
     tm.setTenantId(null);
     expect(tm.getTenantId()).toBeNull();
   });
+
+  // ── needsRefresh（预刷新判定，波 3）────────────────────────────
+  describe('needsRefresh', () => {
+    it('returns true when remaining lifetime is within skew', () => {
+      tm.setTokens(createToken({ exp: Math.floor(Date.now() / 1000) + 10 }), 'r1', 900);
+      expect(tm.needsRefresh(30_000)).toBe(true);
+    });
+
+    it('returns true for an already-expired token', () => {
+      tm.setTokens(createToken({ exp: Math.floor(Date.now() / 1000) - 5 }), 'r1', 900);
+      expect(tm.needsRefresh(30_000)).toBe(true);
+    });
+
+    it('returns false when remaining lifetime exceeds skew', () => {
+      tm.setTokens(createToken({ exp: Math.floor(Date.now() / 1000) + 900 }), 'r1', 900);
+      expect(tm.needsRefresh(30_000)).toBe(false);
+    });
+
+    it('returns false without a token (未登录由 401 路径处理)', () => {
+      expect(tm.needsRefresh(30_000)).toBe(false);
+    });
+
+    it('returns false for an undecodable token (无 exp 声明)', () => {
+      tm.setTokens('not-a-jwt', 'r1', 900);
+      expect(tm.needsRefresh(30_000)).toBe(false);
+    });
+  });
 });

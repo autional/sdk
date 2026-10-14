@@ -7,6 +7,10 @@ interface OIDCDiscoveryMetadata {
   userinfo_endpoint?: string;
   jwks_uri: string;
   end_session_endpoint?: string;
+  /** RFC 7009 令牌撤销端点 */
+  revocation_endpoint?: string;
+  /** RFC 8628 设备授权端点 */
+  device_authorization_endpoint?: string;
   scopes_supported?: string[];
   response_types_supported: string[];
   grant_types_supported?: string[];
@@ -65,6 +69,14 @@ export class Discovery {
 
   getEndSessionEndpoint(): string | null {
     return this.metadata?.end_session_endpoint ?? null;
+  }
+
+  getRevocationEndpoint(): string | null {
+    return this.metadata?.revocation_endpoint ?? null;
+  }
+
+  getDeviceAuthorizationEndpoint(): string | null {
+    return this.metadata?.device_authorization_endpoint ?? null;
   }
 
   getJWKSUri(): string | null {

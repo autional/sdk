@@ -3,15 +3,18 @@ import type { TokenManager } from './token-manager';
 import type { Discovery } from './discovery';
 import type {
   AuthResult, LoginRequest, RegisterRequest, OAuthOptions, LogoutOptions,
-  TenantAuthConfig, PasswordPolicyConfig,
+  TenantAuthConfig, PasswordPolicyConfig, RevokeTokensOptions,
+  ResetPasswordRequest, ProfileUpdate, SessionList, ReauthenticateResult,
+  DeleteAccountOptions, TrialTenantResult, DeviceCodeInfo, DeviceLoginOptions,
 } from './types';
 import { AutionalAuthError } from './errors';
+import type { DpopManager } from './dpop';
 import { processPasswordForTransmission } from './crypto/password-transmission';
 import { solveProofOfWork } from './crypto/pow-solver';
 import type { KeyExchangeFn } from './crypto/password-transmission';
 import {
   buildAuthorizeUrl, buildEndSessionUrl, clearPkceSession, generatePkce, generateState,
-  loadPkceSession, resolveSsoAuthorizeUrl, savePkceSession,
+  loadPkceSession, resolveAuthOrigin, resolveSsoAuthorizeUrl, savePkceSession,
 } from './pkce';
 
 interface AuthClientConfig {
@@ -27,6 +30,8 @@ interface AuthClientConfig {
   endpoints?: Record<string, string>;
   /** OIDC Discovery（SSO 会话 logout 用 end_session_endpoint；缺省时不升级跳转） */
   discovery?: Discovery;
+  /** DPoP proof（opt-in；仅作用于 oauth 服务的令牌类端点） */
+  dpop?: DpopManager;
 }
 
 const MAX_CAPTCHA_RETRIES = 3;
@@ -39,6 +44,7 @@ export class AuthClient {
   private keyExchangeFn?: KeyExchangeFn;
   private appId: string;
   private discovery?: Discovery;
+  private dpop?: DpopManager;
   private configCache: Map<string, { data: TenantAuthConfig; at: number }> = new Map();
   /** 同一授权码的在飞换票（React StrictMode 等会并发触发两次回调） */
   private inflightCallback: { code: string; promise: Promise<AuthResult> } | null = null;
@@ -52,6 +58,16 @@ export class AuthClient {
     this.appId = config.appId || '';
     this.discovery = config.discovery;
     this.tenantId = config.tenantId || '';
+    this.dpop = config.dpop;
+  }
+
+  /**
+   * DPoP proof 请求头（未启用 dpop 时为空对象）。
+   * proof 构造失败（环境缺 WebCrypto）会抛出 —— 启用即明示要求，不静默降级。
+   */
+  private async dpopHeaders(method: string, url: string, accessToken?: string | null): Promise<Record<string, string>> {
+    if (!this.dpop) return {};
+    return this.dpop.proofHeaders(method, url, accessToken);
   }
 
   async fetchAuthConfig(tenantId?: string): Promise<TenantAuthConfig> {
@@ -247,6 +263,270 @@ export class AuthClient {
     }
   }
 
+  /** 发起找回密码（服务端防枚举：无论账号是否存在都返回成功） */
+  async forgotPassword(identity: string): Promise<void> {
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identity }),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Forgot password request failed',
+        response.status,
+      );
+    }
+  }
+
+  /** 完成密码重置（验证码来自 forgot-password 邮件/短信；新密码按租户传输策略预处理） */
+  async resetPassword(input: ResetPasswordRequest): Promise<void> {
+    const authConfig = await this.fetchAuthConfig(this.tenantId || undefined);
+    const processed = await processPasswordForTransmission(input.newPassword, {
+      mode: authConfig.passwordPolicy.mode,
+      tenantId: authConfig.tenantId || this.tenantId || '',
+      requireUpper: false,
+      minLength: 0,
+      publicKey: authConfig.transmissionPublicKey || '',
+    }, this.keyExchangeFn);
+
+    const body: Record<string, unknown> = {
+      identity: input.identity,
+      code: input.code,
+      new_password: processed.password,
+      password_transmission: processed.passwordTransmission,
+    };
+
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Password reset failed',
+        response.status,
+      );
+    }
+  }
+
+  /** 发送邮箱验证码（注册/换邮箱场景；服务端防枚举恒返回成功） */
+  async sendVerificationEmail(email: string): Promise<{ expiresIn: number }> {
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/send-verification-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Send verification email failed',
+        response.status,
+      );
+    }
+    const json = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const data = (json.data ?? {}) as Record<string, unknown>;
+    return { expiresIn: (data.expires_in as number) || 0 };
+  }
+
+  /** 校验邮箱验证码 */
+  async verifyEmail(email: string, code: string): Promise<void> {
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Email verification failed',
+        response.status,
+      );
+    }
+  }
+
+  /** 更新当前用户资料（部分更新：缺省字段不改） */
+  async updateProfile(update: ProfileUpdate): Promise<void> {
+    const body: Record<string, unknown> = {};
+    if (update.username !== undefined) body.username = update.username;
+    if (update.mfaEnabled !== undefined) body.mfa_enabled = update.mfaEnabled;
+    if (update.metadata !== undefined) body.metadata = update.metadata;
+
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/me`, {
+      method: 'PUT',
+      headers: this.authHeaders(),
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Profile update failed',
+        response.status,
+      );
+    }
+  }
+
+  /** 我的活跃会话列表（服务端按当前 JWT 的 sid 标记 isCurrentSession） */
+  async getSessions(page = 1, pageSize = 20): Promise<SessionList> {
+    const response = await this.http.request(
+      `${this.baseUrl}/identity/api/v1/auth/me/sessions?page=${page}&page_size=${pageSize}`,
+      { headers: this.authHeaders() },
+    );
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Failed to load sessions',
+        response.status,
+      );
+    }
+    // ListResponse 为平铺结构：{ code, message, items, total, pagination }（非 data 包裹）
+    const json = await response.json() as Record<string, unknown>;
+    const items = (json.items ?? []) as Array<Record<string, unknown>>;
+    const pagination = (json.pagination ?? {}) as Record<string, unknown>;
+    return {
+      sessions: items.map((s) => ({
+        id: s.id as string,
+        deviceType: s.device_type as string | undefined,
+        ip: s.ip as string | undefined,
+        geoIp: s.geoip as string | undefined,
+        userAgent: s.user_agent as string | undefined,
+        amr: s.amr as string | undefined,
+        isCurrentSession: Boolean(s.is_current_session),
+        authenticatedAt: s.authenticated_at as string | undefined,
+        idleExpiresAt: s.idle_expires_at as string | undefined,
+        lastActiveAt: s.last_active_at as string | undefined,
+        createdAt: s.created_at as string | undefined,
+        expiresAt: s.expires_at as string | undefined,
+      })),
+      total: (json.total as number) || 0,
+      page: (pagination.page as number) || page,
+      pageSize: (pagination.page_size as number) || pageSize,
+    };
+  }
+
+  /** 登出指定会话（按 session id 吊销服务端会话） */
+  async revokeSession(sessionId: string): Promise<void> {
+    const response = await this.http.request(
+      `${this.baseUrl}/identity/api/v1/auth/me/sessions/${encodeURIComponent(sessionId)}`,
+      { method: 'DELETE', headers: this.authHeaders() },
+    );
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Failed to revoke session',
+        response.status,
+      );
+    }
+  }
+
+  /** 登出所有其他会话（服务端按当前 JWT 的 sid 排除当前会话） */
+  async revokeOtherSessions(): Promise<void> {
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/me/sessions`, {
+      method: 'DELETE',
+      headers: this.authHeaders(),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Failed to revoke other sessions',
+        response.status,
+      );
+    }
+  }
+
+  /**
+   * step-up 重认证：验证当前密码，返回单次使用的 step-up token（5 分钟有效）。
+   * 服务端对敏感操作（销户、换绑标识）要求最近 step-up —— token 用过即焚（防重放）。
+   */
+  async reauthenticate(password: string, mfaCode?: string): Promise<ReauthenticateResult> {
+    const processed = await this.processPasswordOnly(password);
+    return this.reauthenticateProcessed(processed, mfaCode);
+  }
+
+  private async reauthenticateProcessed(password: string, mfaCode?: string): Promise<ReauthenticateResult> {
+    const body: Record<string, unknown> = { password };
+    if (mfaCode) body.mfa_code = mfaCode;
+
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/me/reauthenticate`, {
+      method: 'POST',
+      headers: this.authHeaders(),
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Re-authentication failed',
+        response.status,
+      );
+    }
+    const json = await response.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    return {
+      stepUpToken: (data.step_up_token as string) || '',
+      expiresIn: (data.expires_in as number) || 0,
+    };
+  }
+
+  /**
+   * 销户（GDPR 被遗忘权）。内部先 reauthenticate 取 step-up token（单次使用），
+   * 再携带 X-StepUp-Token 调用删除端点；密码必填，服务端二次校验。
+   */
+  async deleteAccount(password: string, options: DeleteAccountOptions = {}): Promise<void> {
+    const processed = await this.processPasswordOnly(password);
+    const { stepUpToken } = await this.reauthenticateProcessed(processed, options.mfaCode);
+
+    const body: Record<string, unknown> = { password: processed };
+    if (options.reason) body.reason = options.reason;
+
+    const response = await this.http.request(`${this.baseUrl}/identity/api/v1/auth/me/delete-account`, {
+      method: 'POST',
+      headers: this.authHeaders(stepUpToken ? { 'X-StepUp-Token': stepUpToken } : {}),
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.code ?? response.status),
+        (errJson.message as string) || 'Account deletion failed',
+        response.status,
+      );
+    }
+  }
+
+  /** 当前会话认证头（Bearer）；未登录时不带 Authorization，由服务端 401。
+   *  注：identity/oauth 的对称与非对称加密传输模式下，敏感端点 DTO 暂无传输字段，
+   *  step-up/销户仅支持 plain / hash 模式。 */
+  private authHeaders(extra: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
+    const token = this.tokenManager.getAccessToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  }
+
+  /** 敏感端点的密码预处理：按租户传输策略转换后只取 password 值（端点 DTO 不收 transmission 字段） */
+  private async processPasswordOnly(password: string): Promise<string> {
+    const authConfig = await this.fetchAuthConfig(this.tenantId || undefined);
+    const processed = await processPasswordForTransmission(password, {
+      mode: authConfig.passwordPolicy.mode,
+      tenantId: authConfig.tenantId || this.tenantId || '',
+      requireUpper: false,
+      minLength: 0,
+      publicKey: authConfig.transmissionPublicKey || '',
+    }, this.keyExchangeFn);
+    return processed.password;
+  }
+
+
   /**
    * SSO 登录：整页跳转 Autional 授权端点（auth 域）。
    * 需要应用注册回调地址（redirectUri）；回调页调用 handleOAuthCallback 完成换票。
@@ -339,9 +619,13 @@ export class AuthClient {
       code_verifier: pending.verifier,
     });
 
-    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/token`, {
+    const tokenUrl = `${this.baseUrl}/oauth/api/v1/oauth/token`;
+    const response = await this.http.request(tokenUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...await this.dpopHeaders('POST', tokenUrl),
+      },
       body: body.toString(),
     });
 
@@ -375,9 +659,13 @@ export class AuthClient {
   async fetchUserInfo(): Promise<Record<string, unknown> | null> {
     const token = this.tokenManager.getAccessToken();
     if (!token) return null;
-    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/userinfo`, {
+    const url = `${this.baseUrl}/oauth/api/v1/oauth/userinfo`;
+    const response = await this.http.request(url, {
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        ...await this.dpopHeaders('GET', url, token),
+      },
     });
     if (!response.ok) return null;
     const json = await response.json() as Record<string, unknown>;
@@ -408,13 +696,14 @@ export class AuthClient {
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
       const code = String(errJson.code ?? '');
-      if (code.startsWith('400002')) {
+      const message = String(errJson.message ?? '');
+      // 复用检测：现役服务端为 40000502 + "refresh token has been reused" 文案（全族已撤销）。
+      // 其余失败（expired/invalid RT、429、5xx）不清会话——预刷新路径要保会话，清理由 401 路径统一执行。
+      if (code === '40000502' && /reus/i.test(message)) {
         this.tokenManager.clear();
         this.tokenManager.persist();
         throw new AutionalAuthError('TOKEN_REUSE', 'Refresh token reused — all sessions revoked', 401);
       }
-      this.tokenManager.clear();
-      this.tokenManager.persist();
       throw new AutionalAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
     }
 
@@ -441,15 +730,27 @@ export class AuthClient {
     };
     if (clientId) params['client_id'] = clientId;
 
-    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/refresh`, {
+    const refreshUrl = `${this.baseUrl}/oauth/api/v1/oauth/refresh`;
+    const response = await this.http.request(refreshUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...await this.dpopHeaders('POST', refreshUrl),
+      },
       body: new URLSearchParams(params).toString(),
     });
 
     if (!response.ok) {
-      this.tokenManager.clear();
-      this.tokenManager.persist();
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      const errCode = String(errJson.error ?? '');
+      const desc = String(errJson.error_description ?? errJson.message ?? '');
+      // 复用检测：oauth 面 invalid_grant + "refresh token reused" 描述（全族已撤销）。
+      // 其余失败（含会话被撤销、会话过期的 invalid_grant）不清会话——清理由 401 路径统一执行。
+      if (errCode === 'invalid_grant' && /reus/i.test(desc)) {
+        this.tokenManager.clear();
+        this.tokenManager.persist();
+        throw new AutionalAuthError('TOKEN_REUSE', 'Refresh token reused — all sessions revoked', 401);
+      }
       throw new AutionalAuthError('REFRESH_FAILED', 'SSO token refresh failed', 401);
     }
 
@@ -465,9 +766,68 @@ export class AuthClient {
   }
 
   /**
+   * RFC 7009 令牌撤销：撤销当前会话（或显式传入）的 access / refresh 令牌。
+   * 端点优先取 discovery 的 revocation_endpoint，缺省回落 <apiUrl>/oauth/api/v1/oauth/revoke。
+   * 公开客户端仅凭 client_id 认证（与 PKCE 流程一致，无需 secret）。
+   * 只做服务端撤销，不清本地会话状态；完整登出用 logout()。
+   */
+  async revokeTokens(options: RevokeTokensOptions = {}): Promise<void> {
+    const scope = options.tokens ?? 'all';
+    const targets: Array<{ value: string; hint: 'access_token' | 'refresh_token' }> = [];
+    if (scope !== 'refresh') {
+      const at = options.accessToken ?? this.tokenManager.getAccessToken();
+      if (at) targets.push({ value: at, hint: 'access_token' });
+    }
+    if (scope !== 'access') {
+      const rt = options.refreshToken ?? this.tokenManager.getRefreshToken();
+      if (rt) targets.push({ value: rt, hint: 'refresh_token' });
+    }
+    if (targets.length === 0) return;
+
+    const endpoint = this.discovery?.getRevocationEndpoint()
+      ?? `${this.baseUrl}/oauth/api/v1/oauth/revoke`;
+    const clientId = this.tokenManager.getOAuthClientId() || this.appId;
+
+    const results = await Promise.allSettled(
+      targets.map(({ value, hint }) => this.revokeSingleToken(endpoint, value, hint, clientId)),
+    );
+    if (results.every((r) => r.status === 'rejected')) {
+      const reason = (results[0] as PromiseRejectedResult).reason as Error;
+      throw new AutionalAuthError('REVOKE_FAILED', reason?.message || 'Token revocation failed', 0);
+    }
+  }
+
+  private async revokeSingleToken(
+    endpoint: string,
+    token: string,
+    hint: 'access_token' | 'refresh_token',
+    clientId: string,
+  ): Promise<void> {
+    const body: Record<string, string> = { token, token_type_hint: hint };
+    if (clientId) body['client_id'] = clientId;
+    const response = await this.http.request(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...await this.dpopHeaders('POST', endpoint),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.error ?? errJson.code ?? response.status),
+        String(errJson.error_description ?? errJson.message ?? `Token revocation failed (${response.status})`),
+        response.status,
+      );
+    }
+  }
+
+  /**
    * 登出。先清本地，再按会话模式分流：
    * - identity（password）会话：fire-and-forget POST 吊销 refresh token；
-   * - SSO（sso）会话：RP-Initiated Logout —— 整页跳转 discovery 的 end_session_endpoint
+   * - SSO（sso）会话：RFC 7009 撤销本地令牌（限时 1.5s，不阻塞登出）→
+   *   RP-Initiated Logout —— 整页跳转 discovery 的 end_session_endpoint
    *   （id_token_hint[未过期时] + client_id + post_logout_redirect_uri + state）。
    *   endpoint 不可得（未注入 discovery / 未发现）→ fallback：仅清本地 + 既有行为。
    *
@@ -495,6 +855,15 @@ export class AuthClient {
     if (authMode === 'sso' && typeof window !== 'undefined') {
       const endSessionEndpoint = this.discovery?.getEndSessionEndpoint();
       if (!endSessionEndpoint) return;
+      // OAuth 2.0 BCP：跳 end_session 前撤销本客户端令牌（后端黑名单 AT + 吊销 RT）。
+      // 限时 1.5s —— 撤销端不可达不阻塞登出；整页导航会中止未完成请求，须在跳转前等待。
+      await Promise.race([
+        this.revokeTokens({
+          accessToken: accessToken ?? undefined,
+          refreshToken: refreshToken ?? undefined,
+        }).catch(() => {}),
+        new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+      ]);
       const usableHint = idToken && !this.tokenManager.isTokenExpired(idToken) ? idToken : undefined;
       window.location.href = buildEndSessionUrl(endSessionEndpoint, {
         idTokenHint: usableHint,
@@ -518,13 +887,13 @@ export class AuthClient {
     return data;
   }
 
-  /** 公开注册试用租户（无需 JWT） */
+  /** 公开注册试用租户（无需 JWT）。name 即 URL slug（门户路由 /<slug>/ 使用）。 */
   async createTrialTenant(config: {
     name: string;
     adminEmail: string;
     adminPassword: string;
     agreementAccepted?: boolean;
-  }): Promise<{ tenantId: string; name: string; status: string }> {
+  }): Promise<TrialTenantResult> {
     const body: Record<string, unknown> = {
       name: config.name,
       admin_email: config.adminEmail,
@@ -546,7 +915,8 @@ export class AuthClient {
     }
     const json = await response.json() as Record<string, unknown>;
     const data = (json.data ?? json) as Record<string, unknown>;
-    return { tenantId: data.id as string, name: data.name as string, status: data.status as string };
+    const name = (data.name as string) || config.name;
+    return { tenantId: data.id as string, name, slug: name, status: data.status as string };
   }
 
   /** 试用升级为正式版 */
@@ -651,4 +1021,140 @@ export class AuthClient {
     const result = this.handleAuthResponse(json);
     return result;
   }
+
+  /**
+   * RFC 8628 设备授权请求：返回 user_code / verification_uri / 轮询参数。
+   * 单独使用场景（如在非浏览器设备上分两段展示）请自行轮询；
+   * 浏览器/一般场景直接用 loginWithDeviceCode 一体化完成。
+   */
+  async requestDeviceCode(options?: { clientId?: string; scope?: string }): Promise<DeviceCodeInfo> {
+    const clientId = options?.clientId || this.appId;
+    const body: Record<string, string> = { client_id: clientId };
+    if (options?.scope) body['scope'] = options.scope;
+
+    const response = await this.http.request(`${this.baseUrl}/oauth/api/v1/oauth/device/authorize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      throw new AutionalAuthError(
+        String(errJson.error ?? errJson.code ?? response.status),
+        String(errJson.error_description ?? errJson.message ?? `Device authorization failed (${response.status})`),
+        response.status,
+      );
+    }
+    const json = await response.json() as Record<string, unknown>;
+    const data = (json.data ?? json) as Record<string, unknown>;
+    return {
+      deviceCode: data.device_code as string,
+      userCode: data.user_code as string,
+      verificationUri: this.resolveVerificationUri((data.verification_uri as string) || ''),
+      expiresIn: (data.expires_in as number) || 600,
+      interval: (data.interval as number) || 5,
+    };
+  }
+
+  /**
+   * RFC 8628 设备流登录（一体化）：请求设备码 → onUserCode 回调（展示 userCode
+   * 与 verificationUri）→ 按 interval 轮询换票，处理 authorization_pending /
+   * slow_down（+5s）/ expired_token / access_denied → signal 取消。
+   * 成功后认证模式标记 sso（令牌由 oauth 服务签发，刷新走 /oauth/refresh）。
+   */
+  async loginWithDeviceCode(options: DeviceLoginOptions = {}): Promise<AuthResult> {
+    const info = await this.requestDeviceCode(options);
+    options.onUserCode?.(info);
+
+    const clientId = options.clientId || this.appId;
+    const deadline = Date.now() + info.expiresIn * 1000;
+    let interval = info.interval;
+    const tokenUrl = `${this.baseUrl}/oauth/api/v1/oauth/token`;
+
+    while (true) {
+      if (options.signal?.aborted) {
+        throw new AutionalAuthError('DEVICE_FLOW_ABORTED', 'Device login aborted by caller', 0);
+      }
+      if (Date.now() >= deadline) {
+        throw new AutionalAuthError('DEVICE_CODE_EXPIRED', 'Device code expired — start a new login', 400);
+      }
+      await sleepWithSignal(interval * 1000, options.signal);
+
+      const form = new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+        device_code: info.deviceCode,
+      });
+      if (clientId) form.set('client_id', clientId);
+
+      const response = await this.http.request(tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          ...await this.dpopHeaders('POST', tokenUrl),
+        },
+        body: form.toString(),
+      });
+
+      if (response.ok) {
+        const json = await response.json() as Record<string, unknown>;
+        const result = this.handleAuthResponse(json);
+        this.tokenManager.setAuthMode('sso', clientId);
+        try {
+          const userInfo = await this.fetchUserInfo();
+          if (userInfo) {
+            result.user = userInfo as AuthResult['user'];
+            this.tokenManager.setUser(userInfo);
+          }
+        } catch {
+          // userinfo 失败不阻断登录 — token 已到手，用户信息可稍后重试
+        }
+        await this.tokenManager.persist();
+        return result;
+      }
+
+      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
+      const error = String(errJson.error ?? '');
+      if (error === 'authorization_pending') continue;
+      if (error === 'slow_down') {
+        interval += 5;
+        continue;
+      }
+      if (error === 'expired_token') {
+        throw new AutionalAuthError('DEVICE_CODE_EXPIRED', 'Device code expired — start a new login', 400);
+      }
+      if (error === 'access_denied') {
+        throw new AutionalAuthError('DEVICE_ACCESS_DENIED', 'Device authorization denied by user', 403);
+      }
+      throw new AutionalAuthError(
+        error || String(errJson.code ?? response.status),
+        String(errJson.error_description ?? errJson.message ?? `Device token polling failed (${response.status})`),
+        response.status,
+      );
+    }
+  }
+
+  /** 服务端 verification_uri 为相对路径（/device）→ 解析为 auth 域绝对地址 */
+  private resolveVerificationUri(uri: string): string {
+    if (!uri || /^https?:\/\//i.test(uri)) return uri;
+    return `${resolveAuthOrigin(this.baseUrl)}${uri.startsWith('/') ? '' : '/'}${uri}`;
+  }
+}
+
+/** 可取消 sleep（AbortSignal → DEVICE_FLOW_ABORTED） */
+function sleepWithSignal(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new AutionalAuthError('DEVICE_FLOW_ABORTED', 'Device login aborted by caller', 0));
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new AutionalAuthError('DEVICE_FLOW_ABORTED', 'Device login aborted by caller', 0));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort);
+  });
 }

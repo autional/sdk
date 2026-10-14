@@ -8,6 +8,8 @@ interface ApiClientConfig {
   http: HttpAdapter;
   refreshTokenFn: () => Promise<void>;
   onForceLogout?: () => void;
+  /** 请求前预刷新提前量（ms；0 = 禁用）。剩余寿命 ≤ 该值时先刷新再发请求。 */
+  refreshSkewMs?: number;
 }
 
 function snakeToCamel(str: string): string {
@@ -48,6 +50,7 @@ export class ApiClient {
   private redirectingToLogin = false;
   private maxRetries = 3;
   private baseDelay = 1000;
+  private refreshSkewMs: number;
 
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/$/, '');
@@ -55,6 +58,7 @@ export class ApiClient {
     this.http = config.http;
     this.refreshTokenFn = config.refreshTokenFn;
     this.onForceLogout = config.onForceLogout;
+    this.refreshSkewMs = config.refreshSkewMs ?? 0;
   }
 
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
@@ -100,6 +104,12 @@ export class ApiClient {
   }
 
   private async request<T>(url: string, init: RequestInit): Promise<T> {
+    // 预刷新：剩余寿命 ≤ skew 时先刷新再发请求（并发请求共享同一 refreshPromise）。
+    // 失败不在此处理（不清会话、不注销）—— 请求照发，由 401 路径按既有语义兜底。
+    if (this.refreshSkewMs > 0 && this.tokenManager.needsRefresh(this.refreshSkewMs)) {
+      await this.startRefresh().catch(() => { /* 留给 401 路径 */ });
+    }
+
     const headers: Record<string, string> = {
       ...(init.headers as Record<string, string> || {}),
     };
@@ -153,26 +163,37 @@ export class ApiClient {
       : new AutionalNetworkError('Request failed');
   }
 
-  private async handle401<T>(url: string, requestInit: RequestInit): Promise<T> {
+  /**
+   * 刷新会话（401 路径与请求前预刷新路径的唯一刷新入口，并发共享在飞 promise）。
+   * 只负责去重：失败语义由调用方决定 —— 预刷新路径吞错保会话；
+   * 401 路径在 handle401 中执行清会话 + 强制登出（无论 promise 由谁创建）。
+   */
+  private startRefresh(): Promise<void> {
     if (!this.refreshPromise) {
       this.refreshPromise = (async () => {
         try {
           await this.refreshTokenFn();
-        } catch {
-          this.tokenManager.clear();
-          if (!this.redirectingToLogin) {
-            this.redirectingToLogin = true;
-            this.onForceLogout?.();
-            throw new AutionalAuthError('SESSION_EXPIRED', 'Session expired, please login again', 401);
-          }
-          throw new AutionalAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
         } finally {
           this.refreshPromise = null;
         }
       })();
     }
 
-    await this.refreshPromise;
+    return this.refreshPromise;
+  }
+
+  private async handle401<T>(url: string, requestInit: RequestInit): Promise<T> {
+    try {
+      await this.startRefresh();
+    } catch {
+      this.tokenManager.clear();
+      if (!this.redirectingToLogin) {
+        this.redirectingToLogin = true;
+        this.onForceLogout?.();
+        throw new AutionalAuthError('SESSION_EXPIRED', 'Session expired, please login again', 401);
+      }
+      throw new AutionalAuthError('REFRESH_FAILED', 'Token refresh failed', 401);
+    }
 
     const newToken = this.tokenManager.getAccessToken();
     if (newToken) {

@@ -111,8 +111,8 @@ const REGISTER_SUCCESS_RESPONSE = {
 };
 
 const REFRESH_TOKEN_REUSE_RESPONSE = {
-  code: '40000201',
-  message: 'Token reused',
+  code: '40000502',
+  message: 'refresh token has been reused - all sessions revoked',
   __status: 401,
 };
 
@@ -418,7 +418,7 @@ describe('AuthClient', () => {
       expect(tokenManager.getAccessToken()).toBe(newAt);
     });
 
-    it('throws TOKEN_REUSE on 400002xx code', async () => {
+    it('throws TOKEN_REUSE and clears tokens on server reuse detection (40000502 + reused)', async () => {
       setupClient({
         [REFRESH_KEY]: REFRESH_TOKEN_REUSE_RESPONSE,
       });
@@ -432,6 +432,36 @@ describe('AuthClient', () => {
       });
 
       expect(tokenManager.getRefreshToken()).toBeNull();
+    });
+
+    it('does NOT clear the session on a generic refresh failure (5xx)', async () => {
+      setupClient({
+        [REFRESH_KEY]: { code: '500001', message: 'internal error', __status: 500 },
+      });
+
+      tokenManager.setTokens(createToken(), 'old_rt', 900);
+
+      await expect(client.refreshToken()).rejects.toMatchObject({
+        name: 'AutionalAuthError',
+        code: 'REFRESH_FAILED',
+        status: 401,
+      });
+
+      expect(tokenManager.getRefreshToken()).toBe('old_rt');
+    });
+
+    it('does NOT clear the session on expired refresh token (40000502 without reused)', async () => {
+      setupClient({
+        [REFRESH_KEY]: { code: '40000502', message: 'refresh token expired', __status: 401 },
+      });
+
+      tokenManager.setTokens(createToken(), 'old_rt', 900);
+
+      await expect(client.refreshToken()).rejects.toMatchObject({
+        code: 'REFRESH_FAILED',
+      });
+
+      expect(tokenManager.getRefreshToken()).toBe('old_rt');
     });
   });
 
@@ -771,7 +801,7 @@ describe('AuthClient', () => {
       expect(form.get('client_id')).toBe('app-1');
     });
 
-    it('clears tokens and throws REFRESH_FAILED on SSO refresh failure', async () => {
+    it('does NOT clear tokens on generic SSO refresh failure', async () => {
       setupClient({
         [SSO_REFRESH_KEY]: { error: 'invalid_grant', error_description: 'refresh token expired', __status: 400 },
       });
@@ -779,6 +809,17 @@ describe('AuthClient', () => {
       tokenManager.setAuthMode('sso', 'app-1');
 
       await expect(client.refreshToken()).rejects.toMatchObject({ code: 'REFRESH_FAILED', status: 401 });
+      expect(tokenManager.getRefreshToken()).toBe('old_rt');
+    });
+
+    it('clears tokens and throws TOKEN_REUSE on SSO reuse detection (invalid_grant + reused)', async () => {
+      setupClient({
+        [SSO_REFRESH_KEY]: { error: 'invalid_grant', error_description: 'refresh token reused', __status: 400 },
+      });
+      tokenManager.setTokens(createToken(), 'old_rt', 900);
+      tokenManager.setAuthMode('sso', 'app-1');
+
+      await expect(client.refreshToken()).rejects.toMatchObject({ code: 'TOKEN_REUSE', status: 401 });
       expect(tokenManager.getRefreshToken()).toBeNull();
     });
   });

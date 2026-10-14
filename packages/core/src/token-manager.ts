@@ -75,6 +75,18 @@ export class TokenManager {
     return this.store.accessToken;
   }
 
+  /**
+   * 是否应在请求前主动刷新：有 token 且剩余寿命 ≤ skewMs（已过期亦为 true）。
+   * 无 token（未登录）返回 false —— 由 401 路径处理。
+   */
+  needsRefresh(skewMs: number): boolean {
+    const token = this.store.accessToken;
+    if (!token) return false;
+    const claims = this.decodeToken(token);
+    if (!claims?.exp) return false;
+    return claims.exp * 1000 - Date.now() <= skewMs;
+  }
+
   getRefreshToken(): string | null {
     return this.store.refreshToken;
   }

@@ -27,7 +27,8 @@ export const autionalConfig = {
   appId: '{APP_ID}',
   issuer: '{{ISSUER}}',
   apiUrl: '{{API_URL}}',
-  syncTabs: true,
+  tenantSlug: '{TENANT_SLUG}',
+  syncTabs: true, // keep — cross-tab session sync (refresh/logout broadcast)
 };
 
 // Same-origin proxy form (apiUrl on your own origin, e.g. a /bff reverse proxy)?
@@ -50,6 +51,7 @@ Next.js: wrap the root layout with the provider from `{{NPM_SCOPE}}/next` and pr
 AUTIONAL_APP_ID={APP_ID}
 AUTIONAL_ISSUER={{ISSUER}}
 AUTIONAL_API_URL={{API_URL}}
+AUTIONAL_TENANT_SLUG={TENANT_SLUG}   # your tenant slug — portal links & SDK tenantSlug
 ```
 
 Use the framework's public prefix when needed: `VITE_` (Vite), `NEXT_PUBLIC_` (Next.js), `REACT_APP_` (CRA); none for Node.
@@ -79,7 +81,8 @@ export const autionalConfig = {
   appId: '{APP_ID}',
   issuer: '{{ISSUER}}',
   apiUrl: '{{API_URL}}',
-  syncTabs: true,
+  tenantSlug: '{TENANT_SLUG}',
+  syncTabs: true, // 多标签会话同步——保持默认（刷新/登出跨标签广播）
 };
 
 // 同源代理形态（apiUrl 指向自己的源，如 /bff 反代）？
@@ -101,6 +104,7 @@ Next.js：在根 layout 用 `{{NPM_SCOPE}}/next` 的 Provider 包裹，并用其
 AUTIONAL_APP_ID={APP_ID}
 AUTIONAL_ISSUER={{ISSUER}}
 AUTIONAL_API_URL={{API_URL}}
+AUTIONAL_TENANT_SLUG={TENANT_SLUG}   # 租户 slug —— 门户链接与 SDK tenantSlug 均用它
 ```
 
 按框架使用公开前缀：`VITE_`（Vite）、`NEXT_PUBLIC_`（Next.js）、`REACT_APP_`（CRA）；Node 无需前缀。
@@ -125,6 +129,7 @@ AUTIONAL_API_URL={{API_URL}}
 - Date: {DATE}
 - Framework: {FRAMEWORK}
 - Tenant: {TENANT_NAME}
+- Tenant slug: {TENANT_SLUG}
 - Region: .{{REGION}}
 - Environment: {ENVIRONMENT}
 
@@ -153,11 +158,13 @@ AUTIONAL_API_URL={{API_URL}}
 ## Portals
 | Portal | Address | Purpose |
 |---|---|---|
-| Admin | {{PORTAL_ADMIN}} | users / roles / security policy / audit log |
-| User | {{PORTAL_USER}} | change password / devices / MFA |
-| Security | {{PORTAL_SECURITY}} | anomaly detection / login trends |
-| Developer | {{PORTAL_DEVELOPER}} | API docs / OAuth clients / app settings |
-| Status | {{PORTAL_STATUS}} | service health |
+| Admin | {{PORTAL_ADMIN}}/{TENANT_SLUG}/ | users / roles / security policy / audit log |
+| User | {{PORTAL_USER}}/{TENANT_SLUG}/ | change password / devices / MFA |
+| Security | {{PORTAL_SECURITY}}/{TENANT_SLUG}/ | anomaly detection / login trends |
+| Developer | {{PORTAL_DEVELOPER}} | API docs / OAuth clients / app settings (global) |
+| Status | {{PORTAL_STATUS}} | service health (global) |
+
+> Console portals are tenant-scoped — the slug keeps users on their tenant. A bare root drops them on the tenant picker.
 
 ## Reminders
 1. Admin password stored separately (not in this file)
@@ -175,6 +182,7 @@ AUTIONAL_API_URL={{API_URL}}
 - 接入日期: {DATE}
 - 框架: {FRAMEWORK}
 - 租户: {TENANT_NAME}
+- 租户 slug: {TENANT_SLUG}
 - Region: .{{REGION}}
 - 环境: {ENVIRONMENT}
 
@@ -203,11 +211,13 @@ AUTIONAL_API_URL={{API_URL}}
 ## 门户
 | Portal | 地址 | 用途 |
 |---|---|---|
-| 管理后台 | {{PORTAL_ADMIN}} | 用户/角色/安全策略/审计日志 |
-| 用户门户 | {{PORTAL_USER}} | 修改密码/设备/MFA |
-| 安全仪表盘 | {{PORTAL_SECURITY}} | 异常检测/登录趋势 |
-| 开发者门户 | {{PORTAL_DEVELOPER}} | API 文档/OAuth 客户端/应用设置 |
-| 系统状态 | {{PORTAL_STATUS}} | 服务运行状况 |
+| 管理后台 | {{PORTAL_ADMIN}}/{TENANT_SLUG}/ | 用户/角色/安全策略/审计日志 |
+| 用户门户 | {{PORTAL_USER}}/{TENANT_SLUG}/ | 修改密码/设备/MFA |
+| 安全仪表盘 | {{PORTAL_SECURITY}}/{TENANT_SLUG}/ | 异常检测/登录趋势 |
+| 开发者门户 | {{PORTAL_DEVELOPER}} | API 文档/OAuth 客户端/应用设置（全局） |
+| 系统状态 | {{PORTAL_STATUS}} | 服务运行状况（全局） |
+
+> 控制台门户按租户路由——带上 slug，用户才不会落到「选择租户」页。
 
 ## 提醒
 1. 管理员密码单独保存（不在此文件）

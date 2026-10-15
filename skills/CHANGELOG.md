@@ -35,7 +35,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 **备注**：
 
 - **发布须用 pnpm ≥10**（`npx -y pnpm@10.34.6 publish:ci`）：pnpm ≤9 委托 `npm publish` 会把 changesets 注入的 `--no-git-checks` 透传给 npm 12 → `EUNKNOWNCONFIG` 全量失败（本机系统 pnpm 9.5 实测踩中）。细则见 `RELEASING.md` §5。
-- changesets 2.31.0 在 npm 12 下 info 检查失效：误判已发布包为未发布，对 28 个已发布包发起重发尝试（全部被 registry 拒，无害）。durable fix = 升级 `@changesets/cli` 3.x（待决策）。
+- changesets 2.31.0 在 npm 12 下 info 检查失效：误判已发布包为未发布，对 28 个已发布包发起重发尝试（全部被 registry 拒，无害）。durable fix 已落地：`@changesets/cli` `2.31.0 → 2.31.1`（v2 维护线补丁，新增 `normalizeInfoJson` 解包 npm 12 的 `info --json` 数组输出）。
 - npm 12 publish 异步：`PUT 202` 后数分钟才可查，立即可查 `E404` 属正常；以 npm 调试日志 `PUT 202` + exit 0 为准。
 
 ## [2026-10-14] core@3bc775d388f6 —— 行业缺口三波并入（多标签会话 / RFC 7009 / B2C 暴露 / 预刷新 / 设备流 / DPoP / 租户 slug）

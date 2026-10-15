@@ -471,11 +471,11 @@ importers:
   packages/next:
     dependencies:
       '@autional/core':
-        specifier: '>=0.1.0'
-        version: 0.2.2
+        specifier: '>=0.3.5'
+        version: 0.3.5
       '@autional/react':
-        specifier: '>=0.1.0'
-        version: 0.2.1(@autional/core@0.2.2)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: '>=0.3.1'
+        version: 0.3.1(@autional/core@0.3.5)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -610,8 +610,8 @@ importers:
   packages/react:
     dependencies:
       '@autional/core':
-        specifier: '>=0.1.0'
-        version: 0.2.2
+        specifier: '>=0.3.5'
+        version: 0.3.5
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.9.1
@@ -722,11 +722,23 @@ packages:
 
   '@autional/core@0.2.2':
     resolution: {integrity: sha512-Tm3lrN5DYJuH9aswfgtstTEnHMRvNl8oCoMyaynnoE3MUG7Xu9T85ZBVJ7N8aITFKY9zx7R5AbMqeG7Gt8HNMw==}
+    deprecated: Superseded by >=0.3.0.
+
+  '@autional/core@0.3.5':
+    resolution: {integrity: sha512-/V4vokl7NIKQx/UbgC2UKjKka7pdIC7swsU0bavYl3RvGHU7CoAHBsrVTSQHp1Ti2fIAr03ihnmsSIaTucL9cQ==}
 
   '@autional/react@0.2.1':
     resolution: {integrity: sha512-3ua7e194lB+BwsemoAP2GdCCW5/TGpxxmpFxqJWYY7yt6Kdq8sJYqUM1hsBoN9WSkTIagqYBSQUOovwqMsl60Q==}
+    deprecated: Broken build (undeclared @authms reference). Use >=0.3.0.
     peerDependencies:
       '@autional/core': '>=0.1.0'
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+
+  '@autional/react@0.3.1':
+    resolution: {integrity: sha512-TnjsxreM/7GjzLhqr0hDULR7kYAj34rmlQ79NO4f3b/n/4LdOqFEVNhDYhSCAEnpqjpazDyiH1qsJzmD5Ia6Wg==}
+    peerDependencies:
+      '@autional/core': '>=0.3.5'
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
@@ -4724,9 +4736,17 @@ snapshots:
 
   '@autional/core@0.2.2': {}
 
+  '@autional/core@0.3.5': {}
+
   '@autional/react@0.2.1(@autional/core@0.2.2)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@autional/core': 0.2.2
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+
+  '@autional/react@0.3.1(@autional/core@0.3.5)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+    dependencies:
+      '@autional/core': 0.3.5
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 

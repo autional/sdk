@@ -14,6 +14,36 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-16] core@be4097dfdc14 —— 换号守卫并入 1.6（本地优先应用数据隔离；nextchat R1 反哺波）
+
+**内容**（sdk `bca56e5`；`_core` PROCEDURE 8 处；EN/ZH 对称）：
+
+- §1.6 应用数据隔离检查：检查项 4 补「不经登出的会话终结」对照 —— token 过期 / 平台侧撤销 / 清 cookie 等路径结束后，换另一账号登录，前一账号数据是否仍可见；报告块拆两行（经登出所见 / 不经登出所见）。
+- §1.6 新增「换号守卫（本地优先应用）」段：持久化 last signed-in user id；会话启动比对 —— 不匹配（含无标记）→ 先清本地用户数据 + 整页重载，再进入 pull / merge / push；同 id 不动；清理清单复用登出路径（两条路径不漂移）。
+- Security 清单行补：换号不得见前账号数据（1.6 守卫覆盖无登出终结路径）。
+
+**触发**：lab 实验 3（nextchat）安全分析 7 问发现 R1（无登出终结后换号：前账号本地残留并入下一账号视图，并经下次同步推入其云端）+ R5（`ACAO:*` 与 `Allow-Credentials` 同发畸形组合）；nextchat 修复 `603fe4e2`（双分支同版）+ 生产部署 8 `4mrryqcdh` + E2E 8/8（含换号残留守卫轮）；R1 检查项沉淀平台 skill（lab README `20aebf4` 回填）。
+
+| 区 | CDN 版本 | 交付物（字节） | SKILL 主文件 sha256（前 8） |
+|----|----------|----------------|------------------------------|
+| com | `v0.1.0-6aef473d` | SKILL.md 35717 / SKILL.zh.md 33552 / references 1514 + 3705 | `69aba812` |
+| cn  | `v0.1.0-be3dab86` | SKILL.md 33708 / SKILL.en.md 35922 / references 2042 + 3727 | `ef03801c` |
+
+**发布记录**：
+
+- 站点快照：web `fafb383`（双站 `public/ai/` 镜像 + `.sha256` 刷新；`533916f..fafb383`）。
+- CDN 上架：`6f99a8d` —— 8 文件 `git hash-object --no-filters` 与 sdk `bca56e5:skills/**` blob **全等**；区域指针 `latest.com.json → 6aef473d`、`latest.cn.json → be3dab86`；`vercel.json` rewrite 跟版（`9d6546c..6f99a8d`）。
+- 复验：**T4 全绿 34/34**（CDN 直链 8 + latest 别名 8 + 双站资产 8 + `.sha256` 6 + 指针 2 + `/ai` 页 2）。鲜度标记：EN `Account-switch guard` / ZH `换号守卫` 命中。完整 sha256 与矩阵见 workspace `docs/positioning/12-skill-reachability-registry.md` §19。
+- CI：`skills-gate`（Skills Consistency Gate）success（`bca56e5`，run 38810402399）。
+
+**备注**：
+
+- 本轮为内容指引变更（非工作区协议/门禁行为变更）→ T3 干跑按 `RELEASING.md` §2.3 范围判定跳过。
+- references ×4：仅 `generated:` 行更替（core 指纹换代，字节零变化）；SKILL ×4 为实质变更（§1.6 三处 + Security 行）。
+- 复验口径补录：CDN 版本目录次级语言文件 = **同区**产物（com `SKILL.zh.md` `4f5246b2…` / cn `SKILL.en.md` `f6c9eec6…`），≠ 对方区 primary；站点侧次级映射仍为对方区 primary（见 registry §19.4）——复验期望值勿混用（本轮首跑 4 项假红，已核正）。
+- 生成机制零改动；两区渲染由既有 G2 区纯净门保证。
+- npm 交付线本轮无变更。
+
 ## [2026-10-15] npm 交付线（SDK 运行包）—— core 0.3.5 / next 0.4.0 / react 0.3.1（会话交付链修复波）
 
 **内容**（sdk `df9c127`，版本提交 `3a87678`）：会话交付链修复波 —— core `initialize()` 冷启动过期恢复 + 会话桥恒注册；next `seedStorage` 富会话降覆写（C13）+ 包粒化子路径导出（C3N/C7）；react 源 + 构建保留 `'use client'`（C7）。

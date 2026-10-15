@@ -13,8 +13,12 @@
     }
   },
   "sideEffects": false,
+  "bundleDirectives": {
+    "dist/index.mjs": "use client",
+    "dist/index.js": "use client"
+  },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @autional/core",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external react --external react-dom --external @autional/core && node ../../scripts/check-bundle-directives.mjs",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react --external react-dom --external @autional/core",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

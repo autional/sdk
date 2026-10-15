@@ -18,7 +18,8 @@ class MockBroadcastChannel {
   constructor(name: string) { this.name = name; MockBroadcastChannel.channels.set(name, this); }
   postMessage(data: any) {
     MockBroadcastChannel.channels.forEach((ch, key) => {
-      if (key === this.name && ch.onmessage) ch.onmessage({ data });
+      // 真实 BroadcastChannel 不向发送者自身投递
+      if (key === this.name && ch !== this && ch.onmessage) ch.onmessage({ data });
     });
   }
   close() { MockBroadcastChannel.channels.delete(this.name); }

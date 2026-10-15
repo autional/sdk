@@ -56,6 +56,7 @@ export class Autional {
   private _ready = false;
   private _userCache: Record<string, unknown> | null = null;
   private _authConfig: Record<string, unknown> | null = null;
+  private _sessionBridgeBound = false;
   /** 确定的租户 ID (从 config 或 issuer 提取) */
   readonly tenantId: string;
   /** 确定的租户 slug (显式配置 > issuer 提取；共享 issuer 下为 '') */
@@ -121,11 +122,33 @@ export class Autional {
   }
 
   async initialize(): Promise<void> {
-    await     this.tokenManager.load();
+    await this.tokenManager.load();
     try {
       await this.discovery.discover(this.config.issuer);
     } catch {
       // OIDC Discovery 失败 — API 调用不受影响（apiUrl 已配置）
+    }
+
+    // 冷启动过期恢复：access 过期但 refresh 尚存 → 先刷新再水合（含 SSO 模式）。
+    // 刷新失败（RT 过期/撤销、网络、无 offline_access 的 401）静默按未登录继续，不阻塞启动。
+    if (!this.tokenManager.getAccessToken() && this.tokenManager.getRefreshToken()) {
+      try {
+        await this.refreshSession();
+      } catch { /* 按未登录继续 */ }
+    }
+
+    // 会话桥恒注册（含未登录态启动）：tokenManager 的 token 变更必须上抛公共事件，
+    // 否则「登录前启动」的页面在随后登录/刷新时事件断链（跨标签同步、应用侧 cookie 桥失效）。
+    if (!this._sessionBridgeBound) {
+      this._sessionBridgeBound = true;
+      this.tokenManager.onTokenChange((token) => {
+        if (!token) {
+          this._userCache = null;
+          this.emit('LOGGED_OUT');
+        }
+        this.emit('TOKEN_CHANGED', { token });
+        this.emit('USER_CHANGED');
+      });
     }
 
     const accessToken = this.tokenManager.getAccessToken();
@@ -145,15 +168,6 @@ export class Autional {
           }
         }
       }
-
-      this.tokenManager.onTokenChange((token) => {
-        if (!token) {
-          this._userCache = null;
-          this.emit('LOGGED_OUT');
-        }
-        this.emit('TOKEN_CHANGED', { token });
-        this.emit('USER_CHANGED');
-      });
     }
 
     this._ready = true;

@@ -4,9 +4,13 @@ Autional Next.js SDK — middleware, server-side session, and provider for Next.
 
 ## What's Inside
 
-- **`autionalMiddleware`** — edge middleware that redirects unauthenticated users from protected paths
-- **`getServerSession`** — server-side session lookup via cookie token + `/auth/me` API call
-- **`AutionalProvider`** — client component wrapper (re-exports from `@autional/react` with SSR support)
+Use the subpath that matches the runtime — do not import middleware from the package root (the root bundle mixes client hooks and breaks the react-server graph):
+
+- **`@autional/next/middleware`** — edge middleware that redirects unauthenticated users from protected paths
+- **`@autional/next/server`** — server-side session lookup via cookie token + `/auth/me` API call
+- **`@autional/next/provider`** — client component wrapper (re-exports from `@autional/react` with SSR support; ships the `"use client"` directive)
+
+The package root (`@autional/next`) re-exports all three for backward compatibility; client-context imports work, but middleware/server code should always use the subpaths.
 
 ## Install
 
@@ -18,7 +22,7 @@ npm install @autional/core @autional/react @autional/next
 
 ```ts
 // middleware.ts
-import { autionalMiddleware } from '@autional/next';
+import { autionalMiddleware } from '@autional/next/middleware';
 
 export const config = { matcher: ['/dashboard/:path*', '/settings/:path*'] };
 
@@ -31,13 +35,15 @@ export default autionalMiddleware({
 
 ```tsx
 // app/layout.tsx
-import { AutionalProvider } from '@autional/next';
+import { AutionalProvider } from '@autional/next/provider';
+
+const config = { appId: 'my-app', issuer: 'https://auth.autional.cn' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
       <body>
-        <AutionalProvider appId="my-app" issuer="https://auth.iam.tianv.com">
+        <AutionalProvider config={config}>
           {children}
         </AutionalProvider>
       </body>
@@ -48,10 +54,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```tsx
 // app/dashboard/page.tsx
-import { getServerSession } from '@autional/next';
+import { getServerSession } from '@autional/next/server';
 
 export default async function DashboardPage() {
-  const session = await getServerSession({ authUrl: 'https://auth.iam.tianv.com' });
+  const session = await getServerSession({ authUrl: 'https://auth.autional.cn' });
   if (!session.user) return <div>Not authenticated</div>;
   return <h1>Welcome, {session.user.displayName}</h1>;
 }

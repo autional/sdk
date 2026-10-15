@@ -5,31 +5,19 @@ import {
   AutionalProvider as ReactAutionalProvider,
   type AutionalProviderConfig,
 } from '@autional/react';
+import { seedStorage } from './seed';
 
 export interface AutionalNextProviderConfig extends AutionalProviderConfig {
   initialToken?: string;
   cookieName?: string;
 }
 
-const STORAGE_KEY = 'autional_tokens';
 const DEFAULT_COOKIE = 'autional_token';
 
 function readCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
   const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
-}
-
-function seedStorage(token: string): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      accessToken: token,
-      refreshToken: null,
-      user: null,
-      tenantId: null,
-      expiresAt: null,
-    }));
-  } catch { /* localStorage unavailable */ }
 }
 
 interface Props {

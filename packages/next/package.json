@@ -10,12 +10,39 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.mjs",
+      "require": "./dist/middleware.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.mjs",
+      "require": "./dist/server.js"
+    },
+    "./provider": {
+      "types": "./dist/provider.d.ts",
+      "import": "./dist/provider.mjs",
+      "require": "./dist/provider.js"
     }
   },
   "sideEffects": false,
+  "bundleDirectives": {
+    "dist/provider.mjs": "use client",
+    "dist/provider.js": "use client",
+    "dist/middleware.mjs": null,
+    "dist/middleware.js": null,
+    "dist/server.mjs": null,
+    "dist/server.js": null
+  },
+  "bundleForbiddenImports": {
+    "dist/middleware.mjs": ["react", "react-dom", "@autional/react", "@autional/core"],
+    "dist/middleware.js": ["react", "react-dom", "@autional/react", "@autional/core"]
+  },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean --external next --external @autional/core --external @autional/react --external react --external react-dom",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external next --external @autional/core --external @autional/react --external react --external react-dom",
+    "build": "tsup && node ../../scripts/check-bundle-directives.mjs",
+    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist",
     "prepublishOnly": "node ../../scripts/prepublish-guard.mjs"

@@ -1,6 +1,6 @@
 {
   "name": "@autional/next",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Autional Next.js SDK — middleware, server session, and provider for Next.js App Router",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -37,8 +37,18 @@
     "dist/server.js": null
   },
   "bundleForbiddenImports": {
-    "dist/middleware.mjs": ["react", "react-dom", "@autional/react", "@autional/core"],
-    "dist/middleware.js": ["react", "react-dom", "@autional/react", "@autional/core"]
+    "dist/middleware.mjs": [
+      "react",
+      "react-dom",
+      "@autional/react",
+      "@autional/core"
+    ],
+    "dist/middleware.js": [
+      "react",
+      "react-dom",
+      "@autional/react",
+      "@autional/core"
+    ]
   },
   "scripts": {
     "build": "tsup && node ../../scripts/check-bundle-directives.mjs",
@@ -59,13 +69,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@autional/core": ">=0.1.0",
-    "@autional/react": ">=0.1.0",
+    "@autional/core": ">=0.3.5",
+    "@autional/react": ">=0.3.1",
     "next": ">=14.0.0"
   },
   "dependencies": {
-    "@autional/core": ">=0.1.0",
-    "@autional/react": ">=0.1.0"
+    "@autional/core": ">=0.3.5",
+    "@autional/react": ">=0.3.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

@@ -14,6 +14,30 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-15] npm 交付线（SDK 运行包）—— core 0.3.5 / next 0.4.0 / react 0.3.1（会话交付链修复波）
+
+**内容**（sdk `df9c127`，版本提交 `3a87678`）：会话交付链修复波 —— core `initialize()` 冷启动过期恢复 + 会话桥恒注册；next `seedStorage` 富会话降覆写（C13）+ 包粒化子路径导出（C3N/C7）；react 源 + 构建保留 `'use client'`（C7）。
+
+| 包 | 版本 | changeset | dist-tags（npmjs） |
+|----|------|-----------|--------------------|
+| `@autional/core` | `0.3.5` | patch | `latest` = `next` = `0.3.5` |
+| `@autional/next` | `0.4.0` | minor | `latest` = `next` = `0.4.0` |
+| `@autional/react` | `0.3.1` | patch | `latest` = `next` = `0.3.1` |
+
+**发布记录**：
+
+- npmjs 三包上线；npmmirror 三版本同步（两 registry 产物 **88/88 文件 sha256 全等**）。
+- `next` dist-tag 已对齐 `latest`（与 core@0.3.4 轮惯例一致）。
+- git tags `@autional/core@0.3.5` / `@autional/next@0.4.0` / `@autional/react@0.3.1` 已推 origin。
+- 双 registry 复验：fresh-consumer 四件套（CJS / ESM / 导出名 / tsc `--strict`）双绿；已发布构件指令核验过（`provider.mjs` 首行 `"use client"`、`middleware.*` / `server.*` 无、`index.mjs` = middleware 再导出）。
+- lockfile 同步：sdk `63c3af5`（next/react 依赖解析升 0.3.5 / 0.3.1；旧 specifier `>=0.1.0` 与新范围不一致，`--frozen-lockfile` 会报过期）。
+
+**备注**：
+
+- **发布须用 pnpm ≥10**（`npx -y pnpm@10.34.6 publish:ci`）：pnpm ≤9 委托 `npm publish` 会把 changesets 注入的 `--no-git-checks` 透传给 npm 12 → `EUNKNOWNCONFIG` 全量失败（本机系统 pnpm 9.5 实测踩中）。细则见 `RELEASING.md` §5。
+- changesets 2.31.0 在 npm 12 下 info 检查失效：误判已发布包为未发布，对 28 个已发布包发起重发尝试（全部被 registry 拒，无害）。durable fix = 升级 `@changesets/cli` 3.x（待决策）。
+- npm 12 publish 异步：`PUT 202` 后数分钟才可查，立即可查 `E404` 属正常；以 npm 调试日志 `PUT 202` + exit 0 为准。
+
 ## [2026-10-14] core@3bc775d388f6 —— 行业缺口三波并入（多标签会话 / RFC 7009 / B2C 暴露 / 预刷新 / 设备流 / DPoP / 租户 slug）
 
 **内容**（sdk `11a3335`；`_core` PROCEDURE 6 处 + config-template 2 处）：

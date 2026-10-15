@@ -186,11 +186,13 @@ commit + push `main` → 双 Vercel 生产部署 → 复验（§6）。
 
 | 项 | 值 |
 |----|-----|
-| 包 | `@autional/onboard`（npmjs；`npx @autional/onboard`）／`@autional-cn/onboard`（npmmirror） |
+| 包 | `@autional/onboard`（npmjs；`npx @autional/onboard`）／`@autional-cn/onboard`（npmmirror）；SDK 运行包同列车：`@autional/core` / `@autional/next` / `@autional/react`（npmjs；npmmirror 自动镜像） |
 | 版本语义 | 与 skill 内容指纹**独立**（CLI 工具链版本 vs 内容版本） |
 | 常规发版 | changesets：`pnpm changeset`（记变更）→ 版本 PR → `pnpm publish:ci`（= build + changeset publish） |
 | 包级守卫 | `prepublishOnly` → `scripts/prepublish-guard.mjs`（scope 一致性 + fresh build 断言） |
 | 首发/大波 | tag-first（N-05）：`pnpm -r publish --tag next` → 四件套 + 双 registry 闸门 → 逐名 `npm dist-tag add <pkg>@<ver> latest`（坏件暴露面缩到 next 通道） |
+
+**发布工具链（npm 12 时代，2026-10-15）**：发布须用 **pnpm ≥10**（如 `npx -y pnpm@10.34.6 publish:ci`）。pnpm ≤9 委托 `npm publish` 时会把 changesets 注入的 `--no-git-checks` 透传给 npm ≥12 → `EUNKNOWNCONFIG` 全量失败；pnpm ≥10 过滤未知旗标（pnpm 12 原生发布，不再经 npm）。另：npm 12 publish 异步（`PUT 202` → 数分钟可查，立即查询 `E404` 属正常）；changesets 2.x 在 npm 12 下 info 检查失效会产生已发布包的重发尝试（无害），durable fix = `@changesets/cli` 3.x。
 
 **时序约束（C11 教训，2026-10-10）**：SDK 变更牵涉服务端行为（传输口径 / 字段名 / 错误码）时，**先部署服务端修复，再发 npm**。反例：changePassword 契约修复的 npm 发版必须等 identity prod fail-loud 修复上线——否则新旧组合在真实链路上仍踩坑。
 

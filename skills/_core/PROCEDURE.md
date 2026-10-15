@@ -299,6 +299,9 @@ Login is only half of "multi-user". Check where the app keeps its **application 
 2. Are storage keys scoped per user?  "notes" (shared) vs "notes:<userId>" (isolated).
 3. Are backend rows scoped per user?  a user_id / owner_id column, or none?
 4. Once login works (Phase 7): log out, log in as another account — does the data change?
+   Then repeat without a logout: end the session another way (let the token expire or
+   revoke it, clear the stored session), log in as another account — does the previous
+   account's data still show?
 ```
 
 Report honestly:
@@ -306,7 +309,8 @@ Report honestly:
 ```
 Data isolation: ISOLATED / NOT ISOLATED / NOT APPLICABLE (no app data yet)
 Where: <storage keys or tables>
-What another login sees: <a fresh account's empty state | the same shared data>
+What another login sees after a logout: <a fresh account's empty state | the same shared data>
+What another login sees after a no-logout session end: <previous account's residual data | clean state>
 ```
 
 If NOT isolated, present options — **do not touch the data layer on your own; any change happens only after the user explicitly approves it**:
@@ -316,6 +320,8 @@ If NOT isolated, present options — **do not touch the data layer on your own; 
 [B] Move app data behind a backend with per-user scoping (larger; enables multi-device)
 [C] Keep as-is for now (e.g. single-machine demo) — record the finding instead
 ```
+
+**Account-switch guard (local-first apps).** A session does not always end with a logout — token expiry, a platform-side kill, or a cleared cookie ends it too. If local data is only cleared at logout, the previous account's residue survives into the next account: it merges into that account's view, and the next sync pushes it into their cloud state. Guard the switch: persist the last signed-in user id; when a session starts, compare it with the current user id — mismatch (including "no marker yet") → clear the local user data and full-reload BEFORE any pull / merge / push; same id → leave data untouched. Reuse the logout's clear list so the two paths cannot drift apart.
 
 Record the finding and the user's decision in `AUTIONAL_CHANGES.md`. An approved change is extra scope: list it in the Phase 5.0 preview and keep it on the same branch.
 <!-- /lang:en -->
@@ -395,6 +401,8 @@ core + 框架包 增加约 15 KB（gzip 后约 5 KB）。
 2. 存储键是否按用户区分？  "notes"（共享）vs "notes:<userId>"（隔离）。
 3. 后端行是否带用户维度？  有 user_id / owner_id 列，还是完全没有？
 4. 登录打通后（Phase 7）：登出、换一个账号登录——数据变了吗？
+   再做一次「不经登出」的对照：用别的方式结束会话（Token 过期或被撤销、清掉存储的
+   会话），换一个账号登录——上一账号的数据还在吗？
 ```
 
 如实报告：
@@ -402,7 +410,8 @@ core + 框架包 增加约 15 KB（gzip 后约 5 KB）。
 ```
 数据隔离：已隔离 / 未隔离 / 不适用（应用尚无业务数据）
 位置：<存储键或表>
-换账号所见：<新账号的空状态 | 与之前完全相同的共享数据>
+经登出换账号所见：<新账号的空状态 | 与之前完全相同的共享数据>
+不经登出换账号所见：<上一账号的残留数据 | 干净状态>
 ```
 
 如果「未隔离」，给出选项——**不要自作主张动数据层；任何整改动作必须经用户明确同意后才执行**：
@@ -412,6 +421,8 @@ core + 框架包 增加约 15 KB（gzip 后约 5 KB）。
 [B] 业务数据迁到带用户维度的后端（较大；可跨设备）
 [C] 暂不处理（如单机演示）——把结论记录下来即可
 ```
+
+**换号守卫（本地优先应用）。** 会话不一定以登出收场——Token 过期、平台侧终结、清掉 Cookie 同样终结会话。若本地数据只在登出时清理，上一账号的残留会活到下一账号：并入其视图，并在下次同步时推进对方的云端状态。守好换号边界：持久化「上次登录的 userId」标记；会话开始时与当前用户 id 比对——不一致（含「尚无标记」）→ 先清本机用户数据，再做整页重载，之后才拉取 / 合并 / 推送；一致 → 数据不动。清理清单与登出共用，防两处漂移。
 
 结论（与用户的选择）写入 `AUTIONAL_CHANGES.md`。用户批准的整改属于附加范围：列入 Phase 5.0 改动预览，留在同一分支上。
 <!-- /lang:zh -->
@@ -1208,7 +1219,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Wrong password | friendly error, no crash | integration test |
 | CAPTCHA | 3 failures → challenge → retry | integration test |
 
-**Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout ends the OP session, not just the local copy (5.2c) · refresh-replay detected · CAPTCHA slows brute force.
+**Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout ends the OP session, not just the local copy (5.2c) · an account switch shows no previous-account data — local cleanup runs even when the session ended without a logout (1.6 guard) · refresh-replay detected · CAPTCHA slows brute force.
 
 **Config**: .env.local gitignored · password shown once · AUTIONAL_SETUP.md generated · summary contains everything.
 <!-- /lang:en -->
@@ -1226,7 +1237,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | 错误密码 | 友好报错，不崩 | 集成测试 |
 | CAPTCHA | 3 次失败 → 挑战 → 重试 | 集成测试 |
 
-**安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出终结 OP 会话（非仅清本域——5.2c）· 刷新重放可检测 · CAPTCHA 抗爆破。
+**安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出终结 OP 会话（非仅清本域——5.2c）· 换号不见前账号残留（不经登出同样清理——1.6 守卫）· 刷新重放可检测 · CAPTCHA 抗爆破。
 
 **配置**：.env.local 已 gitignore · 密码只显示一次 · AUTIONAL_SETUP.md 已生成 · 摘要信息完整。
 <!-- /lang:zh -->

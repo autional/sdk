@@ -1256,6 +1256,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Several projects, one tenant | skip Phase 3, reuse appId + issuer |
 | Login page renders zero input fields (or only an OAuth card) | tenant auth-policy dead end: `login_methods` declares a method with no matching provider configured → write the tenant auth policy (`PUT /admin/tenants/:id/auth-policy`; `login_methods` is a JSON string), then re-read the login page — a 200 from identity `PUT /admin/security/auth-config` does not prove the change took effect |
 | Authorize page hangs (~30 s), then lands on the brand portal with no login form | this region's auth host is unhealthy (its backend proxy is failing) → cross-check the other region (swap the region suffix in `auth.autional.{{REGION}}`); pin the healthy region's `authorizeUrl` (5.2b) and report the outage |
+| Tenant portal sign-in shows "This organization's sign-in is not configured" | the tenant's portal OAuth client was never supplied by the platform's auto-provisioning chain (tenant creation → client provisioning; tenants created before the fix, or a provisioning failure). Verify: `GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` present (new tenants: within seconds). If absent → report to platform support for backfill; do not substitute an unrelated client |
 
 ### Existing tenant (skip Phase 3)
 
@@ -1294,6 +1295,7 @@ Note: users already registered in Autional are not migrated back into the local 
 | 多项目共用一个租户 | 跳过 Phase 3，复用 appId + issuer |
 | 登录页零输入项（或只有 OAuth 卡片） | 租户 auth-policy 死路：`login_methods` 声明的方法没配对应 provider → 写租户认证策略（`PUT /admin/tenants/:id/auth-policy`；`login_methods` 为 JSON 字符串），再回读登录页——identity `PUT /admin/security/auth-config` 返回 200 不代表生效 |
 | 授权页挂起（约 30 秒）后落到品牌门户、无登录表单 | 本区 auth 主机不健康（后端代理故障）→ 对照另一区（替换 `auth.autional.{{REGION}}` 中的区后缀）；引脚健康区的 `authorizeUrl`（5.2b）并上报故障 |
+| 租户门户登录显示「This organization's sign-in is not configured」 | 租户的门户 OAuth 客户端未被平台自动供给链落位（创建租户 → 供给客户端；修复前建的老租户或供给故障）。核验：`GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` 存在（新租户数秒内落位）。缺失 → 上报平台支持补供给；勿用无关客户端顶替 |
 
 ### 已有租户（跳过 Phase 3）
 

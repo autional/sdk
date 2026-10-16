@@ -14,6 +14,33 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-16] core@ab58de0146e5 —— 门户供给边界情况并入（租户门户登录 not-configured 核验；实验 3 门户供给修复波）
+
+**内容**（sdk `8d57a96`；`_core` PROCEDURE 2 处；EN/ZH 对称）：
+
+- 边界表（EN/ZH）各补 1 行：租户门户登录显示「This organization's sign-in is not configured」= 平台自动供给链未落位（修复前老租户或供给故障）。核验：`GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` 存在（新租户数秒内落位）；缺失 → 上报平台支持补供给；勿用无关客户端顶替。
+
+**触发**：lab 实验 3（nextchat）租户门户登录（user.autional.cn/nextchat-demo）报 not-configured —— 三层根因：① 建户时门户默认 OAuth 客户端未供给；② service-tenant 试用注册链不发布 `tenant.created`（`CreateTrialTenant` 缺发布）；③ `tenant.events` 交换迁移半波（发布侧直连队列 vs 消费侧 fanout）。平台侧修复：客户端背填 + service-tenant `a1b933b`（补发 tenant.created）+ MQ 交换键补齐；门户 E2E landed=ok（19.5s）；新租户 `exg-verify-1` 复验 `oauth_client_id` 回读 3.8s（判据脚本 lab `provision/trial-register-verify.mjs` + `nextchat-portal-e2e.mjs`）。
+
+| 区 | CDN 版本 | 交付物（字节） | SKILL 主文件 sha256（前 8） |
+|----|----------|----------------|------------------------------|
+| com | `v0.1.0-4f539405` | SKILL.md 36235 / SKILL.zh.md 33998 / references 1514 + 3705 | `5b5b0e8a` |
+| cn  | `v0.1.0-48334a28` | SKILL.md 34153 / SKILL.en.md 36439 / references 2042 + 3727 | `d3e57157` |
+
+**发布记录**：
+
+- 站点快照：web `64af71b`（双站 `public/ai/` 镜像 + `.sha256` 刷新；`fafb383..64af71b`）。
+- CDN 上架：`a315f28` —— 8 文件 `git hash-object --no-filters` 与 sdk `8d57a96:skills/**` blob **全等**；区域指针 `latest.com.json → 4f539405`、`latest.cn.json → 48334a28`；`vercel.json` rewrite 跟版（`6f99a8d..a315f28`）。
+- 复验：**T4 全绿 34/34**（CDN 直链 8 + latest 别名 8 + 双站资产 8 + `.sha256` 6 + 指针 2 + `/ai` 页 2）。鲜度标记：EN `Tenant portal sign-in shows` / ZH `租户门户登录显示` 命中。完整 sha256 与矩阵见 workspace `docs/positioning/12-skill-reachability-registry.md` §20。
+- CI：`skills-gate`（Skills Consistency Gate）success（`8d57a96`，run 38857099398）。
+
+**备注**：
+
+- 本轮为内容指引变更（非工作区协议/门禁行为变更）→ T3 干跑按 `RELEASING.md` §2.3 范围判定跳过。
+- references ×4：仅 `generated:` 行更替（core 指纹换代，字节零变化）；SKILL ×4 为实质变更（边界表各补 1 行）。
+- 生成机制零改动；两区渲染由既有 G2 区纯净门保证。
+- npm 交付线本轮无变更。
+
 ## [2026-10-16] core@be4097dfdc14 —— 换号守卫并入 1.6（本地优先应用数据隔离；nextchat R1 反哺波）
 
 **内容**（sdk `bca56e5`；`_core` PROCEDURE 8 处；EN/ZH 对称）：

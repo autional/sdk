@@ -21,7 +21,7 @@ from datetime import datetime
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SDK_DIR = os.path.join(PROJECT_ROOT, "sdk")
 SDK_PACKAGES_DIR = os.path.join(SDK_DIR, "packages")
-MICRO_SERVICES_DIR = os.path.join(PROJECT_ROOT, "micro-services")
+WORKSPACE_SHARED_DIR = os.path.join(PROJECT_ROOT, "shared")
 
 SERVICES = [
     {"name": "identity-service",      "prefix": "identity"},
@@ -138,11 +138,21 @@ def extract_inner_type_from_ref(ref_name):
     return f"{inner}[]" if is_array else inner
 
 
+def definition_exists(def_name, definitions):
+    """swagger $ref 指向的定义是否真实存在（键名可能带长包前缀）。"""
+    if def_name in definitions:
+        return True
+    base = sanitize_type_name(def_name)
+    return any(sanitize_type_name(k) == base for k in definitions)
+
+
 def resolve_response_type(schema, definitions):
     """Resolve response type, unwrapping DataResponse<T>/ListResponse<T> envelopes."""
     ref = schema.get("$ref", "")
     if ref and ref.startswith("#/definitions/"):
         def_name = ref.replace("#/definitions/", "")
+        if not definition_exists(def_name, definitions):
+            return "unknown"
         base = sanitize_type_name(def_name)
         if base in ("DataResponse", "ListResponse"):
             inner = extract_inner_type_from_ref(def_name)
@@ -158,6 +168,8 @@ def swagger_to_ts_type(schema, definitions, indent=0):
     ref = schema.get("$ref", "")
     if ref and ref.startswith("#/definitions/"):
         def_name = ref.replace("#/definitions/", "")
+        if not definition_exists(def_name, definitions):
+            return "unknown"
         return sanitize_type_name(def_name)
     stype = schema.get("type", "")
     if stype == "array":
@@ -207,14 +219,28 @@ def is_skipped_path(path):
     return path in SKIP_PATHS or path.startswith("/internal/")
 
 
+def service_dir_name(svc_name):
+    """服务名 → 工作区目录名（oauth-service → service-oauth）。"""
+    if svc_name.startswith("service-"):
+        return svc_name
+    suffix = "-service"
+    if svc_name.endswith(suffix):
+        return "service-" + svc_name[: -len(suffix)]
+    return svc_name
+
+
 def load_swagger(svc_name):
-    json_path = os.path.join(MICRO_SERVICES_DIR, svc_name, "docs", "swagger.json")
-    if not os.path.isfile(json_path):
-        return None
-    if os.path.getsize(json_path) == 0:
-        return None
-    with open(json_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    # 多仓布局：shared/<svc>/swagger/swagger.json；旧布局 docs/swagger.json 保留兜底
+    svc_dir = os.path.join(WORKSPACE_SHARED_DIR, service_dir_name(svc_name))
+    for rel in (os.path.join("swagger", "swagger.json"), os.path.join("docs", "swagger.json")):
+        json_path = os.path.join(svc_dir, rel)
+        if not os.path.isfile(json_path):
+            continue
+        if os.path.getsize(json_path) == 0:
+            return None
+        with open(json_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
 
 
 def collect_endpoints(swagger):
@@ -273,23 +299,19 @@ def collect_referenced_defs(endpoints, definitions):
         for code, resp in ep.get("responses", {}).items():
             walk(resp.get("schema", {}))
 
-    def resolve_transitive(ref_name):
-        if ref_name in refs:
-            return
-        refs.add(ref_name)
-        schema = definitions.get(ref_name)
-        if schema:
-            walk(schema)
-
-    pending = list(refs)
-    while pending:
-        name = pending.pop()
-        resolve_transitive(name)
+    # 传递闭包：定义之间可多层嵌套（响应 → Detail → 内层 DTO），逐轮展开直至收敛
+    processed = set()
+    while True:
+        pending = refs - processed
+        if not pending:
+            break
+        for name in list(pending):
+            processed.add(name)
+            schema = definitions.get(name)
+            if schema:
+                walk(schema)
 
     return refs
-
-
-SHARED_SKIP_TYPES = {"Problem", "PageInfo", "DataResponse", "ListResponse", "FieldViolation", "SimpleResponse"}
 
 
 def generate_types(definitions, used_refs):
@@ -300,7 +322,7 @@ def generate_types(definitions, used_refs):
     generated = set()
     for ref_name in sorted(used_refs):
         ts_name = sanitize_type_name(ref_name)
-        if ts_name in generated or ts_name in SHARED_SKIP_TYPES:
+        if ts_name in generated:
             continue
         schema = definitions.get(ref_name)
         if not schema:
@@ -431,6 +453,11 @@ def generate_functions(endpoints, definitions, prefix):
         if is_skipped_path(path):
             continue
 
+        # form-urlencoded 端点（OAuth token/introspect/revoke 等）无法用 ApiClient 的
+        # JSON 序列化正确表达，跳过以免生成“看似可用、实际丢参”的函数。
+        if any(p.get("in") == "formData" for p in ep["parameters"]):
+            continue
+
         func_name = build_function_name(path, method, prefix)
         if func_name in seen_names:
             i = 2
@@ -488,6 +515,22 @@ def generate_functions(endpoints, definitions, prefix):
             "prefix": prefix,
         })
 
+    needs_query_helper = any(
+        fi["query_params"] and fi["method"] in ("POST", "PUT") for fi in func_infos
+    )
+    if needs_query_helper:
+        lines.append("// ApiClient 的 post/put 不收 query 参数，这里统一拼接到 URL")
+        lines.append("function appendQuery(url: string, params?: Record<string, unknown>): string {")
+        lines.append("  if (!params) return url;")
+        lines.append("  const query = new URLSearchParams();")
+        lines.append("  for (const [k, v] of Object.entries(params)) {")
+        lines.append("    if (v !== undefined && v !== null) query.append(k, String(v));")
+        lines.append("  }")
+        lines.append("  const qs = query.toString();")
+        lines.append("  return qs ? `${url}?${qs}` : url;")
+        lines.append("}")
+        lines.append("")
+
     for fi in func_infos:
         summary = fi["summary"]
         if summary:
@@ -521,34 +564,20 @@ def generate_functions(endpoints, definitions, prefix):
             else:
                 lines.append(f"  return client.get(`{url}`);")
         elif method == "POST":
+            url_expr = f"appendQuery(`{url}`, params)" if config_parts else f"`{url}`"
             if body_params:
-                if config_parts:
-                    lines.append(f"  return client.post(`{url}`, data, {{ {' , '.join(config_parts)} }});")
-                else:
-                    lines.append(f"  return client.post(`{url}`, data);")
+                lines.append(f"  return client.post({url_expr}, data);")
             else:
-                if config_parts:
-                    lines.append(f"  return client.post(`{url}`, undefined, {{ {' , '.join(config_parts)} }});")
-                else:
-                    lines.append(f"  return client.post(`{url}`);")
+                lines.append(f"  return client.post({url_expr});")
         elif method == "PUT":
+            url_expr = f"appendQuery(`{url}`, params)" if config_parts else f"`{url}`"
             if body_params:
-                if config_parts:
-                    lines.append(f"  return client.put(`{url}`, data, {{ {' , '.join(config_parts)} }});")
-                else:
-                    lines.append(f"  return client.put(`{url}`, data);")
+                lines.append(f"  return client.put({url_expr}, data);")
             else:
-                if config_parts:
-                    lines.append(f"  return client.put(`{url}`, {{ {' , '.join(config_parts)} }});")
-                else:
-                    lines.append(f"  return client.put(`{url}`);")
+                lines.append(f"  return client.put({url_expr});")
         elif method == "DELETE":
-            delete_args = []
-            if body_params:
-                delete_args.append("data")
-            delete_args.extend(config_parts)
-            if delete_args:
-                lines.append(f"  return client.delete(`{url}`, {{ {' , '.join(delete_args)} }});")
+            if config_parts:
+                lines.append(f"  return client.delete(`{url}`, params);")
             else:
                 lines.append(f"  return client.delete(`{url}`);")
         elif method == "PATCH":

@@ -8,7 +8,7 @@
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "clean": "pnpm -r run clean",
-    "generate:api": "tsx scripts/generate-api-packages.ts",
+    "generate:api": "python scripts/generate-api-packages.py",
     "changeset": "changeset",
     "publish:ci": "pnpm build && changeset publish"
   },

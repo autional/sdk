@@ -692,7 +692,7 @@ Label each option with invasiveness / gain / rollback difficulty.
 
 The app shows one "Continue with Autional" button; the login form and all social providers live on the Autional auth page. Use it when several apps must share one user pool, or when the app should not implement password/social login itself.
 
-1. **Register the app** (developer portal {{PORTAL_DEVELOPER}} → OAuth clients): note the `client_id` (this is the SDK `appId`); set the app's public callback URL as `redirect_uri` (e.g. `https://app.example.com/oauth/callback`); add the app's origin to the client's `cors_origins` (e.g. `https://app.example.com`). **CORS registration is mandatory** — without it the browser blocks the token exchange. Also fill in the app's **website** (public https URL) and optional **short alias / logo**: the end-user portal renders the "Authorized apps" tile from them — **without a website the tile is display-only (not clickable)**.
+1. **Register the app** (admin console {{PORTAL_ADMIN}}/{TENANT_SLUG}/oauth-clients): note the `client_id` (this is the SDK `appId`); set the app's public callback URL as `redirect_uri` (e.g. `https://app.example.com/oauth/callback`); add the app's origin to the client's `cors_origins` (e.g. `https://app.example.com`). **CORS registration is mandatory** — without it the browser blocks the token exchange. Also fill in the app's **website** (public https URL) and optional **short alias / logo**: the end-user portal renders the "Authorized apps" tile from them — **without a website the tile is display-only (not clickable)**.
 2. **Login button**:
    ```ts
    await autional.loginWithOAuth({});   // client_id = appId; PKCE (S256) + state handled by the SDK
@@ -823,7 +823,7 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 
 应用只放一个「用 Autional 登录」按钮；登录表单与全部社交登录都留在 Autional 授权页。适合多应用共用一个用户池，或不想自己实现密码/社交登录的应用。
 
-1. **注册应用**（开发者门户 {{PORTAL_DEVELOPER}} → OAuth 客户端）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。同时填写应用的**官网地址（`website`，公网 https 地址）**与可选的**简称（`alias`）/ Logo**：用户中心的「已授权应用」用它们渲染磁贴——**缺 `website` 时磁贴只能展示、不可点击**。
+1. **注册应用**（管理后台 {{PORTAL_ADMIN}}/{TENANT_SLUG}/oauth-clients）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。同时填写应用的**官网地址（`website`，公网 https 地址）**与可选的**简称（`alias`）/ Logo**：用户中心的「已授权应用」用它们渲染磁贴——**缺 `website` 时磁贴只能展示、不可点击**。
 2. **登录按钮**：
    ```ts
    await autional.loginWithOAuth({});   // client_id = appId；PKCE（S256）+ state 由 SDK 处理
@@ -1105,10 +1105,10 @@ Console portals are tenant-scoped — always write links with the tenant slug (`
 | Admin | {{PORTAL_ADMIN}}/{TENANT_SLUG}/ | administrator | users / roles / security policy / audit log |
 | User | {{PORTAL_USER}}/{TENANT_SLUG}/ | end users | change password / devices / MFA |
 | Security | {{PORTAL_SECURITY}}/{TENANT_SLUG}/ | security ops | anomaly detection / login trends / log export |
-| Developer | {{PORTAL_DEVELOPER}} | developer | API docs / OAuth clients / app settings (global — no slug) |
+| Developer | {{PORTAL_DEVELOPER}} | developer | API docs / quickstart guides (global — no slug) |
 | Status | {{PORTAL_STATUS}} | everyone | service health (global — no slug) |
 
-Common operations: add user → Admin › Users › Add; reset password → Admin › Users › user › Reset; security policy → Admin › Security settings; create app → Admin › Apps (or Developer portal); audit log → Admin › Audit.
+Common operations: add user → Admin › Users › Add; reset password → Admin › Users › user › Reset; security policy → Admin › Security settings; create app → Admin › OAuth clients; audit log → Admin › Audit.
 
 ### 8.3 Final reminders
 
@@ -1164,10 +1164,10 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | 管理后台 | {{PORTAL_ADMIN}}/{TENANT_SLUG}/ | 管理员 | 用户/角色/安全策略/审计日志 |
 | 用户门户 | {{PORTAL_USER}}/{TENANT_SLUG}/ | 普通用户 | 改密码/设备/MFA |
 | 安全仪表盘 | {{PORTAL_SECURITY}}/{TENANT_SLUG}/ | 安全运营 | 异常检测/登录趋势/日志导出 |
-| 开发者门户 | {{PORTAL_DEVELOPER}} | 开发者 | API 文档/OAuth 客户端/应用设置（全局——无 slug） |
+| 开发者门户 | {{PORTAL_DEVELOPER}} | 开发者 | API 文档/接入指南（全局——无 slug） |
 | 系统状态 | {{PORTAL_STATUS}} | 所有人 | 服务运行状况（全局——无 slug） |
 
-常用操作：添加用户 → 管理后台 › 用户管理 › 添加；重置密码 → 管理后台 › 用户管理 › 用户 › 重置；安全策略 → 管理后台 › 安全设置；创建应用 → 管理后台 › 应用管理（或开发者门户）；审计日志 → 管理后台 › 审计。
+常用操作：添加用户 → 管理后台 › 用户管理 › 添加；重置密码 → 管理后台 › 用户管理 › 用户 › 重置；安全策略 → 管理后台 › 安全设置；创建应用 → 管理后台 › OAuth 客户端；审计日志 → 管理后台 › 审计。
 
 ### 8.3 最后提醒
 

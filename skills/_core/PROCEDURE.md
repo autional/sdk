@@ -823,7 +823,7 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 
 应用只放一个「用 Autional 登录」按钮；登录表单与全部社交登录都留在 Autional 授权页。适合多应用共用一个用户池，或不想自己实现密码/社交登录的应用。
 
-1. **注册应用**（开发者门户 {{PORTAL_DEVELOPER}} → OAuth 客户端）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。
+1. **注册应用**（开发者门户 {{PORTAL_DEVELOPER}} → OAuth 客户端）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。同时填写应用的**官网地址（`website`，公网 https 地址）**与可选的**简称（`alias`）/ Logo**：用户中心的「已授权应用」用它们渲染磁贴——**缺 `website` 时磁贴只能展示、不可点击**。
 2. **登录按钮**：
    ```ts
    await autional.loginWithOAuth({});   // client_id = appId；PKCE（S256）+ state 由 SDK 处理

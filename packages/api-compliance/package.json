@@ -1,6 +1,6 @@
 {
   "name": "@autional/api-compliance",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Autional Identity Service API — auto-generated TypeScript client",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

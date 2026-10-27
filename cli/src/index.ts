@@ -573,6 +573,7 @@ export default function LoginPage() {
           <label>Email</label>
           <input
             type="email"
+            autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -583,6 +584,7 @@ export default function LoginPage() {
           <label>Password</label>
           <input
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -664,12 +666,12 @@ export function LoginForm() {
     <form onSubmit={handleSubmit}>
       <div style={{ marginBottom: 16 }}>
         <label>Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+        <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required
           style={{ width: '100%', padding: 8, marginTop: 4 }} />
       </div>
       <div style={{ marginBottom: 16 }}>
         <label>Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+        <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required
           style={{ width: '100%', padding: 8, marginTop: 4 }} />
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -700,12 +702,12 @@ export function LoginForm() {
     <form @submit.prevent="handleSubmit">
       <div style="margin-bottom: 16px;">
         <label>Email</label>
-        <input v-model="email" type="email" required
+        <input v-model="email" type="email" autocomplete="username" required
           style="width: 100%; padding: 8px; margin-top: 4px;" />
       </div>
       <div style="margin-bottom: 16px;">
         <label>Password</label>
-        <input v-model="password" type="password" required
+        <input v-model="password" type="password" autocomplete="current-password" required
           style="width: 100%; padding: 8px; margin-top: 4px;" />
       </div>
       <p v-if="error" style="color: red;">{{ error }}</p>

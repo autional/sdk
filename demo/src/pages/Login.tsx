@@ -69,10 +69,10 @@ export function Login() {
       {loginMethods.includes('password') && (
         <form onSubmit={handlePasswordLogin}>
           <label className="label">Email</label>
-          <input className="input" type="email" value={identity} onChange={e => setIdentity(e.target.value)} placeholder="you@example.com" />
+          <input className="input" type="email" autoComplete="username" value={identity} onChange={e => setIdentity(e.target.value)} placeholder="you@example.com" />
 
           <label className="label">Password</label>
-          <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+          <input className="input" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
           {passwordPolicy.minLength > 0 && (
             <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
               Min {passwordPolicy.minLength} chars {passwordPolicy.requireUpper ? '+ uppercase' : ''} {passwordPolicy.requireDigit ? '+ digit' : ''}

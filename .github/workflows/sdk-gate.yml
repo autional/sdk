@@ -1,0 +1,72 @@
+name: SDK Gate
+
+# Fail-closed gate for the generated API packages.
+#
+# Two questions, both answerable from this repo alone:
+#   1. Do the committed packages agree with scripts/client-methods.json and with
+#      each other — README title/table, package description, @autional/core floor?
+#   2. Does every package still build (CJS + ESM + .d.ts), and do the runtime
+#      packages still pass their tests?
+#
+# The other half of the problem — "did a service swagger change while the SDK
+# was not regenerated?" — cannot be answered here: the service repos are not
+# visible from this repo. That check lives in the workspace repo:
+# scripts/ci/check-sdk-generated.py (CI step [79]).
+#
+# See scripts/check-generated-packages.mjs for the 6 invariants.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'packages/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/sdk-gate.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'packages/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/sdk-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sdk-gate:
+    name: generated packages + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # Cheap and dependency-free: fail before the slow build if a package
+      # drifted (identity string copied, core floor downgraded, README stale).
+      - name: Generated package invariants
+        run: node scripts/check-generated-packages.mjs
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm -r build
+
+      - name: Test
+        run: pnpm -r test

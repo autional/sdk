@@ -1,0 +1,10 @@
+{
+  "_comment": "ApiClient 方法 → 首次引入该方法的 @autional/core 版本。生成器（generate-api-packages.py）与 CI 守卫（check-generated-packages.mjs）共读此表：新增 ApiClient 方法时必须在此登记，否则两侧都报错（故意 fail-closed，防止 peer 下限悄悄放宽）。",
+  "methods": {
+    "GET": "0.1.0",
+    "POST": "0.1.0",
+    "PUT": "0.1.0",
+    "DELETE": "0.1.0",
+    "PATCH": "0.3.6"
+  }
+}

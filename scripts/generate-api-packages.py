@@ -72,14 +72,22 @@ SKIP_PATHS = {
 # ApiClient 方法 → 引入该方法的 @autional/core 最低版本。
 # 生成代码直接调用这些方法，package.json 的 peer 下限必须覆盖实际用到的最高者：
 # 声明 ">=0.1.0" 会让消费者装上缺 patch 的 0.3.5，运行期 TypeError。
-# 新增方法时必须在此登记（core_floor 对未登记方法报错，防止悄悄放宽下限）。
-CLIENT_METHOD_MIN_CORE = {
-    "GET": "0.1.0",
-    "POST": "0.1.0",
-    "PUT": "0.1.0",
-    "DELETE": "0.1.0",
-    "PATCH": "0.3.6",
-}
+# 表单一是 scripts/client-methods.json：本生成器与 CI 守卫
+# scripts/check-generated-packages.mjs 共读同一份表，杜绝「两处各写一份再漂移」。
+CLIENT_METHODS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "client-methods.json"
+)
+
+
+def _load_client_methods():
+    with open(CLIENT_METHODS_PATH, encoding="utf-8") as f:
+        table = (json.load(f) or {}).get("methods") or {}
+    if not table:
+        raise SystemExit(f"{CLIENT_METHODS_PATH} 缺少 methods 表（生成器与 CI 守卫的单一源）")
+    return table
+
+
+CLIENT_METHOD_MIN_CORE = _load_client_methods()
 
 TYPE_MAP = {
     "string": "string",
@@ -691,12 +699,67 @@ def core_floor(methods):
     unknown = sorted({m.upper() for m in methods} - set(CLIENT_METHOD_MIN_CORE))
     if unknown:
         raise ValueError(
-            f"未登记的 ApiClient 方法 {unknown}：请在 CLIENT_METHOD_MIN_CORE 补上引入版本"
+            f"未登记的 ApiClient 方法 {unknown}："
+            "请在 scripts/client-methods.json 的 methods 表补上引入版本"
         )
     versions = [CLIENT_METHOD_MIN_CORE[m.upper()] for m in methods]
     if not versions:
         versions = ["0.1.0"]
     return max(versions, key=lambda v: tuple(int(p) for p in v.split(".")))
+
+
+def expected_artifacts(name, prefix, definitions, endpoints):
+    """生成器对某服务应产出的全部内容（不落盘）。"""
+    content, func_infos = generate_index_file(prefix, name, definitions, endpoints)
+    floor = core_floor({fi["method"] for fi in func_infos})
+    return {
+        "index": content,
+        "readme": generate_readme(prefix, name, func_infos),
+        "description": generate_description(prefix, name),
+        "peer": f">={floor}",
+        "func_infos": func_infos,
+    }
+
+
+# index.ts 头部的 `Generated: YYYY-MM-DD` 每天都变；比较前抹掉，否则永远假红。
+DATE_LINE_RE = re.compile(r"^ \* Generated: \d{4}-\d{2}-\d{2}$", re.M)
+
+
+def check_package(prefix, want):
+    """对比已提交产物与生成器应产出；返回漂移项清单（空 = 一致）。"""
+    pkg_dir = os.path.join(SDK_PACKAGES_DIR, f"api-{prefix}")
+
+    def read(rel):
+        p = os.path.join(pkg_dir, rel)
+        if not os.path.isfile(p):
+            return None
+        with open(p, encoding="utf-8", newline="") as f:
+            return f.read().replace("\r\n", "\n")
+
+    drift = []
+    cur = read(os.path.join("src", "index.ts"))
+    if cur is None:
+        drift.append("src/index.ts(缺失)")
+    elif DATE_LINE_RE.sub("", cur) != DATE_LINE_RE.sub("", want["index"]):
+        drift.append("src/index.ts")
+
+    if read("README.md") != want["readme"]:
+        drift.append("README.md")
+
+    pkg = None
+    try:
+        pkg = json.loads(read("package.json") or "null")
+    except ValueError:
+        drift.append("package.json(非法 JSON)")
+    if isinstance(pkg, dict):
+        if pkg.get("description") != want["description"]:
+            drift.append("package.json:description")
+        for field in ("peerDependencies", "devDependencies"):
+            if (pkg.get(field) or {}).get("@autional/core") != want["peer"]:
+                drift.append(f"package.json:{field}")
+    elif pkg is None:
+        drift.append("package.json(缺失)")
+    return drift
 
 
 def generate_package_json(prefix, svc_name, floor):
@@ -899,6 +962,10 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Generate SDK API packages from swagger.json")
     parser.add_argument("--service", type=str, default="", help="Only process a specific service")
+    parser.add_argument(
+        "--check", action="store_true",
+        help="只校验已提交产物是否与 swagger 一致（不写包文件）；有漂移 ⇒ 退出码 1",
+    )
     args = parser.parse_args()
 
     filter_services = SERVICES
@@ -909,21 +976,25 @@ def main():
             sys.exit(1)
 
     total_generated = 0
+    drifted = 0
     for svc in filter_services:
         name = svc["name"]
         prefix = svc["prefix"]
 
         if name in SKIP_SERVICES:
-            print(f"[SKIP] {name} \u2014 excluded (gateway/hash services)")
+            if not args.check:
+                print(f"[SKIP] {name} — excluded (gateway/hash services)")
             continue
 
-        if prefix in ALREADY_EXISTS and not args.service:
-            print(f"[SKIP] {name} \u2014 already exists (manual maintenance)")
+        # --check 是全量校验：ALREADY_EXISTS 的包早已由生成器托管，普通生成
+        # 仍按历史行为跳过它们，校验不能跳（跳过 = 假绿）。
+        if prefix in ALREADY_EXISTS and not args.service and not args.check:
+            print(f"[SKIP] {name} — already exists (manual maintenance)")
             continue
 
         swagger = load_swagger(name)
         if not swagger:
-            print(f"[SKIP] {name} \u2014 no swagger.json")
+            print(f"[SKIP] {name} — no swagger.json")
             continue
 
         definitions = swagger.get("definitions", {})
@@ -931,26 +1002,41 @@ def main():
         public_endpoints = [ep for ep in endpoints if not is_skipped_path(ep["path"])]
 
         if not public_endpoints:
-            print(f"[SKIP] {name} \u2014 no public endpoints")
+            print(f"[SKIP] {name} — no public endpoints")
             continue
 
-        content, func_infos = generate_index_file(prefix, name, definitions, endpoints)
-        ensure_package_scaffold(prefix, func_infos)
-        pkg_dir = os.path.join(SDK_PACKAGES_DIR, f"api-{prefix}")
-        out_path = os.path.join(pkg_dir, "src", "index.ts")
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(content)
-        with open(os.path.join(pkg_dir, "README.md"), "w", encoding="utf-8", newline="\n") as f:
-            f.write(generate_readme(prefix, name, func_infos))
+        want = expected_artifacts(name, prefix, definitions, endpoints)
+        func_infos = want["func_infos"]
 
-        total_generated += 1
-        # 报实际产出数：form-urlencoded 端点在 generate_functions 内被跳过，
-        # 按 public_endpoints 计数会虚报（profile 51 vs 50、oauth 55 vs 50）。
-        skipped = len(public_endpoints) - len(func_infos)
-        note = f", {skipped} skipped (formData)" if skipped else ""
-        print(f"[OK] {name} \u2192 sdk/packages/api-{prefix}/src/index.ts "
-              f"({len(func_infos)} functions{note})")
+        if args.check:
+            drift = check_package(prefix, want)
+            if drift:
+                drifted += 1
+                print(f"[DRIFT] {name} → packages/api-{prefix}: {', '.join(drift)}")
+            else:
+                print(f"[OK] {name} → packages/api-{prefix} 与 swagger 一致")
+        else:
+            ensure_package_scaffold(prefix, func_infos)
+            pkg_dir = os.path.join(SDK_PACKAGES_DIR, f"api-{prefix}")
+            out_path = os.path.join(pkg_dir, "src", "index.ts")
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            with open(out_path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(want["index"])
+            with open(os.path.join(pkg_dir, "README.md"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(want["readme"])
+
+            total_generated += 1
+            # 报实际产出数：form-urlencoded 端点在 generate_functions 内被跳过，
+            # 按 public_endpoints 计数会虚报（profile 51 vs 50、oauth 55 vs 50）。
+            skipped = len(public_endpoints) - len(func_infos)
+            note = f", {skipped} skipped (formData)" if skipped else ""
+            print(f"[OK] {name} → sdk/packages/api-{prefix}/src/index.ts "
+                  f"({len(func_infos)} functions{note})")
+
+    if args.check:
+        print()
+        print(f"Check: {drifted} drifted.")
+        sys.exit(1 if drifted else 0)
 
     print()
     print(f"Done: {total_generated} packages generated.")

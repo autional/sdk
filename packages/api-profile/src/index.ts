@@ -513,6 +513,11 @@ export function getProfileAvatar(client: ApiClient): Promise<MyAvatarResponse> {
   return client.get(`/profile/api/v1/profile/avatar`);
 }
 
+/** 更新我的头像 */
+export function putProfileAvatar(client: ApiClient, data: UpdateAvatarRequest): Promise<UserProfileResponse> {
+  return client.put(`/profile/api/v1/profile/avatar`, data);
+}
+
 /** 用户资料列表 */
 export function getProfiles(client: ApiClient, params?: {
   keyword?: string;  // 搜索关键词

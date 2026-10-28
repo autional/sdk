@@ -25,6 +25,22 @@ export interface ApiListResult<T> {
   pagination?: ApiPaginationInfo;
 }
 
+export interface Evidence {
+  appId?: string;
+  collectedAt?: string;
+  collectorId?: string;
+  controlId?: string;
+  controlType?: string;
+  createdAt?: string;
+  deletedAt?: DeletedAt;  // DeletedAt 不带 `index` tag：单列 deleted_at 属低选择性列（DB-DESIGN-GUIDELINES §1.5）。 移除后 AutoMigrate 不再派生 `idx_<table>_deleted_a...
+  description?: string;
+  fileUrl?: string;
+  id?: string;
+  tenantId?: string;
+  title?: string;
+  updatedAt?: string;
+}
+
 export interface AIDecisionRequest {
   decisionId: string;
   input?: string;
@@ -730,14 +746,6 @@ export interface PublicDengbaoControl {
   status?: string;
 }
 
-export interface PublicEvidenceItem {
-  collectedAt?: string;
-  controlId?: string;
-  controlType?: string;
-  description?: string;
-  title?: string;
-}
-
 export interface PublicHIPAAControl {
   category?: string;
   controlId?: string;
@@ -1257,6 +1265,11 @@ export interface PageInfo {
   totalPages?: number;  // TotalPages is the total number of pages
 }
 
+export interface DeletedAt {
+  time?: string;
+  valid?: boolean;  // Valid is true if Time is not NULL
+}
+
 
 // ====== API Functions (tree-shakeable: independent exports) ======
 
@@ -1286,7 +1299,7 @@ export function getAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, de
 }
 
 /** 更新AI决策记录 */
-export function putAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, decisionId: string, data: UpdateAIDecisionRequest): Promise<SimpleResponse> {
+export function putAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, decisionId: string, data: UpdateAIDecisionRequest): Promise<AIDecisionResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/ai-decisions/${decisionId}`, data);
 }
 
@@ -2177,7 +2190,7 @@ export function getCompliancePublicEvidence(client: ApiClient, params?: {
   page_size?: number;  // 每页数量
   sort_by?: string;  // 排序字段
   sort_order?: string;  // 排序方向 (asc/desc)
-}): Promise<ApiListResult<PublicEvidenceItem>> {
+}): Promise<ApiListResult<Evidence>> {
   return client.get(`/compliance/api/v1/compliance/public/evidence`, { params });
 }
 

@@ -780,6 +780,11 @@ export function getStoragePublicEncryptionStatus(client: ApiClient): Promise<Pub
   return client.get(`/storage/api/v1/storage/public/encryption-status`);
 }
 
+/** 公开：读取公开文件内容 */
+export function getStoragePublicFilesContentByFiles(client: ApiClient, fileId: string): Promise<void> {
+  return client.get(`/storage/api/v1/storage/public/files/${fileId}/content`);
+}
+
 /** 公开：获取合规报告列表 */
 export function getStoragePublicReports(client: ApiClient, params?: {
   page?: number;  // 页码（默认1）

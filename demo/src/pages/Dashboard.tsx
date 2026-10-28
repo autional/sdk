@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAutional, useAutionalContext } from '../autional';
-import { getProfile } from '@autional/api-identity';
+import { getAuthMe } from '@autional/api-identity';
 
 export function Dashboard() {
   const { user, logout, getAccessToken, authConfig } = useAutional();
@@ -14,7 +14,7 @@ export function Dashboard() {
   useEffect(() => {
     getAccessToken().then(t => setToken(t || ''));
     // API 调用统一走 autional.api（带 token/刷新/退出的 ApiClient）
-    getProfile(autional.api).then(p => setProfile(p as any)).catch(() => {});
+    getAuthMe(autional.api).then(p => setProfile(p as any)).catch(() => {});
   }, [autional]);
 
   const handleLogout = async () => {
@@ -34,7 +34,7 @@ export function Dashboard() {
   const handleTestApi = async () => {
     addLog('GET /auth/me ...');
     try {
-      const result = await getProfile(autional.api);
+      const result = await getAuthMe(autional.api);
       setProfile(result as any);
       addLog('GET /auth/me OK');
     } catch (e: any) {

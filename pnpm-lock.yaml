@@ -98,8 +98,8 @@ importers:
   packages/api-billing:
     devDependencies:
       '@autional/core':
-        specifier: '>=0.1.0'
-        version: 0.2.2
+        specifier: '>=0.3.6'
+        version: 0.3.7
       rimraf:
         specifier: ^5.0.0
         version: 5.0.10
@@ -368,8 +368,8 @@ importers:
   packages/api-storage:
     devDependencies:
       '@autional/core':
-        specifier: '>=0.1.0'
-        version: 0.2.2
+        specifier: '>=0.3.6'
+        version: 0.3.7
       rimraf:
         specifier: ^5.0.0
         version: 5.0.10
@@ -729,6 +729,9 @@ packages:
 
   '@autional/core@0.3.5':
     resolution: {integrity: sha512-/V4vokl7NIKQx/UbgC2UKjKka7pdIC7swsU0bavYl3RvGHU7CoAHBsrVTSQHp1Ti2fIAr03ihnmsSIaTucL9cQ==}
+
+  '@autional/core@0.3.7':
+    resolution: {integrity: sha512-gT1EHfHsP9cWRD9NvcL2lBvUi9Ce5qkA//0foaGmQL7Opi82Bk3XqJMt8qEHK8Xi8m6vynjxUJkQFqKvxfSC1w==}
 
   '@autional/react@0.2.1':
     resolution: {integrity: sha512-3ua7e194lB+BwsemoAP2GdCCW5/TGpxxmpFxqJWYY7yt6Kdq8sJYqUM1hsBoN9WSkTIagqYBSQUOovwqMsl60Q==}
@@ -4740,6 +4743,8 @@ snapshots:
   '@autional/core@0.2.2': {}
 
   '@autional/core@0.3.5': {}
+
+  '@autional/core@0.3.7': {}
 
   '@autional/react@0.2.1(@autional/core@0.2.2)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:

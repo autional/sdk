@@ -84,6 +84,15 @@ export class ApiClient {
     });
   }
 
+  async patch<T>(path: string, data?: unknown): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    return this.request<T>(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: data ? JSON.stringify(transformKeys(data, camelToSnake)) : undefined,
+    });
+  }
+
   async delete<T>(path: string, params?: Record<string, unknown>): Promise<T> {
     const url = this.buildUrl(path, params);
     return this.request<T>(url, { method: 'DELETE' });

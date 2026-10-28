@@ -103,10 +103,20 @@ def safe_identifier(name):
 def sanitize_type_name(name):
     """Extract a clean TypeScript type name from a swagger definition key.
     Handles both short names (dto.ProfileListResponse) and
-    fully-qualified names (gitee_com_..._dto_SecretResponse)."""
+    fully-qualified names (gitee_com_..._dto_SecretResponse).
+
+    swaggo 泛型包装器 (dto.DataResponse-...、dto.ListResponse-compliance_Evidence)
+    绝不能和载荷定义塌缩成同名：那两个定义会被当成一个，载荷字段全部丢失。
+    这里给包装器一个独立名字；包装器本身不会被输出（见 envelope_kind）。"""
     parts = name.split(".")
     short = parts[-1]
     short = re.sub(r"[^\w-]", "", short)
+    for kind in ("DataResponse", "ListResponse"):
+        if short.startswith(kind + "-"):
+            param = short[len(kind) + 1:]
+            if param.startswith("array_"):
+                param = param[len("array_"):]
+            return f"{kind}Of{sanitize_type_name(param)}"
     if len(short) > 50:
         segs = re.split(r"[_-]+", short)
         for i in range(len(segs) - 1, -1, -1):
@@ -120,22 +130,59 @@ def sanitize_type_name(name):
     return short
 
 
-def extract_inner_type_from_ref(ref_name):
-    """Extract the inner DTO type from a swaggo-v2 generic wrapper.
-    dto.DataResponse-gitee_com_..._dto_SecretResponse  ->  SecretResponse
-    dto.DataResponse-array_gitee_..._dto_SecretResponse -> SecretResponse[]
-    Returns str or None."""
-    after_dot = ref_name.rsplit(".", 1)[-1] if "." in ref_name else ref_name
-    dash_pos = after_dot.find("-")
-    if dash_pos == -1:
+# 响应包装器（swaggo 的 dto_base.DataResponse[T] / ListResponse[T]）在 swagger 里
+# 各自是一个定义。ApiClient 在运行时总是解包（core/src/api-client.ts:33 unwrapResponse），
+# 所以生成器必须只看载荷类型，绝不能把包装器名当成 TS 类型名——否则包装器与载荷
+# 会塌缩成同一个标识符，载荷定义被静默丢弃（2026-10-28 修）。
+ENVELOPE_DATA_KEYS = {"code", "data", "message", "timestamp"}
+ENVELOPE_LIST_KEYS = {"code", "items", "message", "pagination", "timestamp", "total"}
+
+
+def envelope_kind(def_name, definitions):
+    """返回 'data' / 'items'（该定义是响应包装器）或 None（普通定义）。"""
+    schema = definitions.get(def_name)
+    if not schema:
         return None
-    param = after_dot[dash_pos + 1:]
-    is_array = False
-    if param.startswith("array_"):
-        is_array = True
-        param = param[len("array_"):]
-    inner = sanitize_type_name(param)
-    return f"{inner}[]" if is_array else inner
+    props = schema.get("properties") or {}
+    if "code" not in props or "message" not in props:
+        return None
+    keys = set(props)
+    if "data" in props and keys <= ENVELOPE_DATA_KEYS:
+        return "data"
+    if "items" in props and keys <= ENVELOPE_LIST_KEYS:
+        return "items"
+    return None
+
+
+def _schema_ts_type(schema, definitions):
+    """把包装器内部的 data/items 模式翻译成载荷 TS 类型。"""
+    if not isinstance(schema, dict):
+        return "unknown"
+    if schema.get("type") == "array":
+        items = schema.get("items") or {}
+        ref = items.get("$ref", "")
+        if ref.startswith("#/definitions/"):
+            return sanitize_type_name(ref.replace("#/definitions/", "")) + "[]"
+        return "unknown[]"
+    ref = schema.get("$ref", "")
+    if ref.startswith("#/definitions/"):
+        return sanitize_type_name(ref.replace("#/definitions/", ""))
+    return "unknown"
+
+
+def envelope_payload_type(def_name, definitions):
+    """包装器 → 运行时可拿到的载荷类型。
+    DataResponse[X] -> 'X' / 'X[]'；ListResponse[X] -> 'ApiListResult<X>'。"""
+    kind = envelope_kind(def_name, definitions)
+    if not kind:
+        return None
+    props = (definitions.get(def_name) or {}).get("properties") or {}
+    if kind == "data":
+        return _schema_ts_type(props.get("data"), definitions)
+    inner = _schema_ts_type(props.get("items"), definitions)
+    if inner.endswith("[]"):
+        inner = inner[:-2]
+    return f"ApiListResult<{inner}>"
 
 
 def definition_exists(def_name, definitions):
@@ -147,18 +194,17 @@ def definition_exists(def_name, definitions):
 
 
 def resolve_response_type(schema, definitions):
-    """Resolve response type, unwrapping DataResponse<T>/ListResponse<T> envelopes."""
+    """Resolve response type, unwrapping DataResponse<T>/ListResponse<T> envelopes.
+    The SDK client always unwraps at runtime, so the generated type is the payload."""
     ref = schema.get("$ref", "")
     if ref and ref.startswith("#/definitions/"):
         def_name = ref.replace("#/definitions/", "")
         if not definition_exists(def_name, definitions):
             return "unknown"
-        base = sanitize_type_name(def_name)
-        if base in ("DataResponse", "ListResponse"):
-            inner = extract_inner_type_from_ref(def_name)
-            if inner:
-                return inner
-        return base
+        payload = envelope_payload_type(def_name, definitions)
+        if payload:
+            return payload
+        return sanitize_type_name(def_name)
     return swagger_to_ts_type(schema, definitions)
 
 
@@ -170,6 +216,9 @@ def swagger_to_ts_type(schema, definitions, indent=0):
         def_name = ref.replace("#/definitions/", "")
         if not definition_exists(def_name, definitions):
             return "unknown"
+        payload = envelope_payload_type(def_name, definitions)
+        if payload:
+            return payload
         return sanitize_type_name(def_name)
     stype = schema.get("type", "")
     if stype == "array":
@@ -270,17 +319,7 @@ def collect_referenced_defs(endpoints, definitions):
         ref = schema.get("$ref", "")
         m = ref_pattern.match(ref)
         if m:
-            ref_name = m.group(1)
-            refs.add(ref_name)
-            base = sanitize_type_name(ref_name)
-            if base in ("DataResponse", "ListResponse"):
-                inner = extract_inner_type_from_ref(ref_name)
-                if inner:
-                    inner_clean = inner.rstrip("[]")
-                    for k in definitions:
-                        if sanitize_type_name(k) == inner_clean:
-                            refs.add(k)
-                            break
+            refs.add(m.group(1))
         for key in ("items", "additionalProperties"):
             v = schema.get(key)
             if isinstance(v, dict):
@@ -319,14 +358,46 @@ def generate_types(definitions, used_refs):
     lines.append("// ====== Types ======")
     lines.append("")
 
-    generated = set()
+    # 列表端点的载荷类型由 ApiClient 在运行时解包而来，定义在生成文件里，
+    # 不依赖 swagger 里那个「pagination 只是内联 object」的残缺定义。
+    if any(envelope_kind(r, definitions) == "items" for r in used_refs):
+        lines.append("/** 列表端点分页信息（ApiClient 解包后字段已转 camelCase）。 */")
+        lines.append("export interface ApiPaginationInfo {")
+        lines.append("  total: number;")
+        lines.append("  page: number;")
+        lines.append("  pageSize: number;")
+        lines.append("  totalPages: number;")
+        lines.append("  hasNext: boolean;")
+        lines.append("  hasPrev: boolean;")
+        lines.append("}")
+        lines.append("")
+        lines.append("/** 列表端点的运行时返回值：ApiClient 已解包为 { items, total, pagination }。 */")
+        lines.append("export interface ApiListResult<T> {")
+        lines.append("  items: T[];")
+        lines.append("  total?: number;")
+        lines.append("  pagination?: ApiPaginationInfo;")
+        lines.append("}")
+        lines.append("")
+
+    generated = {}
     for ref_name in sorted(used_refs):
-        ts_name = sanitize_type_name(ref_name)
-        if ts_name in generated:
+        # 响应包装器不是载荷类型：解包后它不会出现在运行时返回值里。
+        if envelope_kind(ref_name, definitions):
             continue
+        ts_name = sanitize_type_name(ref_name)
         schema = definitions.get(ref_name)
         if not schema:
             continue
+        canon = json.dumps(schema, sort_keys=True)
+        if ts_name in generated:
+            prev_name, prev_canon = generated[ts_name]
+            if prev_canon == canon:
+                # 结构完全一致（如 dto.SimpleResponse 是 dto_base.SimpleResponse 的别名）：
+                # 合并成一个接口，无损。
+                continue
+            # 名称塌缩会静默丢掉一个定义（2026-10-28 前的 D 类缺陷根因）。必须响亮失败。
+            print(f"  ERROR: TS 名称冲突 {ts_name!r}: {prev_name} vs {ref_name}")
+            sys.exit(1)
 
         stype = schema.get("type", "")
         has_props = "properties" in schema
@@ -341,7 +412,7 @@ def generate_types(definitions, used_refs):
             else:
                 continue
 
-        generated.add(ts_name)
+        generated[ts_name] = (ref_name, canon)
 
         desc = schema.get("description", "")
         stype = schema.get("type", "")
@@ -516,7 +587,7 @@ def generate_functions(endpoints, definitions, prefix):
         })
 
     needs_query_helper = any(
-        fi["query_params"] and fi["method"] in ("POST", "PUT") for fi in func_infos
+        fi["query_params"] and fi["method"] in ("POST", "PUT", "PATCH") for fi in func_infos
     )
     if needs_query_helper:
         lines.append("// ApiClient 的 post/put 不收 query 参数，这里统一拼接到 URL")
@@ -581,16 +652,12 @@ def generate_functions(endpoints, definitions, prefix):
             else:
                 lines.append(f"  return client.delete(`{url}`);")
         elif method == "PATCH":
+            # ApiClient.patch(path, data) 只收两个参数：query 与 PUT 一样拼进 URL。
+            url_expr = f"appendQuery(`{url}`, params)" if config_parts else f"`{url}`"
             if body_params:
-                if config_parts:
-                    lines.append(f"  return client.patch(`{url}`, data, {{ {' , '.join(config_parts)} }});")
-                else:
-                    lines.append(f"  return client.patch(`{url}`, data);")
+                lines.append(f"  return client.patch({url_expr}, data);")
             else:
-                if config_parts:
-                    lines.append(f"  return client.patch(`{url}`, {{ {' , '.join(config_parts)} }});")
-                else:
-                    lines.append(f"  return client.patch(`{url}`);")
+                lines.append(f"  return client.patch({url_expr});")
         else:
             lines.append(f"  return client.{method.lower()}(`{url}`);")
 
@@ -625,13 +692,17 @@ def generate_module_augmentation(prefix, func_infos):
     return "\n".join(lines)
 
 
-def generate_package_json(prefix, svc_name):
+def generate_description(prefix, svc_name):
     cap = prefix[0].upper() + prefix[1:]
     cap = re.sub(r"-(\w)", lambda m: m.group(1).upper(), cap)
+    return f"Autional {cap} API — auto-generated TypeScript client from {svc_name}"
+
+
+def generate_package_json(prefix, svc_name):
     return json.dumps({
         "name": f"@autional/api-{prefix}",
         "version": "0.1.0",
-        "description": f"Autional {cap} API — auto-generated TypeScript client from {svc_name}",
+        "description": generate_description(prefix, svc_name),
         "main": "./dist/index.js",
         "module": "./dist/index.mjs",
         "types": "./dist/index.d.ts",
@@ -710,12 +781,23 @@ def ensure_package_scaffold(prefix):
     pkg_dir = os.path.join(SDK_PACKAGES_DIR, f"api-{prefix}")
     os.makedirs(os.path.join(pkg_dir, "src"), exist_ok=True)
 
+    svc_name = next((s["name"] for s in SERVICES if s["prefix"] == prefix), f"{prefix}-service")
     pkg_json_path = os.path.join(pkg_dir, "package.json")
     if not os.path.isfile(pkg_json_path):
-        svc_name = next((s["name"] for s in SERVICES if s["prefix"] == prefix), f"{prefix}-service")
         with open(pkg_json_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(generate_package_json(prefix, svc_name))
         print(f"  Created {pkg_json_path}")
+    else:
+        # 描述由生成器单源维护：历史上 15 个包被写成「Identity Service API」
+        # （模板写死），已创建的包不会再写 package.json，于是错误描述长期留存。
+        want = f'"description": {json.dumps(generate_description(prefix, svc_name), ensure_ascii=False)}'
+        with open(pkg_json_path, "r", encoding="utf-8", newline="") as f:
+            text = f.read()
+        fixed = re.sub(r'"description":\s*"(?:[^"\\]|\\.)*"', want, text, count=1)
+        if fixed != text:
+            with open(pkg_json_path, "w", encoding="utf-8", newline="") as f:
+                f.write(fixed)
+            print(f"  Updated description in {pkg_json_path}")
 
     tsconfig_path = os.path.join(pkg_dir, "tsconfig.json")
     if not os.path.isfile(tsconfig_path):

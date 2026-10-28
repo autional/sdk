@@ -8,59 +8,21 @@ import type { ApiClient } from '@autional/core';
 
 // ====== Types ======
 
-export interface Evidence {
-  appId?: string;
-  collectedAt?: string;
-  collectorId?: string;
-  controlId?: string;
-  controlType?: string;
-  createdAt?: string;
-  deletedAt?: DeletedAt;  // DeletedAt 不带 `index` tag：单列 deleted_at 属低选择性列（DB-DESIGN-GUIDELINES §1.5）。 移除后 AutoMigrate 不再派生 `idx_<table>_deleted_a...
-  description?: string;
-  fileUrl?: string;
-  id?: string;
-  tenantId?: string;
-  title?: string;
-  updatedAt?: string;
+/** 列表端点分页信息（ApiClient 解包后字段已转 camelCase）。 */
+export interface ApiPaginationInfo {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
-export interface ScoreSnapshotItem {
-  code?: number;
-  data?: ScoreSnapshotItem[];
-  message?: string;
-  timestamp?: string;
-}
-
-export interface ComplianceProfileResponse {
-  code?: number;
-  data?: ComplianceProfileResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface ListResponsecompliance_Evidence {
-  code?: number;
-  items?: Evidence[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface AIDecisionItemResponse {
-  code?: number;
-  data?: AIDecisionResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface AIDecisionListResponse {
-  code?: number;
-  items?: AIDecisionResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
+/** 列表端点的运行时返回值：ApiClient 已解包为 { items, total, pagination }。 */
+export interface ApiListResult<T> {
+  items: T[];
+  total?: number;
+  pagination?: ApiPaginationInfo;
 }
 
 export interface AIDecisionRequest {
@@ -107,38 +69,6 @@ export interface AuditFindingItem {
   title?: string;
 }
 
-export interface AuditFindingItemResponse {
-  code?: number;
-  data?: AuditFindingItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface AuditFindingListResponse {
-  code?: number;
-  items?: AuditFindingItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface BreachNotificationItemResponse {
-  code?: number;
-  data?: BreachNotificationResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface BreachNotificationListResponse {
-  code?: number;
-  items?: BreachNotificationResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface BreachNotificationRequest {
   affectedUsers?: number;
   description: string;
@@ -170,31 +100,6 @@ export interface CertificationItem {
   status?: string;
 }
 
-export interface CertificationItemResponse {
-  code?: number;
-  data?: CertificationItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface CertificationListResponse {
-  code?: number;
-  items?: CertificationItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface CleanupRecordListResponse {
-  code?: number;
-  items?: CleanupRecordResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface CleanupRecordResponse {
   createdAt?: string;
   dateRange?: string;
@@ -204,6 +109,22 @@ export interface CleanupRecordResponse {
   recordsCount?: number;
 }
 
+export interface ComplianceProfileResponse {
+  aiReviewRequired?: boolean;
+  autoDeleteEnabled?: boolean;
+  breachReportThreshold?: number;
+  consentTtlYears?: number;
+  dataProtectionOfficer?: string;
+  defaultRetentionDays?: number;
+  enabledFrameworks?: string[];
+  maxConcurrentErasures?: number;
+  penTestScheduleDays?: number;
+  scoreWeights?: string;
+  selectedStandards?: string[];
+  sodAutoInitEnabled?: boolean;
+  tenantId?: string;
+}
+
 export interface ComplianceScoreResponse {
   assessmentCoverage?: AssessmentCoverageItem;
   assessmentVersion?: string;
@@ -211,13 +132,6 @@ export interface ComplianceScoreResponse {
   overallScore?: number;
   scoreAvailable?: boolean;  // P2（2026-10-27）：无任何框架完成评估时 score_available=false，overall_score 无意义。
   tenantId?: string;
-}
-
-export interface ComplianceStatusDetailResponse {
-  code?: number;
-  data?: ComplianceStatusResponse;
-  message?: string;
-  timestamp?: string;
 }
 
 /** 整体合规状态 */
@@ -259,22 +173,6 @@ export interface ConsentItem {
   purpose?: string;  // 处理目的
   service?: string;  // 服务名称
   userId?: string;  // 用户ID
-}
-
-export interface ConsentItemResponse {
-  code?: number;
-  data?: ConsentItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface ConsentListResponse {
-  code?: number;
-  items?: ConsentItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface ControlAssessmentItem {
@@ -500,22 +398,6 @@ export interface CreateSubProcessorRequest {
   transferMechanism?: string;
 }
 
-export interface CrossBorderTransferItemResponse {
-  code?: number;
-  data?: CrossBorderTransferResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface CrossBorderTransferListResponse {
-  code?: number;
-  items?: CrossBorderTransferResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface CrossBorderTransferResponse {
   createdAt?: string;
   dataCategory?: string;
@@ -540,29 +422,6 @@ export interface DSARItem {
   userId?: string;  // 用户ID
 }
 
-export interface DSARItemResponse {
-  code?: number;
-  data?: DSARItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface DSARListResponse {
-  code?: number;
-  items?: DSARItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface DSARStatusDetailResponse {
-  code?: number;
-  data?: DSARStatusResponse;
-  message?: string;
-  timestamp?: string;
-}
-
 /** DSAR 状态跟踪响应 */
 export interface DSARStatusResponse {
   completedAt?: string;  // 完成时间
@@ -570,22 +429,6 @@ export interface DSARStatusResponse {
   id?: string;  // DSAR ID
   status?: string;  // 状态
   Type?: string;  // 请求类型
-}
-
-export interface DataClassificationItemResponse {
-  code?: number;
-  data?: DataClassificationResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface DataClassificationListResponse {
-  code?: number;
-  items?: DataClassificationResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface DataClassificationRequest {
@@ -614,22 +457,6 @@ export interface DengbaoControlItem {
   status?: string;
 }
 
-export interface DengbaoControlItemResponse {
-  code?: number;
-  data?: DengbaoControlItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface DengbaoControlListResponse {
-  code?: number;
-  items?: DengbaoControlItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 /** 数据删除请求记录 */
 export interface ErasureItem {
   completedAt?: string;  // 完成时间
@@ -639,22 +466,6 @@ export interface ErasureItem {
   reason?: string;  // 删除原因
   status?: string;  // 状态
   userId?: string;  // 用户ID
-}
-
-export interface ErasureItemResponse {
-  code?: number;
-  data?: ErasureItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface ErasureListResponse {
-  code?: number;
-  items?: ErasureItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface ErrorResponse {
@@ -672,22 +483,6 @@ export interface EvidenceItem {
   fileUrl?: string;
   id?: string;
   title?: string;
-}
-
-export interface EvidenceItemResponse {
-  code?: number;
-  data?: EvidenceItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface EvidenceListResponse {
-  code?: number;
-  items?: EvidenceItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface FrameworkAssessmentItem {
@@ -741,22 +536,6 @@ export interface HIPAAControlItem {
   status?: string;
 }
 
-export interface HIPAAControlItemResponse {
-  code?: number;
-  data?: HIPAAControlItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface HIPAAControlListResponse {
-  code?: number;
-  items?: HIPAAControlItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 /** ISO 27001安全控制项 */
 export interface ISO27001ControlItem {
   category?: string;  // 类别
@@ -766,22 +545,6 @@ export interface ISO27001ControlItem {
   id?: string;  // 主键ID
   lastReviewed?: string;  // 审查时间
   status?: string;  // 状态
-}
-
-export interface ISO27001ControlItemResponse {
-  code?: number;
-  data?: ISO27001ControlItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface ISO27001ControlListResponse {
-  code?: number;
-  items?: ISO27001ControlItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface InvalidOverrideItem {
@@ -799,22 +562,6 @@ export interface LegalDocumentItem {
   tenantId?: string;
   title?: string;
   version?: string;
-}
-
-export interface LegalDocumentItemResponse {
-  code?: number;
-  data?: LegalDocumentItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface ListLegalDocumentsResponse {
-  code?: number;
-  items?: LegalDocumentItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface OverrideItem {
@@ -845,38 +592,6 @@ export interface PCIDSSControlItem {
   status?: string;
 }
 
-export interface PCIDSSControlItemResponse {
-  code?: number;
-  data?: PCIDSSControlItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface PCIDSSControlListResponse {
-  code?: number;
-  items?: PCIDSSControlItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface PIAItemResponse {
-  code?: number;
-  data?: PIAResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface PIAListResponse {
-  code?: number;
-  items?: PIAResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PIARequest {
   data?: string;
   description: string;
@@ -901,22 +616,6 @@ export interface PIPLControlItem {
   status?: string;
 }
 
-export interface PIPLControlItemResponse {
-  code?: number;
-  data?: PIPLControlItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface PIPLControlListResponse {
-  code?: number;
-  items?: PIPLControlItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PSD2ControlItem {
   category?: string;
   controlId?: string;
@@ -925,22 +624,6 @@ export interface PSD2ControlItem {
   id?: string;
   lastReviewed?: string;
   status?: string;
-}
-
-export interface PSD2ControlItemResponse {
-  code?: number;
-  data?: PSD2ControlItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface PSD2ControlListResponse {
-  code?: number;
-  items?: PSD2ControlItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface ParameterGapItem {
@@ -965,38 +648,6 @@ export interface PenTestReportItem {
   severity?: string;  // 严重级别
   testedAt?: string;  // 测试时间
   title?: string;  // 标题
-}
-
-export interface PenTestReportItemResponse {
-  code?: number;
-  data?: PenTestReportItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface PenTestReportListResponse {
-  code?: number;
-  items?: PenTestReportItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface PrivacyPolicyDetailResponse {
-  code?: number;
-  data?: PrivacyPolicyResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface PrivacyPolicyListResponse {
-  code?: number;
-  items?: PrivacyPolicyVersionItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 /** 隐私政策版本信息（公开） */
@@ -1025,15 +676,6 @@ export interface PublicAuditFinding {
   title?: string;
 }
 
-export interface PublicAuditFindingListResponse {
-  code?: number;
-  items?: PublicAuditFinding[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PublicBreachNotification {
   affectedUsersRange?: string;
   description?: string;
@@ -1043,15 +685,6 @@ export interface PublicBreachNotification {
   title?: string;
 }
 
-export interface PublicBreachNotificationListResponse {
-  code?: number;
-  items?: PublicBreachNotification[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PublicCertification {
   auditor?: string;
   certificateUrl?: string;
@@ -1059,22 +692,6 @@ export interface PublicCertification {
   framework?: string;
   lastAuditedDate?: string;
   nextAuditDate?: string;
-}
-
-export interface PublicCertificationListResponse {
-  code?: number;
-  items?: PublicCertification[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface PublicComplianceStatusDetailResponse {
-  code?: number;
-  data?: PublicComplianceStatusResponse;
-  message?: string;
-  timestamp?: string;
 }
 
 export interface PublicComplianceStatusResponse {
@@ -1099,29 +716,11 @@ export interface PublicCrossBorderTransfer {
   targetRegion?: string;
 }
 
-export interface PublicCrossBorderTransferListResponse {
-  code?: number;
-  items?: PublicCrossBorderTransfer[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PublicDataClassification {
   classification?: string;
   dataCategory?: string;
   description?: string;
   retentionRequired?: boolean;
-}
-
-export interface PublicDataClassificationListResponse {
-  code?: number;
-  items?: PublicDataClassification[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface PublicDengbaoControl {
@@ -1131,22 +730,12 @@ export interface PublicDengbaoControl {
   status?: string;
 }
 
-export interface PublicDengbaoListResponse {
-  code?: number;
-  items?: PublicDengbaoControl[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface PublicHIPAAAListResponse {
-  code?: number;
-  items?: PublicHIPAAControl[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
+export interface PublicEvidenceItem {
+  collectedAt?: string;
+  controlId?: string;
+  controlType?: string;
+  description?: string;
+  title?: string;
 }
 
 export interface PublicHIPAAControl {
@@ -1161,15 +750,6 @@ export interface PublicISO27001Control {
   controlId?: string;
   controlName?: string;
   status?: string;
-}
-
-export interface PublicISO27001ControlListResponse {
-  code?: number;
-  items?: PublicISO27001Control[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface PublicLegalDocument {
@@ -1191,29 +771,11 @@ export interface PublicPCIDSSControl {
   status?: string;
 }
 
-export interface PublicPCIListResponse {
-  code?: number;
-  items?: PublicPCIDSSControl[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PublicPIA {
   createdAt?: string;
   description?: string;
   status?: string;
   title?: string;
-}
-
-export interface PublicPIAListResponse {
-  code?: number;
-  items?: PublicPIA[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface PublicPIPLControl {
@@ -1223,29 +785,11 @@ export interface PublicPIPLControl {
   status?: string;
 }
 
-export interface PublicPIPLListResponse {
-  code?: number;
-  items?: PublicPIPLControl[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface PublicPSD2Control {
   category?: string;
   controlId?: string;
   controlName?: string;
   status?: string;
-}
-
-export interface PublicPSD2ListResponse {
-  code?: number;
-  items?: PublicPSD2Control[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface PublicPenTestReport {
@@ -1257,22 +801,6 @@ export interface PublicPenTestReport {
   title?: string;
 }
 
-export interface PublicPenTestReportListResponse {
-  code?: number;
-  items?: PublicPenTestReport[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface PublicSecurityScoreResponse {
-  code?: number;
-  data?: SecurityScore;
-  message?: string;
-  timestamp?: string;
-}
-
 export interface PublicSubProcessor {
   applicableServices?: string;
   category?: string;
@@ -1282,15 +810,6 @@ export interface PublicSubProcessor {
   purpose?: string;
   subjectMatter?: string;
   transferMechanism?: string;
-}
-
-export interface PublicSubProcessorListResponse {
-  code?: number;
-  items?: PublicSubProcessor[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface ReadinessReportResponse {
@@ -1320,22 +839,6 @@ export interface RegulatoryUpdateItem {
   updateId?: string;  // 更新ID
 }
 
-export interface RegulatoryWatchItemResponse {
-  code?: number;
-  data?: RegulatoryUpdateItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface RegulatoryWatchListResponse {
-  code?: number;
-  items?: RegulatoryUpdateItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 export interface ResolvedParamItem {
   mergeRule?: string;
   overridden?: boolean;
@@ -1361,31 +864,6 @@ export interface RetentionPolicyItem {
   purpose?: string;  // 保留目的
   retentionPeriodDays?: number;  // 保留天数
   status?: string;  // 状态
-}
-
-export interface RetentionPolicyItemResponse {
-  code?: number;
-  data?: RetentionPolicyItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface RetentionPolicyListResponse {
-  code?: number;
-  items?: RetentionPolicyItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
-export interface RetentionPolicyPublicListResponse {
-  code?: number;
-  items?: RetentionPolicyPublicResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 /** 数据保留策略公示信息（公开） */
@@ -1419,20 +897,17 @@ export interface SOXITGCItem {
   testResult?: string;  // 测试结果
 }
 
-export interface SOXITGCItemResponse {
-  code?: number;
-  data?: SOXITGCItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface SOXITGCListResponse {
-  code?: number;
-  items?: SOXITGCItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
+export interface ScoreSnapshotItem {
+  appId?: string;
+  id?: string;
+  openBreaches?: number;
+  openIssues?: number;
+  overallStatus?: string;
+  pendingDsar?: number;
+  pendingPias?: number;
+  score?: number;
+  snapshotDate?: string;
+  tenantId?: string;
 }
 
 export interface SecurityScore {
@@ -1465,22 +940,6 @@ export interface SoDCheckResponse {
   tenantId?: string;
   totalRules?: number;
   violations?: number;
-}
-
-export interface SoDRuleItemResponse {
-  code?: number;
-  data?: SoDRuleResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface SoDRuleListResponse {
-  code?: number;
-  items?: SoDRuleResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface SoDRuleResponse {
@@ -1544,22 +1003,6 @@ export interface SubProcessorItem {
   status?: string;
   subjectMatter?: string;
   transferMechanism?: string;
-}
-
-export interface SubProcessorItemResponse {
-  code?: number;
-  data?: SubProcessorItem;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface SubProcessorListResponse {
-  code?: number;
-  items?: SubProcessorItem[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
 }
 
 export interface TenantStandardsRequest {
@@ -1786,22 +1229,6 @@ export interface UpsertPrivacyPolicyRequest {
   version: string;  // 版本号
 }
 
-export interface VendorRiskAssessmentDetailResponse {
-  code?: number;
-  data?: VendorRiskAssessmentResponse;
-  message?: string;
-  timestamp?: string;
-}
-
-export interface VendorRiskAssessmentListResponse {
-  code?: number;
-  items?: VendorRiskAssessmentResponse[];  // 统一使用 items
-  message?: string;
-  pagination?: PageInfo;  // 分页信息（嵌套对象）
-  timestamp?: string;
-  total?: number;  // 总条数（平铺，便于直接读取）
-}
-
 /** 供应商安全风险评估请求参数 */
 export interface VendorRiskAssessmentRequest {
   remarks: string;  // 评估备注
@@ -1830,11 +1257,6 @@ export interface PageInfo {
   totalPages?: number;  // TotalPages is the total number of pages
 }
 
-export interface DeletedAt {
-  time?: string;
-  valid?: boolean;  // Valid is true if Time is not NULL
-}
-
 
 // ====== API Functions (tree-shakeable: independent exports) ======
 
@@ -1844,12 +1266,12 @@ export function getAdminComplianceAiDecisions(client: ApiClient, params?: {
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<AIDecisionListResponse> {
+}): Promise<ApiListResult<AIDecisionResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/ai-decisions`, { params });
 }
 
 /** 记录AI自动决策 */
-export function postAdminComplianceAiDecisions(client: ApiClient, data: AIDecisionRequest): Promise<AIDecisionItemResponse> {
+export function postAdminComplianceAiDecisions(client: ApiClient, data: AIDecisionRequest): Promise<AIDecisionResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/ai-decisions`, data);
 }
 
@@ -1859,17 +1281,17 @@ export function deleteAdminComplianceAiDecisionsByAiDecisions(client: ApiClient,
 }
 
 /** 获取AI决策详情 */
-export function getAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, decisionId: string): Promise<AIDecisionItemResponse> {
+export function getAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, decisionId: string): Promise<AIDecisionResponse> {
   return client.get(`/compliance/api/v1/admin/compliance/ai-decisions/${decisionId}`);
 }
 
 /** 更新AI决策记录 */
-export function putAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, decisionId: string, data: UpdateAIDecisionRequest): Promise<AIDecisionItemResponse> {
+export function putAdminComplianceAiDecisionsByAiDecisions(client: ApiClient, decisionId: string, data: UpdateAIDecisionRequest): Promise<SimpleResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/ai-decisions/${decisionId}`, data);
 }
 
 /** 人工审核AI决策 */
-export function postAdminComplianceAiDecisionsReviewByAiDecisions(client: ApiClient, decisionId: string, data: ReviewAIDecisionRequest): Promise<AIDecisionItemResponse> {
+export function postAdminComplianceAiDecisionsReviewByAiDecisions(client: ApiClient, decisionId: string, data: ReviewAIDecisionRequest): Promise<AIDecisionResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/ai-decisions/${decisionId}/review`, data);
 }
 
@@ -1880,12 +1302,12 @@ export function getAdminComplianceAuditFindings(client: ApiClient, params?: {
   control_type?: string;  // control type filter
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<AuditFindingListResponse> {
+}): Promise<ApiListResult<AuditFindingItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/audit-findings`, { params });
 }
 
 /** 创建审计发现记录 */
-export function postAdminComplianceAuditFindings(client: ApiClient, data: CreateAuditFindingRequest): Promise<AuditFindingItemResponse> {
+export function postAdminComplianceAuditFindings(client: ApiClient, data: CreateAuditFindingRequest): Promise<AuditFindingItem> {
   return client.post(`/compliance/api/v1/admin/compliance/audit-findings`, data);
 }
 
@@ -1895,12 +1317,12 @@ export function deleteAdminComplianceAuditFindingsByAuditFindings(client: ApiCli
 }
 
 /** 获取审计发现详情 */
-export function getAdminComplianceAuditFindingsByAuditFindings(client: ApiClient, auditFindingId: string): Promise<AuditFindingItemResponse> {
+export function getAdminComplianceAuditFindingsByAuditFindings(client: ApiClient, auditFindingId: string): Promise<AuditFindingItem> {
   return client.get(`/compliance/api/v1/admin/compliance/audit-findings/${auditFindingId}`);
 }
 
 /** 更新审计发现状态 */
-export function putAdminComplianceAuditFindingsByAuditFindings(client: ApiClient, auditFindingId: string, data: UpdateAuditFindingRequest): Promise<AuditFindingItemResponse> {
+export function putAdminComplianceAuditFindingsByAuditFindings(client: ApiClient, auditFindingId: string, data: UpdateAuditFindingRequest): Promise<AuditFindingItem> {
   return client.put(`/compliance/api/v1/admin/compliance/audit-findings/${auditFindingId}`, data);
 }
 
@@ -1910,12 +1332,12 @@ export function getAdminComplianceBreachNotifications(client: ApiClient, params?
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<BreachNotificationListResponse> {
+}): Promise<ApiListResult<BreachNotificationResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/breach-notifications`, { params });
 }
 
 /** 创建数据泄露通知 */
-export function postAdminComplianceBreachNotifications(client: ApiClient, data: BreachNotificationRequest): Promise<BreachNotificationItemResponse> {
+export function postAdminComplianceBreachNotifications(client: ApiClient, data: BreachNotificationRequest): Promise<BreachNotificationResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/breach-notifications`, data);
 }
 
@@ -1925,12 +1347,12 @@ export function deleteAdminComplianceBreachNotificationsByBreachNotifications(cl
 }
 
 /** 获取数据泄露通知详情 */
-export function getAdminComplianceBreachNotificationsByBreachNotifications(client: ApiClient, breachNotificationId: string): Promise<BreachNotificationItemResponse> {
+export function getAdminComplianceBreachNotificationsByBreachNotifications(client: ApiClient, breachNotificationId: string): Promise<BreachNotificationResponse> {
   return client.get(`/compliance/api/v1/admin/compliance/breach-notifications/${breachNotificationId}`);
 }
 
 /** 更新数据泄露通知 */
-export function putAdminComplianceBreachNotificationsByBreachNotifications(client: ApiClient, breachNotificationId: string, data: UpdateBreachNotificationRequest): Promise<BreachNotificationItemResponse> {
+export function putAdminComplianceBreachNotificationsByBreachNotifications(client: ApiClient, breachNotificationId: string, data: UpdateBreachNotificationRequest): Promise<BreachNotificationResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/breach-notifications/${breachNotificationId}`, data);
 }
 
@@ -1939,12 +1361,12 @@ export function getAdminComplianceCertifications(client: ApiClient, params?: {
   framework?: string;  // 认证框架筛选
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<CertificationListResponse> {
+}): Promise<ApiListResult<CertificationItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/certifications`, { params });
 }
 
 /** 创建合规认证记录 */
-export function postAdminComplianceCertifications(client: ApiClient, data: CreateCertificationRequest): Promise<CertificationItemResponse> {
+export function postAdminComplianceCertifications(client: ApiClient, data: CreateCertificationRequest): Promise<CertificationItem> {
   return client.post(`/compliance/api/v1/admin/compliance/certifications`, data);
 }
 
@@ -1954,12 +1376,12 @@ export function deleteAdminComplianceCertificationsByCertifications(client: ApiC
 }
 
 /** 获取合规认证详情 */
-export function getAdminComplianceCertificationsByCertifications(client: ApiClient, certificationId: string): Promise<CertificationItemResponse> {
+export function getAdminComplianceCertificationsByCertifications(client: ApiClient, certificationId: string): Promise<CertificationItem> {
   return client.get(`/compliance/api/v1/admin/compliance/certifications/${certificationId}`);
 }
 
 /** 更新合规认证信息 */
-export function putAdminComplianceCertificationsByCertifications(client: ApiClient, certificationId: string, data: UpdateComplianceCertificationRequest): Promise<CertificationItemResponse> {
+export function putAdminComplianceCertificationsByCertifications(client: ApiClient, certificationId: string, data: UpdateComplianceCertificationRequest): Promise<CertificationItem> {
   return client.put(`/compliance/api/v1/admin/compliance/certifications/${certificationId}`, data);
 }
 
@@ -1969,7 +1391,7 @@ export function getAdminComplianceCleanupRecords(client: ApiClient, params?: {
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<CleanupRecordListResponse> {
+}): Promise<ApiListResult<CleanupRecordResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/cleanup-records`, { params });
 }
 
@@ -1984,12 +1406,12 @@ export function getAdminComplianceCrossBorderTransfers(client: ApiClient, params
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<CrossBorderTransferListResponse> {
+}): Promise<ApiListResult<CrossBorderTransferResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/cross-border-transfers`, { params });
 }
 
 /** 创建跨境数据传输记录 */
-export function postAdminComplianceCrossBorderTransfers(client: ApiClient, data: CreateCrossBorderTransferRequest): Promise<CrossBorderTransferItemResponse> {
+export function postAdminComplianceCrossBorderTransfers(client: ApiClient, data: CreateCrossBorderTransferRequest): Promise<CrossBorderTransferResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/cross-border-transfers`, data);
 }
 
@@ -1999,12 +1421,12 @@ export function deleteAdminComplianceCrossBorderTransfersByCrossBorderTransfers(
 }
 
 /** 获取跨境数据传输详情 */
-export function getAdminComplianceCrossBorderTransfersByCrossBorderTransfers(client: ApiClient, crossBorderTransferId: string): Promise<CrossBorderTransferItemResponse> {
+export function getAdminComplianceCrossBorderTransfersByCrossBorderTransfers(client: ApiClient, crossBorderTransferId: string): Promise<CrossBorderTransferResponse> {
   return client.get(`/compliance/api/v1/admin/compliance/cross-border-transfers/${crossBorderTransferId}`);
 }
 
 /** 更新跨境数据传输记录 */
-export function putAdminComplianceCrossBorderTransfersByCrossBorderTransfers(client: ApiClient, crossBorderTransferId: string, data: UpdateCrossBorderTransferRequest): Promise<CrossBorderTransferItemResponse> {
+export function putAdminComplianceCrossBorderTransfersByCrossBorderTransfers(client: ApiClient, crossBorderTransferId: string, data: UpdateCrossBorderTransferRequest): Promise<CrossBorderTransferResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/cross-border-transfers/${crossBorderTransferId}`, data);
 }
 
@@ -2014,12 +1436,12 @@ export function getAdminComplianceDataClassifications(client: ApiClient, params?
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<DataClassificationListResponse> {
+}): Promise<ApiListResult<DataClassificationResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/data-classifications`, { params });
 }
 
 /** 创建数据分类规则 */
-export function postAdminComplianceDataClassifications(client: ApiClient, data: DataClassificationRequest): Promise<DataClassificationItemResponse> {
+export function postAdminComplianceDataClassifications(client: ApiClient, data: DataClassificationRequest): Promise<DataClassificationResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/data-classifications`, data);
 }
 
@@ -2029,12 +1451,12 @@ export function deleteAdminComplianceDataClassificationsByDataClassifications(cl
 }
 
 /** 获取数据分类分级详情 */
-export function getAdminComplianceDataClassificationsByDataClassifications(client: ApiClient, dataClassificationId: string): Promise<DataClassificationItemResponse> {
+export function getAdminComplianceDataClassificationsByDataClassifications(client: ApiClient, dataClassificationId: string): Promise<DataClassificationResponse> {
   return client.get(`/compliance/api/v1/admin/compliance/data-classifications/${dataClassificationId}`);
 }
 
 /** 更新数据分类规则 */
-export function putAdminComplianceDataClassificationsByDataClassifications(client: ApiClient, dataClassificationId: string, data: UpdateDataClassificationRequest): Promise<DataClassificationItemResponse> {
+export function putAdminComplianceDataClassificationsByDataClassifications(client: ApiClient, dataClassificationId: string, data: UpdateDataClassificationRequest): Promise<DataClassificationResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/data-classifications/${dataClassificationId}`, data);
 }
 
@@ -2042,12 +1464,12 @@ export function putAdminComplianceDataClassificationsByDataClassifications(clien
 export function getAdminComplianceDengbaoControls(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<DengbaoControlListResponse> {
+}): Promise<ApiListResult<DengbaoControlItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/dengbao/controls`, { params });
 }
 
 /** 创建等级保护控制项 */
-export function postAdminComplianceDengbaoControls(client: ApiClient, data: CreateDengbaoControlRequest): Promise<DengbaoControlItemResponse> {
+export function postAdminComplianceDengbaoControls(client: ApiClient, data: CreateDengbaoControlRequest): Promise<DengbaoControlItem> {
   return client.post(`/compliance/api/v1/admin/compliance/dengbao/controls`, data);
 }
 
@@ -2057,12 +1479,12 @@ export function deleteAdminComplianceDengbaoControlsByControls(client: ApiClient
 }
 
 /** 更新等级保护控制项 */
-export function putAdminComplianceDengbaoControlsByControls(client: ApiClient, controlId: string, data: UpdateDengbaoControlRequest): Promise<DengbaoControlItemResponse> {
+export function putAdminComplianceDengbaoControlsByControls(client: ApiClient, controlId: string, data: UpdateDengbaoControlRequest): Promise<DengbaoControlItem> {
   return client.put(`/compliance/api/v1/admin/compliance/dengbao/controls/${controlId}`, data);
 }
 
 /** 获取删除权请求详情 */
-export function getAdminComplianceErasureRequestsByErasureRequests(client: ApiClient, erasureId: string): Promise<ErasureItemResponse> {
+export function getAdminComplianceErasureRequestsByErasureRequests(client: ApiClient, erasureId: string): Promise<ErasureItem> {
   return client.get(`/compliance/api/v1/admin/compliance/erasure-requests/${erasureId}`);
 }
 
@@ -2072,12 +1494,12 @@ export function getAdminComplianceEvidence(client: ApiClient, params?: {
   control_id?: string;  // control ID
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<EvidenceListResponse> {
+}): Promise<ApiListResult<EvidenceItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/evidence`, { params });
 }
 
 /** 上传合规证据 */
-export function postAdminComplianceEvidence(client: ApiClient, data: CreateEvidenceRequest): Promise<EvidenceItemResponse> {
+export function postAdminComplianceEvidence(client: ApiClient, data: CreateEvidenceRequest): Promise<EvidenceItem> {
   return client.post(`/compliance/api/v1/admin/compliance/evidence`, data);
 }
 
@@ -2087,7 +1509,7 @@ export function deleteAdminComplianceEvidenceByEvidence(client: ApiClient, evide
 }
 
 /** 获取合规证据详情 */
-export function getAdminComplianceEvidenceByEvidence(client: ApiClient, evidenceId: string): Promise<EvidenceItemResponse> {
+export function getAdminComplianceEvidenceByEvidence(client: ApiClient, evidenceId: string): Promise<EvidenceItem> {
   return client.get(`/compliance/api/v1/admin/compliance/evidence/${evidenceId}`);
 }
 
@@ -2110,17 +1532,17 @@ export function getAdminComplianceGdprConsent(client: ApiClient, params?: {
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<ConsentListResponse> {
+}): Promise<ApiListResult<ConsentItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/gdpr/consent`, { params });
 }
 
 /** 创建同意记录 */
-export function postAdminComplianceGdprConsent(client: ApiClient, data: CreateConsentRequest): Promise<ConsentItemResponse> {
+export function postAdminComplianceGdprConsent(client: ApiClient, data: CreateConsentRequest): Promise<ConsentItem> {
   return client.post(`/compliance/api/v1/admin/compliance/gdpr/consent`, data);
 }
 
 /** 获取同意记录详情 */
-export function getAdminComplianceGdprConsentByConsent(client: ApiClient, consentId: string): Promise<ConsentItemResponse> {
+export function getAdminComplianceGdprConsentByConsent(client: ApiClient, consentId: string): Promise<ConsentItem> {
   return client.get(`/compliance/api/v1/admin/compliance/gdpr/consent/${consentId}`);
 }
 
@@ -2131,12 +1553,12 @@ export function getAdminComplianceGdprDsar(client: ApiClient, params?: {
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<DSARListResponse> {
+}): Promise<ApiListResult<DSARItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/gdpr/dsar`, { params });
 }
 
 /** 创建DSAR */
-export function postAdminComplianceGdprDsar(client: ApiClient, data: CreateDSARRequest): Promise<DSARItemResponse> {
+export function postAdminComplianceGdprDsar(client: ApiClient, data: CreateDSARRequest): Promise<DSARItem> {
   return client.post(`/compliance/api/v1/admin/compliance/gdpr/dsar`, data);
 }
 
@@ -2146,12 +1568,12 @@ export function deleteAdminComplianceGdprDsarByDsar(client: ApiClient, dsarId: s
 }
 
 /** 获取DSAR详情 */
-export function getAdminComplianceGdprDsarByDsar(client: ApiClient, dsarId: string): Promise<DSARItemResponse> {
+export function getAdminComplianceGdprDsarByDsar(client: ApiClient, dsarId: string): Promise<DSARItem> {
   return client.get(`/compliance/api/v1/admin/compliance/gdpr/dsar/${dsarId}`);
 }
 
 /** 更新DSAR */
-export function putAdminComplianceGdprDsarByDsar(client: ApiClient, dsarId: string, data: UpdateDSARRequest): Promise<DSARItemResponse> {
+export function putAdminComplianceGdprDsarByDsar(client: ApiClient, dsarId: string, data: UpdateDSARRequest): Promise<DSARItem> {
   return client.put(`/compliance/api/v1/admin/compliance/gdpr/dsar/${dsarId}`, data);
 }
 
@@ -2162,22 +1584,22 @@ export function getAdminComplianceGdprRightToErasure(client: ApiClient, params?:
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<ErasureListResponse> {
+}): Promise<ApiListResult<ErasureItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/gdpr/right-to-erasure`, { params });
 }
 
 /** 创建数据删除权请求 */
-export function postAdminComplianceGdprRightToErasure(client: ApiClient, data: CreateErasureRequest): Promise<ErasureItemResponse> {
+export function postAdminComplianceGdprRightToErasure(client: ApiClient, data: CreateErasureRequest): Promise<ErasureItem> {
   return client.post(`/compliance/api/v1/admin/compliance/gdpr/right-to-erasure`, data);
 }
 
 /** 获取删除权请求详情 */
-export function getAdminComplianceGdprRightToErasureByRightToErasure(client: ApiClient, erasureId: string): Promise<ErasureItemResponse> {
+export function getAdminComplianceGdprRightToErasureByRightToErasure(client: ApiClient, erasureId: string): Promise<ErasureItem> {
   return client.get(`/compliance/api/v1/admin/compliance/gdpr/right-to-erasure/${erasureId}`);
 }
 
 /** 更新删除权请求状态 */
-export function putAdminComplianceGdprRightToErasureByRightToErasure(client: ApiClient, erasureId: string, data: UpdateErasureRequest): Promise<ErasureItemResponse> {
+export function putAdminComplianceGdprRightToErasureByRightToErasure(client: ApiClient, erasureId: string, data: UpdateErasureRequest): Promise<ErasureItem> {
   return client.put(`/compliance/api/v1/admin/compliance/gdpr/right-to-erasure/${erasureId}`, data);
 }
 
@@ -2190,12 +1612,12 @@ export function postAdminComplianceGdprRightToErasureExecuteByRightToErasure(cli
 export function getAdminComplianceHipaaControls(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<HIPAAControlListResponse> {
+}): Promise<ApiListResult<HIPAAControlItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/hipaa/controls`, { params });
 }
 
 /** 创建HIPAA控制项 */
-export function postAdminComplianceHipaaControls(client: ApiClient, data: CreateHIPAAControlRequest): Promise<HIPAAControlItemResponse> {
+export function postAdminComplianceHipaaControls(client: ApiClient, data: CreateHIPAAControlRequest): Promise<HIPAAControlItem> {
   return client.post(`/compliance/api/v1/admin/compliance/hipaa/controls`, data);
 }
 
@@ -2205,7 +1627,7 @@ export function deleteAdminComplianceHipaaControlsByControls(client: ApiClient, 
 }
 
 /** 更新HIPAA控制项 */
-export function putAdminComplianceHipaaControlsByControls(client: ApiClient, controlId: string, data: UpdateHIPAAControlRequest): Promise<HIPAAControlItemResponse> {
+export function putAdminComplianceHipaaControlsByControls(client: ApiClient, controlId: string, data: UpdateHIPAAControlRequest): Promise<HIPAAControlItem> {
   return client.put(`/compliance/api/v1/admin/compliance/hipaa/controls/${controlId}`, data);
 }
 
@@ -2213,12 +1635,12 @@ export function putAdminComplianceHipaaControlsByControls(client: ApiClient, con
 export function getAdminComplianceIso27001Controls(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<ISO27001ControlListResponse> {
+}): Promise<ApiListResult<ISO27001ControlItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/iso27001/controls`, { params });
 }
 
 /** 创建ISO27001控制项 */
-export function postAdminComplianceIso27001Controls(client: ApiClient, data: CreateISO27001ControlRequest): Promise<ISO27001ControlItemResponse> {
+export function postAdminComplianceIso27001Controls(client: ApiClient, data: CreateISO27001ControlRequest): Promise<ISO27001ControlItem> {
   return client.post(`/compliance/api/v1/admin/compliance/iso27001/controls`, data);
 }
 
@@ -2228,12 +1650,12 @@ export function deleteAdminComplianceIso27001ControlsByControls(client: ApiClien
 }
 
 /** 获取ISO27001控制项详情 */
-export function getAdminComplianceIso27001ControlsByControls(client: ApiClient, controlId: string): Promise<ISO27001ControlItemResponse> {
+export function getAdminComplianceIso27001ControlsByControls(client: ApiClient, controlId: string): Promise<ISO27001ControlItem> {
   return client.get(`/compliance/api/v1/admin/compliance/iso27001/controls/${controlId}`);
 }
 
 /** 更新ISO27001控制项 */
-export function putAdminComplianceIso27001ControlsByControls(client: ApiClient, controlId: string, data: UpdateISO27001ControlRequest): Promise<ISO27001ControlItemResponse> {
+export function putAdminComplianceIso27001ControlsByControls(client: ApiClient, controlId: string, data: UpdateISO27001ControlRequest): Promise<ISO27001ControlItem> {
   return client.put(`/compliance/api/v1/admin/compliance/iso27001/controls/${controlId}`, data);
 }
 
@@ -2242,32 +1664,32 @@ export function getAdminComplianceLegalDocuments(client: ApiClient, params?: {
   doc_type?: string;  // doc type filter (terms/privacy)
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<ListLegalDocumentsResponse> {
+}): Promise<ApiListResult<LegalDocumentItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/legal-documents`, { params });
 }
 
 /** 创建协议文档 */
-export function postAdminComplianceLegalDocuments(client: ApiClient, data: CreateLegalDocumentRequest): Promise<LegalDocumentItemResponse> {
+export function postAdminComplianceLegalDocuments(client: ApiClient, data: CreateLegalDocumentRequest): Promise<LegalDocumentItem> {
   return client.post(`/compliance/api/v1/admin/compliance/legal-documents`, data);
 }
 
 /** 获取协议文档详情 */
-export function getAdminComplianceLegalDocumentsByLegalDocuments(client: ApiClient, legalDocumentId: string): Promise<LegalDocumentItemResponse> {
+export function getAdminComplianceLegalDocumentsByLegalDocuments(client: ApiClient, legalDocumentId: string): Promise<LegalDocumentItem> {
   return client.get(`/compliance/api/v1/admin/compliance/legal-documents/${legalDocumentId}`);
 }
 
 /** 更新协议文档 */
-export function putAdminComplianceLegalDocumentsByLegalDocuments(client: ApiClient, legalDocumentId: string, data: UpdateLegalDocumentRequest): Promise<LegalDocumentItemResponse> {
+export function putAdminComplianceLegalDocumentsByLegalDocuments(client: ApiClient, legalDocumentId: string, data: UpdateLegalDocumentRequest): Promise<LegalDocumentItem> {
   return client.put(`/compliance/api/v1/admin/compliance/legal-documents/${legalDocumentId}`, data);
 }
 
 /** 归档协议文档 */
-export function postAdminComplianceLegalDocumentsArchiveByLegalDocuments(client: ApiClient, legalDocumentId: string): Promise<LegalDocumentItemResponse> {
+export function postAdminComplianceLegalDocumentsArchiveByLegalDocuments(client: ApiClient, legalDocumentId: string): Promise<LegalDocumentItem> {
   return client.post(`/compliance/api/v1/admin/compliance/legal-documents/${legalDocumentId}/archive`);
 }
 
 /** 发布协议文档 */
-export function postAdminComplianceLegalDocumentsPublishByLegalDocuments(client: ApiClient, legalDocumentId: string): Promise<LegalDocumentItemResponse> {
+export function postAdminComplianceLegalDocumentsPublishByLegalDocuments(client: ApiClient, legalDocumentId: string): Promise<LegalDocumentItem> {
   return client.post(`/compliance/api/v1/admin/compliance/legal-documents/${legalDocumentId}/publish`);
 }
 
@@ -2275,12 +1697,12 @@ export function postAdminComplianceLegalDocumentsPublishByLegalDocuments(client:
 export function getAdminCompliancePcidssControls(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<PCIDSSControlListResponse> {
+}): Promise<ApiListResult<PCIDSSControlItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/pcidss/controls`, { params });
 }
 
 /** 创建PCI DSS控制项 */
-export function postAdminCompliancePcidssControls(client: ApiClient, data: CreatePCIDSSControlRequest): Promise<PCIDSSControlItemResponse> {
+export function postAdminCompliancePcidssControls(client: ApiClient, data: CreatePCIDSSControlRequest): Promise<PCIDSSControlItem> {
   return client.post(`/compliance/api/v1/admin/compliance/pcidss/controls`, data);
 }
 
@@ -2290,7 +1712,7 @@ export function deleteAdminCompliancePcidssControlsByControls(client: ApiClient,
 }
 
 /** 更新PCI DSS控制项 */
-export function putAdminCompliancePcidssControlsByControls(client: ApiClient, controlId: string, data: UpdatePCIDSSControlRequest): Promise<PCIDSSControlItemResponse> {
+export function putAdminCompliancePcidssControlsByControls(client: ApiClient, controlId: string, data: UpdatePCIDSSControlRequest): Promise<PCIDSSControlItem> {
   return client.put(`/compliance/api/v1/admin/compliance/pcidss/controls/${controlId}`, data);
 }
 
@@ -2298,12 +1720,12 @@ export function putAdminCompliancePcidssControlsByControls(client: ApiClient, co
 export function getAdminCompliancePenetrationTestReports(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<PenTestReportListResponse> {
+}): Promise<ApiListResult<PenTestReportItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/penetration-test-reports`, { params });
 }
 
 /** 创建渗透测试报告 */
-export function postAdminCompliancePenetrationTestReports(client: ApiClient, data: CreatePenTestReportRequest): Promise<PenTestReportItemResponse> {
+export function postAdminCompliancePenetrationTestReports(client: ApiClient, data: CreatePenTestReportRequest): Promise<PenTestReportItem> {
   return client.post(`/compliance/api/v1/admin/compliance/penetration-test-reports`, data);
 }
 
@@ -2313,7 +1735,7 @@ export function deleteAdminCompliancePenetrationTestReportsByPenetrationTestRepo
 }
 
 /** 更新渗透测试报告 */
-export function putAdminCompliancePenetrationTestReportsByPenetrationTestReports(client: ApiClient, penetrationTestReportId: string, data: UpdatePenTestReportRequest): Promise<PenTestReportItemResponse> {
+export function putAdminCompliancePenetrationTestReportsByPenetrationTestReports(client: ApiClient, penetrationTestReportId: string, data: UpdatePenTestReportRequest): Promise<PenTestReportItem> {
   return client.put(`/compliance/api/v1/admin/compliance/penetration-test-reports/${penetrationTestReportId}`, data);
 }
 
@@ -2321,12 +1743,12 @@ export function putAdminCompliancePenetrationTestReportsByPenetrationTestReports
 export function getAdminCompliancePiplControls(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<PIPLControlListResponse> {
+}): Promise<ApiListResult<PIPLControlItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/pipl/controls`, { params });
 }
 
 /** 创建PIPL控制项 */
-export function postAdminCompliancePiplControls(client: ApiClient, data: CreatePIPLControlRequest): Promise<PIPLControlItemResponse> {
+export function postAdminCompliancePiplControls(client: ApiClient, data: CreatePIPLControlRequest): Promise<PIPLControlItem> {
   return client.post(`/compliance/api/v1/admin/compliance/pipl/controls`, data);
 }
 
@@ -2336,7 +1758,7 @@ export function deleteAdminCompliancePiplControlsByControls(client: ApiClient, c
 }
 
 /** 更新PIPL控制项 */
-export function putAdminCompliancePiplControlsByControls(client: ApiClient, controlId: string, data: UpdatePIPLControlRequest): Promise<PIPLControlItemResponse> {
+export function putAdminCompliancePiplControlsByControls(client: ApiClient, controlId: string, data: UpdatePIPLControlRequest): Promise<PIPLControlItem> {
   return client.put(`/compliance/api/v1/admin/compliance/pipl/controls/${controlId}`, data);
 }
 
@@ -2346,12 +1768,12 @@ export function getAdminCompliancePrivacyImpact(client: ApiClient, params?: {
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<PIAListResponse> {
+}): Promise<ApiListResult<PIAResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/privacy-impact`, { params });
 }
 
 /** 创建隐私影响评估 */
-export function postAdminCompliancePrivacyImpact(client: ApiClient, data: PIARequest): Promise<PIAItemResponse> {
+export function postAdminCompliancePrivacyImpact(client: ApiClient, data: PIARequest): Promise<PIAResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/privacy-impact`, data);
 }
 
@@ -2361,12 +1783,12 @@ export function deleteAdminCompliancePrivacyImpactByPrivacyImpact(client: ApiCli
 }
 
 /** 获取隐私影响评估详情 */
-export function getAdminCompliancePrivacyImpactByPrivacyImpact(client: ApiClient, privacyImpactId: string): Promise<PIAItemResponse> {
+export function getAdminCompliancePrivacyImpactByPrivacyImpact(client: ApiClient, privacyImpactId: string): Promise<PIAResponse> {
   return client.get(`/compliance/api/v1/admin/compliance/privacy-impact/${privacyImpactId}`);
 }
 
 /** 更新隐私影响评估 */
-export function putAdminCompliancePrivacyImpactByPrivacyImpact(client: ApiClient, privacyImpactId: string, data: UpdatePIARequest): Promise<PIAItemResponse> {
+export function putAdminCompliancePrivacyImpactByPrivacyImpact(client: ApiClient, privacyImpactId: string, data: UpdatePIARequest): Promise<PIAResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/privacy-impact/${privacyImpactId}`, data);
 }
 
@@ -2389,12 +1811,12 @@ export function postAdminComplianceProfiles(client: ApiClient, data: UpsertCompl
 export function getAdminCompliancePsd2Controls(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<PSD2ControlListResponse> {
+}): Promise<ApiListResult<PSD2ControlItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/psd2/controls`, { params });
 }
 
 /** 创建PSD2控制项 */
-export function postAdminCompliancePsd2Controls(client: ApiClient, data: CreatePSD2ControlRequest): Promise<PSD2ControlItemResponse> {
+export function postAdminCompliancePsd2Controls(client: ApiClient, data: CreatePSD2ControlRequest): Promise<PSD2ControlItem> {
   return client.post(`/compliance/api/v1/admin/compliance/psd2/controls`, data);
 }
 
@@ -2404,7 +1826,7 @@ export function deleteAdminCompliancePsd2ControlsByControls(client: ApiClient, c
 }
 
 /** 更新PSD2控制项 */
-export function putAdminCompliancePsd2ControlsByControls(client: ApiClient, controlId: string, data: UpdatePSD2ControlRequest): Promise<PSD2ControlItemResponse> {
+export function putAdminCompliancePsd2ControlsByControls(client: ApiClient, controlId: string, data: UpdatePSD2ControlRequest): Promise<PSD2ControlItem> {
   return client.put(`/compliance/api/v1/admin/compliance/psd2/controls/${controlId}`, data);
 }
 
@@ -2412,12 +1834,12 @@ export function putAdminCompliancePsd2ControlsByControls(client: ApiClient, cont
 export function getAdminComplianceRegulatoryWatch(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<RegulatoryWatchListResponse> {
+}): Promise<ApiListResult<RegulatoryUpdateItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/regulatory-watch`, { params });
 }
 
 /** 创建法规动态监控项 */
-export function postAdminComplianceRegulatoryWatch(client: ApiClient, data: CreateRegulatoryWatchItemRequest): Promise<RegulatoryWatchItemResponse> {
+export function postAdminComplianceRegulatoryWatch(client: ApiClient, data: CreateRegulatoryWatchItemRequest): Promise<RegulatoryUpdateItem> {
   return client.post(`/compliance/api/v1/admin/compliance/regulatory-watch`, data);
 }
 
@@ -2427,7 +1849,7 @@ export function deleteAdminComplianceRegulatoryWatchByRegulatoryWatch(client: Ap
 }
 
 /** 更新法规动态监控项 */
-export function putAdminComplianceRegulatoryWatchByRegulatoryWatch(client: ApiClient, regulatoryWatchId: string, data: UpdateRegulatoryWatchItemRequest): Promise<RegulatoryWatchItemResponse> {
+export function putAdminComplianceRegulatoryWatchByRegulatoryWatch(client: ApiClient, regulatoryWatchId: string, data: UpdateRegulatoryWatchItemRequest): Promise<RegulatoryUpdateItem> {
   return client.put(`/compliance/api/v1/admin/compliance/regulatory-watch/${regulatoryWatchId}`, data);
 }
 
@@ -2435,12 +1857,12 @@ export function putAdminComplianceRegulatoryWatchByRegulatoryWatch(client: ApiCl
 export function getAdminComplianceRetentionPolicies(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<RetentionPolicyListResponse> {
+}): Promise<ApiListResult<RetentionPolicyItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/retention-policies`, { params });
 }
 
 /** 创建数据保留策略 */
-export function postAdminComplianceRetentionPolicies(client: ApiClient, data: CreateRetentionPolicyRequest): Promise<RetentionPolicyItemResponse> {
+export function postAdminComplianceRetentionPolicies(client: ApiClient, data: CreateRetentionPolicyRequest): Promise<RetentionPolicyItem> {
   return client.post(`/compliance/api/v1/admin/compliance/retention-policies`, data);
 }
 
@@ -2450,12 +1872,12 @@ export function deleteAdminComplianceRetentionPoliciesByRetentionPolicies(client
 }
 
 /** 更新数据保留策略 */
-export function putAdminComplianceRetentionPoliciesByRetentionPolicies(client: ApiClient, retentionPolicyId: string, data: UpdateRetentionPolicyRequest): Promise<RetentionPolicyItemResponse> {
+export function putAdminComplianceRetentionPoliciesByRetentionPolicies(client: ApiClient, retentionPolicyId: string, data: UpdateRetentionPolicyRequest): Promise<RetentionPolicyItem> {
   return client.put(`/compliance/api/v1/admin/compliance/retention-policies/${retentionPolicyId}`, data);
 }
 
 /** 查询合规评分历史 */
-export function getAdminComplianceScoreHistory(client: ApiClient): Promise<ScoreSnapshotItem> {
+export function getAdminComplianceScoreHistory(client: ApiClient): Promise<ScoreSnapshotItem[]> {
   return client.get(`/compliance/api/v1/admin/compliance/score-history`);
 }
 
@@ -2468,12 +1890,12 @@ export function getAdminComplianceSodChecks(client: ApiClient): Promise<SoDCheck
 export function getAdminComplianceSodRules(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<SoDRuleListResponse> {
+}): Promise<ApiListResult<SoDRuleResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/sod-rules`, { params });
 }
 
 /** 创建职责分离规则 */
-export function postAdminComplianceSodRules(client: ApiClient, data: CreateSoDRuleRequest): Promise<SoDRuleItemResponse> {
+export function postAdminComplianceSodRules(client: ApiClient, data: CreateSoDRuleRequest): Promise<SoDRuleResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/sod-rules`, data);
 }
 
@@ -2483,7 +1905,7 @@ export function deleteAdminComplianceSodRulesBySodRules(client: ApiClient, sodRu
 }
 
 /** 更新职责分离规则 */
-export function putAdminComplianceSodRulesBySodRules(client: ApiClient, sodRuleId: string, data: UpdateSoDRuleRequest): Promise<SoDRuleItemResponse> {
+export function putAdminComplianceSodRulesBySodRules(client: ApiClient, sodRuleId: string, data: UpdateSoDRuleRequest): Promise<SoDRuleResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/sod-rules/${sodRuleId}`, data);
 }
 
@@ -2491,12 +1913,12 @@ export function putAdminComplianceSodRulesBySodRules(client: ApiClient, sodRuleI
 export function getAdminComplianceSoxItgc(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<SOXITGCListResponse> {
+}): Promise<ApiListResult<SOXITGCItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/sox/itgc`, { params });
 }
 
 /** 创建SOX ITGC控制项 */
-export function postAdminComplianceSoxItgc(client: ApiClient, data: CreateSOXITGCControlRequest): Promise<SOXITGCItemResponse> {
+export function postAdminComplianceSoxItgc(client: ApiClient, data: CreateSOXITGCControlRequest): Promise<SOXITGCItem> {
   return client.post(`/compliance/api/v1/admin/compliance/sox/itgc`, data);
 }
 
@@ -2506,12 +1928,12 @@ export function deleteAdminComplianceSoxItgcByItgc(client: ApiClient, itgcId: st
 }
 
 /** 获取SOX ITGC控制项详情 */
-export function getAdminComplianceSoxItgcByItgc(client: ApiClient, itgcId: string): Promise<SOXITGCItemResponse> {
+export function getAdminComplianceSoxItgcByItgc(client: ApiClient, itgcId: string): Promise<SOXITGCItem> {
   return client.get(`/compliance/api/v1/admin/compliance/sox/itgc/${itgcId}`);
 }
 
 /** 更新SOX ITGC控制项 */
-export function putAdminComplianceSoxItgcByItgc(client: ApiClient, itgcId: string, data: UpdateSOXITGCControlRequest): Promise<SOXITGCItemResponse> {
+export function putAdminComplianceSoxItgcByItgc(client: ApiClient, itgcId: string, data: UpdateSOXITGCControlRequest): Promise<SOXITGCItem> {
   return client.put(`/compliance/api/v1/admin/compliance/sox/itgc/${itgcId}`, data);
 }
 
@@ -2540,12 +1962,12 @@ export function getAdminComplianceSubprocessors(client: ApiClient, params?: {
   category?: string;  // category filter
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<SubProcessorListResponse> {
+}): Promise<ApiListResult<SubProcessorItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/subprocessors`, { params });
 }
 
 /** 创建子处理商记录 */
-export function postAdminComplianceSubprocessors(client: ApiClient, data: CreateSubProcessorRequest): Promise<SubProcessorItemResponse> {
+export function postAdminComplianceSubprocessors(client: ApiClient, data: CreateSubProcessorRequest): Promise<SubProcessorItem> {
   return client.post(`/compliance/api/v1/admin/compliance/subprocessors`, data);
 }
 
@@ -2555,12 +1977,12 @@ export function deleteAdminComplianceSubprocessorsBySubprocessors(client: ApiCli
 }
 
 /** 获取子处理商详情 */
-export function getAdminComplianceSubprocessorsBySubprocessors(client: ApiClient, subprocessorId: string): Promise<SubProcessorItemResponse> {
+export function getAdminComplianceSubprocessorsBySubprocessors(client: ApiClient, subprocessorId: string): Promise<SubProcessorItem> {
   return client.get(`/compliance/api/v1/admin/compliance/subprocessors/${subprocessorId}`);
 }
 
 /** 更新子处理商信息 */
-export function putAdminComplianceSubprocessorsBySubprocessors(client: ApiClient, subprocessorId: string, data: UpdateSubProcessorRequest): Promise<SubProcessorItemResponse> {
+export function putAdminComplianceSubprocessorsBySubprocessors(client: ApiClient, subprocessorId: string, data: UpdateSubProcessorRequest): Promise<SubProcessorItem> {
   return client.put(`/compliance/api/v1/admin/compliance/subprocessors/${subprocessorId}`, data);
 }
 
@@ -2636,12 +2058,12 @@ export function getAdminComplianceVendorRiskAssessment(client: ApiClient, params
   page_size?: number;  // page size
   sort_by?: string;  // sort field
   sort_order?: string;  // sort order
-}): Promise<VendorRiskAssessmentListResponse> {
+}): Promise<ApiListResult<VendorRiskAssessmentResponse>> {
   return client.get(`/compliance/api/v1/admin/compliance/vendor-risk-assessment`, { params });
 }
 
 /** 创建供应商风险评估 */
-export function postAdminComplianceVendorRiskAssessment(client: ApiClient, data: VendorRiskAssessmentRequest): Promise<VendorRiskAssessmentDetailResponse> {
+export function postAdminComplianceVendorRiskAssessment(client: ApiClient, data: VendorRiskAssessmentRequest): Promise<VendorRiskAssessmentResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/vendor-risk-assessment`, data);
 }
 
@@ -2651,7 +2073,7 @@ export function deleteAdminComplianceVendorRiskAssessmentByVendorRiskAssessment(
 }
 
 /** 更新供应商风险评估 */
-export function putAdminComplianceVendorRiskAssessmentByVendorRiskAssessment(client: ApiClient, vendorRiskAssessmentId: string, data: UpdateVendorRiskAssessmentRequest): Promise<VendorRiskAssessmentDetailResponse> {
+export function putAdminComplianceVendorRiskAssessmentByVendorRiskAssessment(client: ApiClient, vendorRiskAssessmentId: string, data: UpdateVendorRiskAssessmentRequest): Promise<VendorRiskAssessmentResponse> {
   return client.put(`/compliance/api/v1/admin/compliance/vendor-risk-assessment/${vendorRiskAssessmentId}`, data);
 }
 
@@ -2659,22 +2081,22 @@ export function putAdminComplianceVendorRiskAssessmentByVendorRiskAssessment(cli
 export function getComplianceGdprDsarMe(client: ApiClient, params?: {
   page?: number;  // page number
   page_size?: number;  // page size
-}): Promise<DSARListResponse> {
+}): Promise<ApiListResult<DSARItem>> {
   return client.get(`/compliance/api/v1/compliance/gdpr/dsar/me`, { params });
 }
 
 /** 提交我的DSAR */
-export function postComplianceGdprDsarMe(client: ApiClient, data: CreateMyDSARRequest): Promise<DSARItemResponse> {
+export function postComplianceGdprDsarMe(client: ApiClient, data: CreateMyDSARRequest): Promise<DSARItem> {
   return client.post(`/compliance/api/v1/compliance/gdpr/dsar/me`, data);
 }
 
 /** 获取DSAR状态 */
-export function getComplianceGdprDsarStatusByDsar(client: ApiClient, dsarId: string): Promise<DSARStatusDetailResponse> {
+export function getComplianceGdprDsarStatusByDsar(client: ApiClient, dsarId: string): Promise<DSARStatusResponse> {
   return client.get(`/compliance/api/v1/compliance/gdpr/dsar/${dsarId}/status`);
 }
 
 /** 获取当前隐私政策 */
-export function getCompliancePrivacyPolicy(client: ApiClient): Promise<PrivacyPolicyDetailResponse> {
+export function getCompliancePrivacyPolicy(client: ApiClient): Promise<PrivacyPolicyResponse> {
   return client.get(`/compliance/api/v1/compliance/privacy/policy`);
 }
 
@@ -2682,7 +2104,7 @@ export function getCompliancePrivacyPolicy(client: ApiClient): Promise<PrivacyPo
 export function getCompliancePrivacyPolicyVersions(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PrivacyPolicyListResponse> {
+}): Promise<ApiListResult<PrivacyPolicyVersionItem>> {
   return client.get(`/compliance/api/v1/compliance/privacy/policy/versions`, { params });
 }
 
@@ -2690,7 +2112,7 @@ export function getCompliancePrivacyPolicyVersions(client: ApiClient, params?: {
 export function getCompliancePrivacyRetention(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<RetentionPolicyPublicListResponse> {
+}): Promise<ApiListResult<RetentionPolicyPublicResponse>> {
   return client.get(`/compliance/api/v1/compliance/privacy/retention`, { params });
 }
 
@@ -2704,7 +2126,7 @@ export function getCompliancePublicAuditFindings(client: ApiClient, params?: {
   severity?: string;  // 严重级别筛选
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicAuditFindingListResponse> {
+}): Promise<ApiListResult<PublicAuditFinding>> {
   return client.get(`/compliance/api/v1/compliance/public/audit-findings`, { params });
 }
 
@@ -2712,7 +2134,7 @@ export function getCompliancePublicAuditFindings(client: ApiClient, params?: {
 export function getCompliancePublicBreachNotifications(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicBreachNotificationListResponse> {
+}): Promise<ApiListResult<PublicBreachNotification>> {
   return client.get(`/compliance/api/v1/compliance/public/breach-notifications`, { params });
 }
 
@@ -2721,7 +2143,7 @@ export function getCompliancePublicCertifications(client: ApiClient, params?: {
   framework?: string;  // 认证框架筛选 (SOC2 Type II, ISO 27001)
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicCertificationListResponse> {
+}): Promise<ApiListResult<PublicCertification>> {
   return client.get(`/compliance/api/v1/compliance/public/certifications`, { params });
 }
 
@@ -2729,7 +2151,7 @@ export function getCompliancePublicCertifications(client: ApiClient, params?: {
 export function getCompliancePublicCrossBorderTransfers(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicCrossBorderTransferListResponse> {
+}): Promise<ApiListResult<PublicCrossBorderTransfer>> {
   return client.get(`/compliance/api/v1/compliance/public/cross-border-transfers`, { params });
 }
 
@@ -2737,7 +2159,7 @@ export function getCompliancePublicCrossBorderTransfers(client: ApiClient, param
 export function getCompliancePublicDataClassifications(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicDataClassificationListResponse> {
+}): Promise<ApiListResult<PublicDataClassification>> {
   return client.get(`/compliance/api/v1/compliance/public/data-classifications`, { params });
 }
 
@@ -2745,7 +2167,7 @@ export function getCompliancePublicDataClassifications(client: ApiClient, params
 export function getCompliancePublicDengbaoControls(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicDengbaoListResponse> {
+}): Promise<ApiListResult<PublicDengbaoControl>> {
   return client.get(`/compliance/api/v1/compliance/public/dengbao/controls`, { params });
 }
 
@@ -2755,7 +2177,7 @@ export function getCompliancePublicEvidence(client: ApiClient, params?: {
   page_size?: number;  // 每页数量
   sort_by?: string;  // 排序字段
   sort_order?: string;  // 排序方向 (asc/desc)
-}): Promise<ListResponsecompliance_Evidence> {
+}): Promise<ApiListResult<PublicEvidenceItem>> {
   return client.get(`/compliance/api/v1/compliance/public/evidence`, { params });
 }
 
@@ -2763,7 +2185,7 @@ export function getCompliancePublicEvidence(client: ApiClient, params?: {
 export function getCompliancePublicHipaaControls(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicHIPAAAListResponse> {
+}): Promise<ApiListResult<PublicHIPAAControl>> {
   return client.get(`/compliance/api/v1/compliance/public/hipaa/controls`, { params });
 }
 
@@ -2771,7 +2193,7 @@ export function getCompliancePublicHipaaControls(client: ApiClient, params?: {
 export function getCompliancePublicIso27001Controls(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicISO27001ControlListResponse> {
+}): Promise<ApiListResult<PublicISO27001Control>> {
   return client.get(`/compliance/api/v1/compliance/public/iso27001/controls`, { params });
 }
 
@@ -2788,7 +2210,7 @@ export function getCompliancePublicLegalDocuments(client: ApiClient, params?: {
 export function getCompliancePublicPcidssControls(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicPCIListResponse> {
+}): Promise<ApiListResult<PublicPCIDSSControl>> {
   return client.get(`/compliance/api/v1/compliance/public/pcidss/controls`, { params });
 }
 
@@ -2796,7 +2218,7 @@ export function getCompliancePublicPcidssControls(client: ApiClient, params?: {
 export function getCompliancePublicPenetrationTestReports(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicPenTestReportListResponse> {
+}): Promise<ApiListResult<PublicPenTestReport>> {
   return client.get(`/compliance/api/v1/compliance/public/penetration-test-reports`, { params });
 }
 
@@ -2804,7 +2226,7 @@ export function getCompliancePublicPenetrationTestReports(client: ApiClient, par
 export function getCompliancePublicPiplControls(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicPIPLListResponse> {
+}): Promise<ApiListResult<PublicPIPLControl>> {
   return client.get(`/compliance/api/v1/compliance/public/pipl/controls`, { params });
 }
 
@@ -2812,7 +2234,7 @@ export function getCompliancePublicPiplControls(client: ApiClient, params?: {
 export function getCompliancePublicPrivacyImpact(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicPIAListResponse> {
+}): Promise<ApiListResult<PublicPIA>> {
   return client.get(`/compliance/api/v1/compliance/public/privacy-impact`, { params });
 }
 
@@ -2820,7 +2242,7 @@ export function getCompliancePublicPrivacyImpact(client: ApiClient, params?: {
 export function getCompliancePublicPsd2Controls(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicPSD2ListResponse> {
+}): Promise<ApiListResult<PublicPSD2Control>> {
   return client.get(`/compliance/api/v1/compliance/public/psd2/controls`, { params });
 }
 
@@ -2828,17 +2250,17 @@ export function getCompliancePublicPsd2Controls(client: ApiClient, params?: {
 export function getCompliancePublicRegulatoryWatch(client: ApiClient, params?: {
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<RegulatoryWatchListResponse> {
+}): Promise<ApiListResult<RegulatoryUpdateItem>> {
   return client.get(`/compliance/api/v1/compliance/public/regulatory-watch`, { params });
 }
 
 /** 获取公开安全评分 */
-export function getCompliancePublicSecurityScore(client: ApiClient): Promise<PublicSecurityScoreResponse> {
+export function getCompliancePublicSecurityScore(client: ApiClient): Promise<SecurityScore> {
   return client.get(`/compliance/api/v1/compliance/public/security-score`);
 }
 
 /** 获取公开合规状态 */
-export function getCompliancePublicStatus(client: ApiClient): Promise<PublicComplianceStatusDetailResponse> {
+export function getCompliancePublicStatus(client: ApiClient): Promise<PublicComplianceStatusResponse> {
   return client.get(`/compliance/api/v1/compliance/public/status`);
 }
 
@@ -2847,12 +2269,12 @@ export function getCompliancePublicSubprocessors(client: ApiClient, params?: {
   category?: string;  // 类别筛选: infrastructure/service_provider/third_party
   page?: number;  // 页码
   page_size?: number;  // 每页条数
-}): Promise<PublicSubProcessorListResponse> {
+}): Promise<ApiListResult<PublicSubProcessor>> {
   return client.get(`/compliance/api/v1/compliance/public/subprocessors`, { params });
 }
 
 /** 获取合规状态概览 */
-export function getComplianceStatus(client: ApiClient): Promise<ComplianceStatusDetailResponse> {
+export function getComplianceStatus(client: ApiClient): Promise<ComplianceStatusResponse> {
   return client.get(`/compliance/api/v1/compliance/status`);
 }
 

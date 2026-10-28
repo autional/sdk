@@ -1,7 +1,7 @@
 {
   "name": "@autional/api-notification",
-  "version": "0.3.0",
-  "description": "Autional Identity Service API — auto-generated TypeScript client",
+  "version": "0.4.0",
+  "description": "Autional Notification API — auto-generated TypeScript client from notification-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

@@ -1,7 +1,7 @@
 {
   "name": "@autional/api-status",
-  "version": "0.3.0",
-  "description": "Autional Identity Service API — auto-generated TypeScript client",
+  "version": "0.4.0",
+  "description": "Autional Status API — auto-generated TypeScript client from status-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

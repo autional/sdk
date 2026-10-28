@@ -1,7 +1,7 @@
 {
   "name": "@autional/api-billing",
-  "version": "0.3.0",
-  "description": "Autional Billing Service API — auto-generated TypeScript client",
+  "version": "0.4.0",
+  "description": "Autional Billing API — auto-generated TypeScript client from billing-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

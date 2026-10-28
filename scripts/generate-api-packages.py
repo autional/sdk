@@ -945,8 +945,12 @@ def main():
             f.write(generate_readme(prefix, name, func_infos))
 
         total_generated += 1
-        func_count = sum(1 for ep in public_endpoints)
-        print(f"[OK] {name} \u2192 sdk/packages/api-{prefix}/src/index.ts ({func_count} functions)")
+        # 报实际产出数：form-urlencoded 端点在 generate_functions 内被跳过，
+        # 按 public_endpoints 计数会虚报（profile 51 vs 50、oauth 55 vs 50）。
+        skipped = len(public_endpoints) - len(func_infos)
+        note = f", {skipped} skipped (formData)" if skipped else ""
+        print(f"[OK] {name} \u2192 sdk/packages/api-{prefix}/src/index.ts "
+              f"({len(func_infos)} functions{note})")
 
     print()
     print(f"Done: {total_generated} packages generated.")

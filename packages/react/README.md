@@ -21,7 +21,7 @@ import { AutionalProvider } from '@autional/react';
 
 function App() {
   return (
-    <AutionalProvider appId="my-app" issuer="https://auth.iam.tianv.com">
+    <AutionalProvider appId="my-app" issuer="https://auth.example.com">
       <Dashboard />
     </AutionalProvider>
   );

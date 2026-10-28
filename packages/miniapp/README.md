@@ -27,7 +27,7 @@ import { createAutional } from '@autional/miniapp';
 
 const autional = createAutional({
   appId: 'wx1234567890',
-  authUrl: 'https://auth.iam.tianv.com',
+  authUrl: 'https://auth.example.com',
 });
 
 // In a page's onLoad or a button handler:

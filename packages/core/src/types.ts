@@ -232,11 +232,3 @@ export const ERROR_CODES = {
   REVOKE_FAILED: 'REVOKE_FAILED',
 } as const;
 
-/**
- * 已安装 API 包的类型占位接口。
- * 各 API 包通过 module augmentation 扩展此接口。
- *
- * 安装 @autional/api-identity 后：
- *   const { identity } = useAutional().api;  // ← 类型安全
- */
-export interface RegisteredApis {}

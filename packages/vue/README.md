@@ -26,7 +26,7 @@ import App from './App.vue';
 const app = createApp(App);
 app.use(createAutional({
   appId: 'my-app',
-  issuer: 'https://auth.iam.tianv.com',
+  issuer: 'https://auth.example.com',
 }));
 app.mount('#app');
 ```

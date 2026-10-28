@@ -94,10 +94,7 @@ export default function Layout({ children }) {
 | `@autional/next` | Next.js 14+ App Router: middleware, `getServerSession`, `AutionalProvider` | `next`, `@autional/react`, `@autional/core` |
 | `@autional/react-native` | React Native 0.70+: `AutionalProvider`, `useAutional`, `RequireAuth` for iOS/Android | `react`, `react-native`, `@autional/core` |
 | `@autional/miniapp` | WeChat Mini Program adapter: platform binding, WeChat login, token persistence | `@autional/core` |
-| `@autional/api-identity` | Auto-generated TypeScript client for Identity Service (login, register, profile, RBAC, NHI, etc.) | `@autional/core` |
-| `@autional/api-tenant` | Auto-generated TypeScript client for Tenant Service (tenant CRUD, plans, branding) | `@autional/core` |
-| `@autional/api-mfa` | Auto-generated TypeScript client for MFA Service (TOTP, SMS, passkey, backup codes) | `@autional/core` |
-| `@autional/api-billing` | Auto-generated TypeScript client for Billing Service (plans, invoices, usage) | `@autional/core` |
+| `@autional/api-*` | 20 auto-generated per-service clients: audit, billing, communication, compliance, identity, mfa, notification, oauth, pay, point, profile, rbac, saml, secret, session, status, storage, tenant, verification, wallet. Each package README carries its own full function table. | `@autional/core` |
 | `@autional/plugin-mfa` | React MFA plugin: pre-built TOTP setup, passkey registration, backup code UI | `@autional/react`, `@autional/core` |
 
 ---
@@ -173,7 +170,8 @@ HTTP client. Tokens are automatically refreshed and attached to every request.
 
 ```ts
 import { Autional } from '@autional/core';
-import { login, getProfile } from '@autional/api-identity';
+import { postAuthLogin, getAuthMe } from '@autional/api-identity';
+import { getAdminTenantsByTenants } from '@autional/api-tenant';
 
 const autional = new Autional({
   appId: 'app_xxx',
@@ -181,20 +179,19 @@ const autional = new Autional({
 });
 await autional.initialize();
 
-// Login
-const result = await login(autional, {
+// Login — 首参恒为 ApiClient（autional.api）；返回值已解包，不是 { code, data, message } 信封
+const result = await postAuthLogin(autional.api, {
   email: 'user@example.com',
   password: 'securePassword123',
 });
-console.log(result.user.email, result.accessToken);
+console.log(result.user?.email, result.accessToken);
 
 // Fetch profile (auto-authenticated)
-const profile = await getProfile(autional);
-console.log(profile);
+const me = await getAuthMe(autional.api);
+console.log(me.email);
 
 // Cross-service calls with @autional/api-tenant
-import { getTenant } from '@autional/api-tenant';
-const tenant = await getTenant(autional, 'tn_abc123');
+const tenant = await getAdminTenantsByTenants(autional.api, 'tn_abc123');
 console.log(tenant.name, tenant.plan);
 ```
 

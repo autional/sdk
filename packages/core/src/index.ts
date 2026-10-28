@@ -64,6 +64,5 @@ export type {
   PasswordPolicyConfig,
   TenantAuthConfig,
   BrandingInfo,
-  RegisteredApis,
 } from './types';
 export { ERROR_CODES } from './types';

@@ -60,10 +60,7 @@ const { user, isLoading, login, logout } = useAutional();
 | `@autional/react` | React 适配器：AutionalProvider + useAutional + RequireAuth |
 | `@autional/vue` | Vue 3 适配器：createAutional + useAutional + v-auth + 路由守卫 |
 | `@autional/next` | Next.js 适配器：中间件 + getServerSession + Provider |
-| `@autional/api-identity` | 身份认证 API（21 个函数，树摇导出） |
-| `@autional/api-tenant` | 租户管理 API（10 个函数） |
-| `@autional/api-mfa` | 多因素认证 API（10 个函数） |
-| `@autional/api-billing` | 计费管理 API（9 个函数） |
+| `@autional/api-*` | 20 个按服务自动生成的客户端（audit/billing/communication/compliance/identity/mfa/notification/oauth/pay/point/profile/rbac/saml/secret/session/status/storage/tenant/verification/wallet），函数数量以各包 README 为准，树摇导出 |
 | `@autional/plugin-mfa` | MFA UI 组件（TOTP 设置/挑战/备份码） |
 | `@autional/miniapp` | 微信小程序适配器 |
 | `@autional/react-native` | React Native 适配器 |

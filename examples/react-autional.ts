@@ -13,7 +13,7 @@ import { AutionalProvider, useAutional, RequireAuth } from '@autional/react';
 
 export const autionalConfig = {
   appId: 'YOUR_APP_ID',                         // ← 在 Autional 控制台创建的应用 ID
-  issuer: 'https://auth.iam.tianv.com',          // ← Autional 服务器地址（不是你的网站域名）
+  issuer: 'https://auth.example.com',          // ← Autional 服务器地址（不是你的网站域名）
 };
 
 export { AutionalProvider, useAutional, RequireAuth };

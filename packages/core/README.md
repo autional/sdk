@@ -27,7 +27,7 @@ import { Autional, browserPlatform } from '@autional/core';
 
 const autional = new Autional({
   appId: 'my-app',
-  issuer: 'https://auth.iam.tianv.com',
+  issuer: 'https://auth.example.com',
   platform: browserPlatform,
 });
 

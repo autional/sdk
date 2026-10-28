@@ -350,32 +350,3 @@ export function getSecretPublicTransmissionPublicKey(client: ApiClient): Promise
   return client.get(`/secret/api/v1/secret/public/transmission/public-key`);
 }
 
-// ====== Module Augmentation =====
-// Installing this package auto-types useAutional().api.secret
-
-export interface SecretApi {
-  getAdminSecrets: typeof getAdminSecrets;
-  postAdminSecrets: typeof postAdminSecrets;
-  postAdminSecretsBatchDelete: typeof postAdminSecretsBatchDelete;
-  postAdminSecretsBatchRevoke: typeof postAdminSecretsBatchRevoke;
-  getAdminSecretsDetail: typeof getAdminSecretsDetail;
-  getAdminSecretsEncryptionKeys: typeof getAdminSecretsEncryptionKeys;
-  deleteAdminSecretsItemKeyByKey: typeof deleteAdminSecretsItemKeyByKey;
-  getAdminSecretsJwtKeys: typeof getAdminSecretsJwtKeys;
-  deleteAdminSecretsPolicy: typeof deleteAdminSecretsPolicy;
-  getAdminSecretsPolicy: typeof getAdminSecretsPolicy;
-  putAdminSecretsPolicy: typeof putAdminSecretsPolicy;
-  postAdminSecretsRevoke: typeof postAdminSecretsRevoke;
-  postAdminSecretsRotate: typeof postAdminSecretsRotate;
-  postAdminSecretsUpdate: typeof postAdminSecretsUpdate;
-  getAdminSecretsVersions: typeof getAdminSecretsVersions;
-  postAdminSecretsVersionsValue: typeof postAdminSecretsVersionsValue;
-  getSecretPublicJwtPublicKey: typeof getSecretPublicJwtPublicKey;
-  getSecretPublicTransmissionPublicKey: typeof getSecretPublicTransmissionPublicKey;
-}
-
-declare module '@autional/core' {
-  interface RegisteredApis {
-    secret: SecretApi;
-  }
-}

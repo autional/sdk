@@ -13,7 +13,7 @@ import { createAutional, useAutional, autionalGuard } from '@autional/vue';
 
 export const autionalConfig = {
   appId: 'YOUR_APP_ID',                    // ← 在 Autional 控制台创建的应用 ID
-  issuer: 'https://auth.iam.tianv.com',      // ← Autional 服务器地址（你的认证域名）
+  issuer: 'https://auth.example.com',      // ← Autional 服务器地址（你的认证域名）
 };
 
 export const autionalPlugin = createAutional(autionalConfig);

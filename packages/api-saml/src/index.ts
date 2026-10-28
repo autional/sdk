@@ -221,27 +221,3 @@ export function getSamlSloSpBySaml(client: ApiClient, providerId: string, params
   return client.get(`/saml/api/v1/saml/${providerId}/slo/sp`, { params });
 }
 
-// ====== Module Augmentation =====
-// Installing this package auto-types useAutional().api.saml
-
-export interface SamlApi {
-  getAdminSamlProviders: typeof getAdminSamlProviders;
-  postAdminSamlProviders: typeof postAdminSamlProviders;
-  deleteAdminSamlProvidersByProviders: typeof deleteAdminSamlProvidersByProviders;
-  getAdminSamlProvidersByProviders: typeof getAdminSamlProvidersByProviders;
-  putAdminSamlProvidersByProviders: typeof putAdminSamlProvidersByProviders;
-  putAdminSamlProvidersAttributeMappingByProviders: typeof putAdminSamlProvidersAttributeMappingByProviders;
-  getAdminSamlSessions: typeof getAdminSamlSessions;
-  getAdminSamlUserLinks: typeof getAdminSamlUserLinks;
-  deleteAdminSamlUserLinksByUserLinks: typeof deleteAdminSamlUserLinksByUserLinks;
-  getSamlLoginBySaml: typeof getSamlLoginBySaml;
-  getSamlMetadataBySaml: typeof getSamlMetadataBySaml;
-  getSamlSloBySaml: typeof getSamlSloBySaml;
-  getSamlSloSpBySaml: typeof getSamlSloSpBySaml;
-}
-
-declare module '@autional/core' {
-  interface RegisteredApis {
-    saml: SamlApi;
-  }
-}

@@ -12,7 +12,7 @@ import { AutionalProvider, useAutional, useAutionalContext, RequireAuth } from '
 export const autionalConfig = {
   appId: import.meta.env.VITE_AUTIONAL_APP_ID || 'demo-app',
   // issuer = Autional 服务器地址（OIDC Discovery 端点，非当前域名）
-  issuer: import.meta.env.VITE_AUTIONAL_ISSUER || 'https://auth.iam.tianv.com',
+  issuer: import.meta.env.VITE_AUTIONAL_ISSUER || 'https://api.autional.cn',
   // apiUrl = API 调用基础路径（默认与 issuer 相同）
   apiUrl: import.meta.env.VITE_AUTIONAL_API_URL || undefined,
   syncTabs: false,

@@ -1,5 +1,5 @@
 /**
- * @autional/api-saml — Auto-generated from saml-service swagger.json
+ * @autional/api-saml — Auto-generated from saml-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

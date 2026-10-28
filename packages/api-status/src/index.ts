@@ -1,5 +1,5 @@
 /**
- * @autional/api-status — Auto-generated from status-service swagger.json
+ * @autional/api-status — Auto-generated from status-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

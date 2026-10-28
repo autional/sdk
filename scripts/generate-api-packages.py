@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
 Generate TypeScript API packages for the Autional SDK
-from micro-service swagger.json files.
+from each service's committed swagger single source:
+`shared/<svc>/internal/docs/docs.go` (swag-generated, version-controlled).
+
+为什么不读 `swagger/swagger.json`：它被各服务 .gitignore 排除（本地产物），
+fresh clone / CI 上不存在，且可能是旧一代 swag 的产物（响应包装器命名不同 ⇒
+指纹与已提交的 docs.go 不一致）。docs.go 是仓库里唯一入库的 API 契约，
+工作区守卫 scripts/ci/check-sdk-generated.py 也读它 —— 两侧同源，才不会有
+"生成器按 A 生成、守卫按 B 校验" 的假绿/假红。
 
 Output: sdk/packages/api-{prefix}/src/index.ts
         sdk/packages/api-{prefix}/package.json   (if new)
@@ -10,6 +17,7 @@ Output: sdk/packages/api-{prefix}/src/index.ts
 Usage:
     python sdk/scripts/generate-api-packages.py
     python sdk/scripts/generate-api-packages.py --service profile-service
+    python sdk/scripts/generate-api-packages.py --check --shared /clean/shared
 """
 
 import json
@@ -22,6 +30,11 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 SDK_DIR = os.path.join(PROJECT_ROOT, "sdk")
 SDK_PACKAGES_DIR = os.path.join(SDK_DIR, "packages")
 WORKSPACE_SHARED_DIR = os.path.join(PROJECT_ROOT, "shared")
+
+# 入库的 swagger 单源（swagger/swagger.json 被 gitignore，只在本地存在）
+DOCS_GO_REL = os.path.join("internal", "docs", "docs.go")
+# swag 把描述里的反引号写成 Go 拼接转义；docs.go 是 Go 源码，还原后再解析
+_DOC_BACKTICK_ESCAPE = '` + "`" + `'
 
 SERVICES = [
     {"name": "identity-service",      "prefix": "identity"},
@@ -298,18 +311,59 @@ def service_dir_name(svc_name):
     return svc_name
 
 
-def load_swagger(svc_name):
-    # 多仓布局：shared/<svc>/swagger/swagger.json；旧布局 docs/swagger.json 保留兜底
-    svc_dir = os.path.join(WORKSPACE_SHARED_DIR, service_dir_name(svc_name))
-    for rel in (os.path.join("swagger", "swagger.json"), os.path.join("docs", "swagger.json")):
-        json_path = os.path.join(svc_dir, rel)
-        if not os.path.isfile(json_path):
-            continue
-        if os.path.getsize(json_path) == 0:
-            return None
-        with open(json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return None
+def _extract_braced(text, start):
+    """从 start（'{' 下标）做字符串感知的花括号配对切片，返回 JSON 对象文本。"""
+    depth, i, in_str, esc = 0, start, False, False
+    while i < len(text):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        else:
+            if c == '"':
+                in_str = True
+            elif c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:i + 1]
+        i += 1
+    raise ValueError("花括号不配对（docTemplate 截断？）")
+
+
+def parse_docs_go(text):
+    """docs.go 源码 → {"paths": {...}, "definitions": {...}}。
+
+    docTemplate 是 swag 的 Go 模板（schemes/host/basePath/info 含 `{{...}}` 占位），
+    只有 paths 与 definitions 是纯 JSON ⇒ 对这两个子对象做字符串感知切片后 json.loads。
+    不渲染模板：渲染 = 复刻 swag 的模板引擎，迟早与 swag 版本漂移。
+    """
+    text = text.replace(_DOC_BACKTICK_ESCAPE, "`")
+    m = re.search(r"const docTemplate = `", text)
+    if not m:
+        raise ValueError("无 docTemplate（不是 swag 生成物？）")
+    pm = re.compile(r'"paths"\s*:\s*\{').search(text, m.end())
+    if not pm:
+        raise ValueError("docTemplate 无 paths")
+    paths = json.loads(_extract_braced(text, pm.end() - 1))
+    dm = re.compile(r'\n\s{4}"definitions"\s*:\s*\{').search(text, pm.end())
+    definitions = json.loads(_extract_braced(text, dm.end() - 1)) if dm else {}
+    return {"paths": paths, "definitions": definitions}
+
+
+def load_swagger(svc_name, shared_dir=None):
+    """读服务入库的 internal/docs/docs.go → {"paths","definitions"}；缺失返回 None。"""
+    root = shared_dir or WORKSPACE_SHARED_DIR
+    docs_go = os.path.join(root, service_dir_name(svc_name), DOCS_GO_REL)
+    if not os.path.isfile(docs_go) or os.path.getsize(docs_go) == 0:
+        return None
+    with open(docs_go, "r", encoding="utf-8", errors="replace") as f:
+        return parse_docs_go(f.read())
 
 
 def collect_endpoints(swagger):
@@ -902,7 +956,7 @@ def generate_index_file(prefix, svc_name, definitions, endpoints):
     now = datetime.now().strftime("%Y-%m-%d")
     lines = []
     lines.append("/**")
-    lines.append(f" * @autional/api-{prefix} \u2014 Auto-generated from {svc_name} swagger.json")
+    lines.append(f" * @autional/api-{prefix} \u2014 Auto-generated from {svc_name} internal/docs/docs.go")
     lines.append(f" * Generated: {now}")
     lines.append(f" * DO NOT EDIT \u2014 run `python sdk/scripts/generate-api-packages.py` to regenerate")
     lines.append(" */")
@@ -960,13 +1014,18 @@ def ensure_package_scaffold(prefix, func_infos):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Generate SDK API packages from swagger.json")
+    parser = argparse.ArgumentParser(description="Generate SDK API packages from service docs.go")
     parser.add_argument("--service", type=str, default="", help="Only process a specific service")
     parser.add_argument(
         "--check", action="store_true",
-        help="只校验已提交产物是否与 swagger 一致（不写包文件）；有漂移 ⇒ 退出码 1",
+        help="只校验已提交产物是否与服务文档一致（不写包文件）；有漂移 ⇒ 退出码 1",
+    )
+    parser.add_argument(
+        "--shared", type=str, default="",
+        help="shared/ 目录（默认 = 工作区根下的 shared/）；用干净导出的树校验已提交包时可指定",
     )
     args = parser.parse_args()
+    shared_dir = args.shared or WORKSPACE_SHARED_DIR
 
     filter_services = SERVICES
     if args.service:
@@ -992,9 +1051,9 @@ def main():
             print(f"[SKIP] {name} — already exists (manual maintenance)")
             continue
 
-        swagger = load_swagger(name)
+        swagger = load_swagger(name, shared_dir)
         if not swagger:
-            print(f"[SKIP] {name} — no swagger.json")
+            print(f"[SKIP] {name} — no internal/docs/docs.go")
             continue
 
         definitions = swagger.get("definitions", {})

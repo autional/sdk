@@ -1,5 +1,5 @@
 /**
- * @autional/api-secret — Auto-generated from secret-service swagger.json
+ * @autional/api-secret — Auto-generated from secret-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

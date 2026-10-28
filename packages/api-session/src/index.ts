@@ -1,5 +1,5 @@
 /**
- * @autional/api-session — Auto-generated from session-service swagger.json
+ * @autional/api-session — Auto-generated from session-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

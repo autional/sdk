@@ -1,5 +1,5 @@
 /**
- * @autional/api-billing — Auto-generated from billing-service swagger.json
+ * @autional/api-billing — Auto-generated from billing-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

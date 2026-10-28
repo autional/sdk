@@ -1,5 +1,5 @@
 /**
- * @autional/api-identity — Auto-generated from identity-service swagger.json
+ * @autional/api-identity — Auto-generated from identity-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

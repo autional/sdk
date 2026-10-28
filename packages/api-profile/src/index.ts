@@ -1,5 +1,5 @@
 /**
- * @autional/api-profile — Auto-generated from profile-service swagger.json
+ * @autional/api-profile — Auto-generated from profile-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

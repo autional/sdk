@@ -1,5 +1,5 @@
 /**
- * @autional/api-pay — Auto-generated from pay-service swagger.json
+ * @autional/api-pay — Auto-generated from pay-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */

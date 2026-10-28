@@ -1,5 +1,5 @@
 /**
- * @autional/api-oauth — Auto-generated from oauth-service swagger.json
+ * @autional/api-oauth — Auto-generated from oauth-service internal/docs/docs.go
  * Generated: 2026-10-28
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
@@ -233,9 +233,12 @@ export interface ConsentCheckResult {
 
 export interface ConsentResponse {
   clientId?: string;
+  clientName?: string;
   grantedAt?: string;
   id?: string;
+  logoUri?: string;
   scopes?: string;
+  website?: string;
 }
 
 export interface CreateClientRequest {

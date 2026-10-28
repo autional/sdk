@@ -1,6 +1,6 @@
 {
   "name": "@autional/api-point",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Autional Point API — auto-generated TypeScript client from point-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

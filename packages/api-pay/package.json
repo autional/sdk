@@ -1,6 +1,6 @@
 {
   "name": "@autional/api-pay",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Autional Pay API — auto-generated TypeScript client from pay-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

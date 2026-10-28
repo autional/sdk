@@ -1,6 +1,6 @@
 {
   "name": "@autional/api-storage",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Autional Storage API — auto-generated TypeScript client from storage-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

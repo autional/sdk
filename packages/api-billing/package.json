@@ -1,6 +1,6 @@
 {
   "name": "@autional/api-billing",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Autional Billing API — auto-generated TypeScript client from billing-service",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -24,10 +24,10 @@
     "src"
   ],
   "peerDependencies": {
-    "@autional/core": ">=0.1.0"
+    "@autional/core": ">=0.3.6"
   },
   "devDependencies": {
-    "@autional/core": ">=0.1.0",
+    "@autional/core": ">=0.3.6",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

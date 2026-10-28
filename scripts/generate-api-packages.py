@@ -69,6 +69,18 @@ SKIP_PATHS = {
     "/.well-known/jwks.json",
 }
 
+# ApiClient 方法 → 引入该方法的 @autional/core 最低版本。
+# 生成代码直接调用这些方法，package.json 的 peer 下限必须覆盖实际用到的最高者：
+# 声明 ">=0.1.0" 会让消费者装上缺 patch 的 0.3.5，运行期 TypeError。
+# 新增方法时必须在此登记（core_floor 对未登记方法报错，防止悄悄放宽下限）。
+CLIENT_METHOD_MIN_CORE = {
+    "GET": "0.1.0",
+    "POST": "0.1.0",
+    "PUT": "0.1.0",
+    "DELETE": "0.1.0",
+    "PATCH": "0.3.6",
+}
+
 TYPE_MAP = {
     "string": "string",
     "integer": "number",
@@ -674,7 +686,20 @@ def generate_description(prefix, svc_name):
     return f"Autional {cap} API — auto-generated TypeScript client from {svc_name}"
 
 
-def generate_package_json(prefix, svc_name):
+def core_floor(methods):
+    """按本包实际调用的 ApiClient 方法求 @autional/core 最低兼容版本。"""
+    unknown = sorted({m.upper() for m in methods} - set(CLIENT_METHOD_MIN_CORE))
+    if unknown:
+        raise ValueError(
+            f"未登记的 ApiClient 方法 {unknown}：请在 CLIENT_METHOD_MIN_CORE 补上引入版本"
+        )
+    versions = [CLIENT_METHOD_MIN_CORE[m.upper()] for m in methods]
+    if not versions:
+        versions = ["0.1.0"]
+    return max(versions, key=lambda v: tuple(int(p) for p in v.split(".")))
+
+
+def generate_package_json(prefix, svc_name, floor):
     return json.dumps({
         "name": f"@autional/api-{prefix}",
         "version": "0.1.0",
@@ -700,10 +725,10 @@ def generate_package_json(prefix, svc_name):
             "src"
         ],
         "peerDependencies": {
-            "@autional/core": ">=0.1.0"
+            "@autional/core": f">={floor}"
         },
         "devDependencies": {
-            "@autional/core": ">=0.1.0",
+            "@autional/core": f">={floor}",
             "rimraf": "^5.0.0",
             "tsup": "^8.4.0",
             "typescript": "^5.8.0"
@@ -834,27 +859,34 @@ def generate_index_file(prefix, svc_name, definitions, endpoints):
     return "\n".join(lines) + "\n", func_infos
 
 
-def ensure_package_scaffold(prefix):
+def ensure_package_scaffold(prefix, func_infos):
     pkg_dir = os.path.join(SDK_PACKAGES_DIR, f"api-{prefix}")
     os.makedirs(os.path.join(pkg_dir, "src"), exist_ok=True)
 
     svc_name = next((s["name"] for s in SERVICES if s["prefix"] == prefix), f"{prefix}-service")
+    floor = core_floor({fi["method"] for fi in func_infos})
     pkg_json_path = os.path.join(pkg_dir, "package.json")
     if not os.path.isfile(pkg_json_path):
         with open(pkg_json_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(generate_package_json(prefix, svc_name))
+            f.write(generate_package_json(prefix, svc_name, floor))
         print(f"  Created {pkg_json_path}")
     else:
-        # 描述由生成器单源维护：历史上 15 个包被写成「Identity Service API」
-        # （模板写死），已创建的包不会再写 package.json，于是错误描述长期留存。
+        # 描述与 peer 下限由生成器单源维护：历史上 15 个包被写成
+        # 「Identity Service API」（模板写死），且核心版本下限长期冻结在
+        # ">=0.1.0"（缺 patch 的旧核心能装进来，运行期 TypeError）。
         want = f'"description": {json.dumps(generate_description(prefix, svc_name), ensure_ascii=False)}'
         with open(pkg_json_path, "r", encoding="utf-8", newline="") as f:
             text = f.read()
         fixed = re.sub(r'"description":\s*"(?:[^"\\]|\\.)*"', want, text, count=1)
+        fixed = re.sub(
+            r'("@autional/core":\s*")[^"]*(")',
+            lambda m: f"{m.group(1)}>={floor}{m.group(2)}",
+            fixed,
+        )
         if fixed != text:
             with open(pkg_json_path, "w", encoding="utf-8", newline="") as f:
                 f.write(fixed)
-            print(f"  Updated description in {pkg_json_path}")
+            print(f"  Updated description/peer floor in {pkg_json_path}")
 
     tsconfig_path = os.path.join(pkg_dir, "tsconfig.json")
     if not os.path.isfile(tsconfig_path):
@@ -902,9 +934,8 @@ def main():
             print(f"[SKIP] {name} \u2014 no public endpoints")
             continue
 
-        ensure_package_scaffold(prefix)
-
         content, func_infos = generate_index_file(prefix, name, definitions, endpoints)
+        ensure_package_scaffold(prefix, func_infos)
         pkg_dir = os.path.join(SDK_PACKAGES_DIR, f"api-{prefix}")
         out_path = os.path.join(pkg_dir, "src", "index.ts")
         os.makedirs(os.path.dirname(out_path), exist_ok=True)

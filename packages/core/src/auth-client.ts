@@ -900,7 +900,11 @@ export class AuthClient {
       admin_password: config.adminPassword,
       agreement_accepted: config.agreementAccepted !== false,
     };
-    const response = await this.http.request(`${this.baseUrl}/tenant/api/v1/public/tenants`, {
+    // 公开注册路由带服务段，必须与网关的精确公开条目逐段一致：
+    // 本段拼接后 = /bff/tenant/api/v1/tenant/public/tenants（public 受众）。
+    // 少一层 tenant 的形态是网关已删除的死条目，会落进宽前缀 /bff/tenant/api/v1（user 受众），
+    // 被 JWT 守卫前置拦成 401/40000502，请求到不了 tenant-service。
+    const response = await this.http.request(`${this.baseUrl}/tenant/api/v1/tenant/public/tenants`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

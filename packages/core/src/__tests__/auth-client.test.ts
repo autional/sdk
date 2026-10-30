@@ -937,4 +937,77 @@ describe('AuthClient', () => {
       })).rejects.toBeInstanceOf(AutionalAuthError);
     });
   });
+
+  describe('createTrialTenant', () => {
+    // 回归：0.3.0–0.3.7 的发布包把公开注册打到 `/tenant/api/v1/public/tenants`（缺一层 tenant 段）。
+    // 该路径不是网关的公开路由，会落进 `/bff/tenant/api/v1`（audience: user）宽前缀，
+    // 被 JWT 守卫前置拦成 401 / 40000502（`service:"middleware"`），请求到不了 tenant-service。
+    // 线上复现见 lite/sdk-trial-tenant-path-20261030/rca.md。
+    const TRIAL_TENANT_PATH = '/tenant/api/v1/tenant/public/tenants';
+    const TRIAL_TENANT_KEY = `POST ${BASE_URL}${TRIAL_TENANT_PATH}`;
+
+    it('posts to the public trial-tenant route (keeps the service-level /tenant segment)', async () => {
+      setupClient({
+        [TRIAL_TENANT_KEY]: {
+          data: { id: '01J8ZQ8Q5F0K6S7V9W2X3Y4Z5B', name: 'acme', status: 'active' },
+        },
+      });
+
+      const result = await client.createTrialTenant({
+        name: 'acme',
+        adminEmail: 'admin@acme.test',
+        adminPassword: 'S3cure-pass',
+      });
+
+      const lastReq = mockHttp.getLastRequest()!;
+      expect(lastReq.method).toBe('POST');
+      // mock 只登记了正确 URL 的响应：源码路径一漂移就 miss → 404，用例必红（修前红实证见 test.log）。
+      expect(lastReq.url).toBe(`${BASE_URL}${TRIAL_TENANT_PATH}`);
+
+      const body = parseBody(lastReq.body);
+      expect(body).toEqual({
+        name: 'acme',
+        admin_email: 'admin@acme.test',
+        admin_password: 'S3cure-pass',
+        agreement_accepted: true,
+      });
+
+      expect(result).toEqual({
+        tenantId: '01J8ZQ8Q5F0K6S7V9W2X3Y4Z5B',
+        name: 'acme',
+        slug: 'acme',
+        status: 'active',
+      });
+    });
+
+    it('honours agreementAccepted: false instead of always sending true', async () => {
+      setupClient({
+        [TRIAL_TENANT_KEY]: { data: { id: 't-1', name: 'acme', status: 'active' } },
+      });
+
+      await client.createTrialTenant({
+        name: 'acme',
+        adminEmail: 'admin@acme.test',
+        adminPassword: 'S3cure-pass',
+        agreementAccepted: false,
+      });
+
+      const body = parseBody(mockHttp.getLastRequest()!.body);
+      expect(body.agreement_accepted).toBe(false);
+    });
+
+    it('surfaces the gateway 401 (40000502) as AutionalAuthError', async () => {
+      setupClient({
+        [TRIAL_TENANT_KEY]: { code: 40000502, message: 'unauthorized', __status: 401 },
+      });
+
+      await expect(
+        client.createTrialTenant({ name: 'acme', adminEmail: 'a@b.c', adminPassword: 'S3cure-pass' }),
+      ).rejects.toMatchObject({
+        name: 'AutionalAuthError',
+        code: '40000502',
+        status: 401,
+      });
+    });
+  });
 });

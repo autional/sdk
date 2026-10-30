@@ -491,6 +491,18 @@ Ask the user:
 
 For [A]/[B]: if the installed SDK client exposes `createTrialTenant(...)` / an invitation-based registration call, drive it programmatically (it creates the tenant and the admin user). If the installed version does not expose it, open the developer portal ({{PORTAL_DEVELOPER}}) and walk the user through the same flow in the browser. Do not invent API calls that are not exposed by the installed SDK or documented by the portal.
 
+### 3.1a Post-registration self-check (mandatory)
+
+Right after trial registration returns, log in once as the admin you just registered:
+
+```
+createTrialTenant(...) → 201 { tenantId, slug, status }
+→ login({ email: adminEmail, password: adminPassword, tenantId })
+```
+
+- **Login succeeds** → continue to 3.2. Read `appId` from the public auth-config (`GET /identity/api/v1/public/auth-config/{tenantId}` → `data.oauth_client_id`) — do not ask the user for it.
+- **Login fails 401 `invalid credentials`** → the tenant exists but its admin was NOT provisioned (known server-side defect in the trial chain: tenant creation and admin provisioning are not committed atomically). Do **not** re-submit the registration (it burns the per-IP trial quota and returns 409). Tell the user, give them the tenantId/slug, and use a fallback path: invitation-code tenant, or the developer portal. Report `request_id` and the tenantId.
+
 ### 3.2 Credential handling
 
 ```
@@ -520,6 +532,18 @@ Record the test accounts in `AUTIONAL_SETUP.md` (passwords shown once).
 ```
 
 [A]/[B]：若安装的 SDK 客户端提供 `createTrialTenant(...)` / 带邀请码的注册调用，直接编程驱动（它会同时创建租户与管理员）。若当前版本未提供，打开开发者门户（{{PORTAL_DEVELOPER}}）带用户在浏览器里走同一流程。不要臆造 SDK 未暴露、门户未记载的 API。
+
+### 3.1a 注册后自检（强制）
+
+试用注册一返回，立刻用刚设的管理员账号登录一次：
+
+```
+createTrialTenant(...) → 201 { tenantId, slug, status }
+→ login({ email: adminEmail, password: adminPassword, tenantId })
+```
+
+- **登录成功** → 继续 3.2。`appId` 从公开 auth-config 取（`GET /identity/api/v1/public/auth-config/{tenantId}` → `data.oauth_client_id`），不要向用户索要。
+- **登录 401 `invalid credentials`** → 租户在、管理员没建成（试用链已知服务端缺陷：建租户与建管理员不在同一事务边界，失败不阻断）。**不要重复提交注册**（会占同 IP 的试用配额，且返回 409）。告知用户并给出 tenantId/slug，改走兜底：邀请码租户，或开发者门户。上报时附 `request_id` 与 tenantId。
 
 ### 3.2 凭证处理
 
@@ -555,6 +579,8 @@ npm install {{NPM_SCOPE}}/core {{NPM_SCOPE}}/react {{NPM_SCOPE}}/next {{NPM_SCOP
 # Node backend
 npm install {{NPM_SCOPE}}/core {{NPM_SCOPE}}/node {{NPM_SCOPE}}/api-identity
 ```
+
+> `{{NPM_SCOPE}}/core` must be **>= 0.3.8**. Versions 0.3.0–0.3.7 shipped a wrong `createTrialTenant()` path (public trial registration answered 401/`40000502` from the gateway) and are deprecated on npm. Verify with `npm ls {{NPM_SCOPE}}/core`; upgrade with `npm install {{NPM_SCOPE}}/core@^0.3.8`.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 4 · 依赖安装
@@ -574,6 +600,8 @@ npm install {{NPM_SCOPE}}/core {{NPM_SCOPE}}/react {{NPM_SCOPE}}/next {{NPM_SCOP
 # Node 后端
 npm install {{NPM_SCOPE}}/core {{NPM_SCOPE}}/node {{NPM_SCOPE}}/api-identity
 ```
+
+> `{{NPM_SCOPE}}/core` 必须 **>= 0.3.8**。0.3.0–0.3.7 的 `createTrialTenant()` 路径写错（公开试用注册会被网关挡成 401/`40000502`），已在 npm 标记弃用。用 `npm ls {{NPM_SCOPE}}/core` 核对；升级：`npm install {{NPM_SCOPE}}/core@^0.3.8`。
 <!-- /lang:zh -->
 
 <!-- region:cn -->
@@ -1051,12 +1079,22 @@ Failure map:
 
 ```
 network timeout → "Cannot reach Autional. Check network or status page ({{PORTAL_STATUS}})." → wait → retry
-401/403         → "Credentials invalid — check appId and issuer." → ask the user to confirm config
+401/403         → read the response body's `service` and `code` FIRST (see 7.1); never blanket-label as credentials
 404             → "Endpoint missing — check the apiUrl/issuer values." → verify against the discovery document
 500             → "Autional service error." → wait 30 s → retry
 other           → show details → retry
 ```
-Only network unreachability and invalid credentials stop the automatic retry loop — both must surface to the user.
+
+### 7.1 Reading a 401/403 (split by `service` + `code`, not by HTTP status)
+
+| status | body signals | meaning | what to do |
+|---|---|---|---|
+| 401 | `service:"middleware"` (gateway) | Routing / audience / auth-header problem: wrong path, a path that fell through to a broader prefix, missing token, wrong entry plane. **Not a credential error.** | Stop retrying. Report `status` + `code` + `service` + `request_id` + the exact URL. A 401 on a **public** endpoint (`/public/…`, trial registration) can never be a credential problem — public surfaces carry no credentials. |
+| 401 | `service:"identity-service"` + `invalid credentials` | Real credential mismatch | Ask the user to confirm the account / appId / issuer |
+| 403 | `code:40000503` · "not accessible from this entry plane" | Wrong entry plane (e.g. an admin endpoint called with a user-plane token) | Switch to the correct portal/plane. Do not retry. |
+| 403 | any other | Insufficient permission | Surface to the user |
+
+Only network unreachability and **identity-side** credential errors stop the automatic retry loop. A gateway 401 also stops it, but it must be reported as a **platform/routing defect** (with `request_id`), never as "your password or appId is wrong".
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 7 · 集成测试
@@ -1078,12 +1116,22 @@ Only network unreachability and invalid credentials stop the automatic retry loo
 
 ```
 网络超时 → 「无法连接 Autional。检查网络或状态页（{{PORTAL_STATUS}}）。」→ 等待 → 重试
-401/403  → 「凭证无效——检查 appId 与 issuer。」→ 请用户确认配置
+401/403  → 先读响应体的 `service` 与 `code`（见 7.1）；不得一律当成凭证错误
 404      → 「端点不存在——检查 apiUrl/issuer 配置。」→ 对照 discovery 文档校验
 500      → 「Autional 服务异常。」→ 等待 30s → 重试
 其它     → 显示错误详情 → 重试
 ```
-仅网络不可达与凭证错误停止自动重试——两者都必须上报用户。
+
+### 7.1 怎么读 401/403（按 `service` + `code` 分流，不按 HTTP 状态）
+
+| 状态 | 响应体信号 | 含义 | 处置 |
+|---|---|---|---|
+| 401 | `service:"middleware"`（网关） | 路由 / 受众 / 认证头问题：路径写错、路径落到更宽的兜底前缀、缺 token、平面不符。**不是凭证错误。** | 停止重试。上报 `status`+`code`+`service`+`request_id`+ 完整 URL。**公开端点**（`/public/…`、试用注册）出现 401 一定不是凭证问题——公开面不带凭证。 |
+| 401 | `service:"identity-service"` + `invalid credentials` | 真的凭证不匹配 | 请用户确认账号 / appId / issuer |
+| 403 | `code:40000503` · "not accessible from this entry plane" | 平面不符（例如用 user 平面 token 调 admin 端点） | 换到对应门户 / 平面，不要重试 |
+| 403 | 其它 | 权限不足 | 报给用户 |
+
+仅「网络不可达」与「identity 侧凭证错误」停止自动重试。网关 401 也停，但必须按**平台 / 路由缺陷**上报（附 `request_id`），绝不能说成「你的密码或 appId 错了」。
 <!-- /lang:zh -->
 
 <!-- lang:en -->

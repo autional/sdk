@@ -1,5 +1,11 @@
 # @autional/miniapp
 
+## 0.4.1
+
+- 修复发布事故：`0.4.0` 的元数据已写入 registry 但 **tarball 未上传**（安装 404）。
+  0.4.0 内容不变（移除 `loginWithWechat` / `getPhoneNumber` 等死链路），本版仅重发，
+  `0.4.0` 已 `npm deprecate`。请使用 **0.4.1**。
+
 ## 0.4.0
 
 ### Minor Changes（0.x breaking）

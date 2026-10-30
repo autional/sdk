@@ -1,16 +1,16 @@
 # @autional/miniapp
 
-Autional WeChat Mini Program SDK — platform adapter, WeChat login, and token management.
+Autional WeChat Mini Program SDK — platform adapter + client bootstrap.
 
 ## Platform Specifics
 
-Uses **`wx.login`** for WeChat OAuth authentication and **`wx.setStorageSync/wx.getStorageSync`** for token persistence. Includes `miniappPlatform` — a pre-configured `AutionalPlatform` using `wx.request` as the HTTP adapter and synchronous storage APIs.
+Includes `miniappPlatform` — a pre-configured `AutionalPlatform` using `wx.request` as the HTTP adapter and `wx.setStorageSync/wx.getStorageSync` for token persistence.
 
 No BroadcastChannel or Web Crypto — key exchange and SHA-256 use pure-JS fallbacks.
 
 ## What's Inside
 
-- **`createAutional(config)`** — creates an `Autional` instance with `.loginWithWechat()` and `.getPhoneNumber()` extensions
+- **`createAutional(config)`** — creates and bootstraps an `Autional` instance (also mounted on `app.globalData.autional`)
 - **`miniappPlatform`** — ready-made platform binding for WeChat Mini Programs
 - **`useAutional()`** — hook-style function (non-reactive, for component data)
 
@@ -27,21 +27,20 @@ import { createAutional } from '@autional/miniapp';
 
 const autional = createAutional({
   appId: 'wx1234567890',
-  authUrl: 'https://auth.example.com',
+  authUrl: 'https://api.autional.cn/bff',
 });
 
-// In a page's onLoad or a button handler:
-const result = await autional.loginWithWechat();
+// Standard Autional flows (password / OTP / social OAuth)
+const result = await autional.login({ email: 'user@example.com', password: '...' });
 console.log('Logged in:', result.user);
-
-// Get phone number from <button open-type="getPhoneNumber">
-// <button open-type="getPhoneNumber" bindgetphonenumber="onGetPhone">
-Page({
-  async onGetPhone(e: WechatPhoneEvent) {
-    const phone = await autional.getPhoneNumber(e);
-    console.log('Phone:', phone);
-  },
-});
 ```
+
+## WeChat-specific flows (removed in 0.4.0)
+
+`loginWithWechat()` and `getPhoneNumber()` were removed in **0.4.0**: they called identity
+endpoints that the server never implemented, so every call failed (gateway fallback 404/401).
+Until the server ships WeChat endpoints, use Autional's standard login flows; if you need the
+WeChat-native flow, keep using an older version *only* if you have a backend endpoint to point at,
+or open an issue so the endpoints get prioritised.
 
 See the [root SDK README](../../README.md) for full documentation.

@@ -392,11 +392,6 @@ export class Autional {
     return this.authClient.createTrialTenant(config);
   }
 
-  /** 试用升级为正式版（需该租户管理员 JWT） */
-  async upgradeTrial(tenantId: string, plan: string = 'basic'): Promise<void> {
-    return this.authClient.upgradeTrial(tenantId, plan);
-  }
-
   async getProfile(): Promise<Record<string, unknown> | null> {
     return this.authClient.getProfile();
   }

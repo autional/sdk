@@ -923,23 +923,6 @@ export class AuthClient {
     return { tenantId: data.id as string, name, slug: name, status: data.status as string };
   }
 
-  /** 试用升级为正式版 */
-  async upgradeTrial(tenantId: string, plan: string = 'basic'): Promise<void> {
-    const response = await this.http.request(`${this.baseUrl}/tenant/api/v1/admin/tenants/${tenantId}/upgrade`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
-    });
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new AutionalAuthError(
-        String(errJson.code ?? response.status),
-        (errJson.message as string) || 'Upgrade failed',
-        response.status,
-      );
-    }
-  }
-
   private async buildLoginBody(credentials: LoginRequest, authConfig: TenantAuthConfig): Promise<Record<string, unknown>> {
     const processed = await processPasswordForTransmission(
       credentials.password,

@@ -1,5 +1,5 @@
 import type { UseAutionalReturn } from './types';
-import type { AutionalWithWechat } from './createAutional';
+import type { Autional } from '@autional/core';
 
 const noopAutional: UseAutionalReturn = {
   user: null,
@@ -8,13 +8,12 @@ const noopAutional: UseAutionalReturn = {
   login: () => Promise.reject(new Error('createAutional must be called before useAutional')),
   logout: () => Promise.resolve(),
   getAccessToken: () => Promise.resolve(null),
-  loginWithWechat: () => Promise.reject(new Error('createAutional must be called before useAutional')),
 };
 
-function getAutional(): AutionalWithWechat | undefined {
+function getAutional(): Autional | undefined {
   try {
     const app = getApp({ allowDefault: true });
-    return app?.globalData?.autional as AutionalWithWechat | undefined;
+    return app?.globalData?.autional as Autional | undefined;
   } catch {
     return undefined;
   }
@@ -48,10 +47,6 @@ export function useAutional(): UseAutionalReturn {
 
     getAccessToken() {
       return autional.getAccessToken();
-    },
-
-    loginWithWechat() {
-      return autional.loginWithWechat();
     },
   };
 }

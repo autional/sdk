@@ -501,7 +501,8 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 ```
 
 - **Login succeeds** → continue to 3.2. Read `appId` from the public auth-config (`GET /identity/api/v1/public/auth-config/{tenantId}` → `data.oauth_client_id`) — do not ask the user for it.
-- **Login fails 401 `invalid credentials`** → the tenant exists but its admin was NOT provisioned (known server-side defect in the trial chain: tenant creation and admin provisioning are not committed atomically). Do **not** re-submit the registration (it burns the per-IP trial quota and returns 409). Tell the user, give them the tenantId/slug, and use a fallback path: invitation-code tenant, or the developer portal. Report `request_id` and the tenantId.
+- **Registration returns 5xx `trial provisioning failed`** → the tenant was **compensated (soft-deleted)** because admin/RBAC provisioning failed; nothing is half-created. Retry once with the same name; if it fails again, stop and report `request_id` + the failing step.
+- **Login fails 401 `invalid credentials`** (older servers, or a manual portal flow) → the tenant exists but its admin was NOT provisioned. Do **not** re-submit the registration (it burns the per-IP trial quota and returns 409). Tell the user, give them the tenantId/slug, and use a fallback path: invitation-code tenant, or the developer portal. Report `request_id` and the tenantId.
 
 ### 3.2 Credential handling
 
@@ -543,7 +544,8 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 ```
 
 - **登录成功** → 继续 3.2。`appId` 从公开 auth-config 取（`GET /identity/api/v1/public/auth-config/{tenantId}` → `data.oauth_client_id`），不要向用户索要。
-- **登录 401 `invalid credentials`** → 租户在、管理员没建成（试用链已知服务端缺陷：建租户与建管理员不在同一事务边界，失败不阻断）。**不要重复提交注册**（会占同 IP 的试用配额，且返回 409）。告知用户并给出 tenantId/slug，改走兜底：邀请码租户，或开发者门户。上报时附 `request_id` 与 tenantId。
+- **注册返回 5xx `trial provisioning failed`** → 管理员/RBAC 开通失败，租户已**补偿软删**（没有半成品）。可用同名重试一次；仍失败则停止，上报 `request_id` + 失败步骤。
+- **登录 401 `invalid credentials`**（旧服务端或门户手工流程）→ 租户在、管理员没建成。**不要重复提交注册**（会占同 IP 的试用配额，且返回 409）。告知用户并给出 tenantId/slug，改走兜底：邀请码租户，或开发者门户。上报时附 `request_id` 与 tenantId。
 
 ### 3.2 凭证处理
 

@@ -1,5 +1,18 @@
 # @autional/core
 
+## 0.4.0
+
+### Minor Changes（0.x breaking）
+
+- 移除 `upgradeTrial(tenantId, plan)`（`Autional` 与 `AuthClient` 双层）。
+  目标路由 `POST /tenant/api/v1/admin/tenants/{id}/upgrade` 在网关是最长前缀
+  `/bff/tenant/api/v1/admin/tenants`（`audiences: [admin, platform]` + `required_roles`），
+  且该方法从不携带 `Authorization`。SDK 永远拿不到 admin 平面凭据 —— 任何调用形态都不可能成功。
+  试用升级请走管理门户（`{PORTAL_ADMIN}/{slug}/…`）或计费/管理面 API。
+- 发布说明：本版为**受控发布**（只发本包与 `@autional/miniapp`）。若走标准
+  `changeset version`，0.x minor 会被判定为对依赖方 breaking，触发 30 个包连锁升
+  `1.0.0`；与本次变更面不符，故手工定版并保留 changeset 文案于本 CHANGELOG。
+
 ## 0.3.8
 
 ### Patch Changes

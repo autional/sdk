@@ -43,7 +43,7 @@ export const autionalConfig = {
 ```
 > **issuer 解释**：Autional 服务器的地址，**不是你网站的域名**。SDK 会去 `{issuer}/.well-known/openid-configuration` 发现认证端点。中国大陆用 `https://api.autional.cn`（国际用 `https://api.autional.com`），直接填对应 region 的地址即可。
 >
-> ⚠️ **现状（2026-10-30）**：`.com` 的 discovery 仍把 `token_endpoint` 等指向 `.cn`，且 `authorization_endpoint` 指向浏览器不可用的 api 面 —— 按 discovery 接入的 `.com` 客户端会 `login_required` / `iss` 校验失败。修复方案见 `docs/positioning/26-endpoint-domain-matrix.md`；在修复上线前，**国际接入请显式配置 `.cn` 端点或在 BFF 内换票**。
+> ✅ **已修复（2026-10-30 上线）**：`.com` 的 discovery 现按本域广播 —— `authorization_endpoint` 在 `auth.autional.com`（门户同意页）、`token`/`userinfo`/`jwks` 在 `api.autional.com`，`id_token.iss` 为 `https://api.autional.com`；`.cn` 同构且行为不变。按 discovery 接入即可直接用对应区域的 issuer。设计/运维口径见 `docs/positioning/26-endpoint-domain-matrix.md`。
 
 **完成。** 你的项目里所有文件都从 `./autional` 导入，不用管是什么框架：
 

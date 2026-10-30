@@ -14,6 +14,22 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-30] core@3058b3e8e110 —— 试用注册 401/5xx 语义 + SDK 版本下限（sdk `386921c`）
+
+**内容**（`_core/PROCEDURE.md`，EN/ZH 对称）：
+- 新增 **§7.1「怎么读 401/403」**：按响应体 `service` + `code` 分流——`service:"middleware"`（网关）= 路由/受众/认证头问题，**公开端点出现 401 必非凭证问题**；`service:"identity-service"` + invalid credentials = 真凭证错；403 `40000503` = 平面不符。
+- Phase 3 新增 **3.1a 注册后自检（强制）**：建租户后立刻登录管理员；`5xx trial provisioning failed` = 服务端已补偿软删、可同名重试一次；`401 invalid credentials` = 管理员未建成，**禁止重复注册**（占配额且 409），改走邀请码/开发者门户并上报 `request_id`。
+- Phase 4 增加 **`@autional/core >= 0.3.8` 硬下限**（0.3.0–0.3.7 的 `createTrialTenant` 路径错误，已在 npm 弃用）。
+
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | 站点 commit | CDN commit |
+|---|---|---|---|---|
+| com | `v0.1.0-eb42e5a1` | `3e980772c1ff8eb783a18160af299f603db0553e1cfe01fef3c30be8d9e7c193` | web `9b6bfce` | cdn `fa26bd6` |
+| cn | `v0.1.0-94acaff0` | `55cce02f06ef3972aa9670eccd18dad333b20961ff6fae6e28cfb9aea7a1c748` | 同上 | 同上 |
+
+**复验**：站点 `/ai/skill.md` 与 CDN `/ai/latest/SKILL.md` 两区四路 sha256 == sdk blob（落盘法）；站点 `.sha256` 与线上文件一致。
+
 ## [2026-10-16] core@ab58de0146e5 —— 门户供给边界情况并入（租户门户登录 not-configured 核验；实验 3 门户供给修复波）
 
 **内容**（sdk `8d57a96`；`_core` PROCEDURE 2 处；EN/ZH 对称）：

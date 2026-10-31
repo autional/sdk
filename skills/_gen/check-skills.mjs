@@ -20,6 +20,7 @@
  *   G3 core freshness the shared hash equals the CURRENT skills/_core hash.
  *   G4 brand clean    no /authms/i, /tianv/i, /linmes/i or /auth\.iam/i anywhere.
  *   G5 canonical      each product's `canonical` is the unique, region-correct skill URL;
+ *   G6 invariants     critical OAuth onboarding constraints are still present (keyword assertions).
  *                     any committed `<artifact>.sha256` matches the artifact bytes.
  *
  * Reuse: G3 delegates to `build-skills.mjs --check`, which is the single source of
@@ -294,6 +295,53 @@ const GATES = [
       return issues;
     },
   },
+  {
+    id: 'G6',
+    name: 'critical invariants (OAuth onboarding)',
+    // 这些是「删掉就会复发 2026-10-30 事故」的硬约束，不是普通文案。
+    // 只断言关键词存在，不校验上下文措辞——防止后续改版把整段删掉却无人发现。
+    run() {
+      const issues = [];
+      const RULES = [
+        {
+          id: 'portal-client-name',
+          re: /portal_oauth_client_id/,
+          why: 'auth-config 的门户客户端字段名必须出现（旧名 oauth_client_id 只能作兼容括注）',
+        },
+        {
+          id: 'one-client-per-app',
+          re: /one client per app|每个应用各注册一个客户端/i,
+          why: '「一应用一客户端」必须明确写出（同租户复用 appId 是事故根因）',
+        },
+        {
+          id: 'redirect-uri-verbatim',
+          re: /redirect_uri not registered/,
+          why: '必须指明回调未登记的错误形态，接入方才能识别',
+        },
+        {
+          id: 'preflight-302',
+          re: /error=login_required/,
+          why: '授权预检判据（302 + error=login_required）必须写死',
+        },
+        {
+          id: 'cors-origins',
+          re: /cors_origins/,
+          why: 'cors_origins 必填项必须出现（漏登记会在换票时被浏览器拦）',
+        },
+      ];
+      for (const p of products) {
+        if (!existsSync(p.path)) {
+          issues.push(`${p.label}: missing (run node skills/_gen/build-skills.mjs)`);
+          continue;
+        }
+        const text = readFileSync(p.path, 'utf8');
+        for (const rule of RULES) {
+          if (!rule.re.test(text)) issues.push(`${p.label}: missing invariant "${rule.id}" — ${rule.why}`);
+        }
+      }
+      return issues;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -321,5 +369,5 @@ for (const gate of GATES) {
   }
 }
 
-console.log(failed === 0 ? '\nAll 5 gates passed.' : `\n${failed} gate(s) FAILED.`);
+console.log(failed === 0 ? `\nAll ${GATES.length} gates passed.` : `\n${failed} gate(s) FAILED.`);
 process.exitCode = failed === 0 ? 0 : 1;

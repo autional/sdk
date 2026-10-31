@@ -12,9 +12,9 @@
       "require": "./dist/index.js"
     },
     "./platform": {
+      "types": "./dist/platform/index.d.ts",
       "import": "./dist/platform/index.mjs",
-      "require": "./dist/platform/index.js",
-      "types": "./dist/platform/index.d.ts"
+      "require": "./dist/platform/index.js"
     }
   },
   "sideEffects": false,

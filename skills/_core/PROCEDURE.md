@@ -500,7 +500,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 → login({ email: adminEmail, password: adminPassword, tenantId })
 ```
 
-- **Login succeeds** → continue to 3.2. Read `appId` from the public auth-config (`GET /identity/api/v1/public/auth-config/{tenantId}` → `data.oauth_client_id`) — do not ask the user for it.
+- **Login succeeds** → continue to 3.2. Note: the auth-config `oauth_client_id` (`GET /identity/api/v1/public/auth-config/{tenantId}`) is the tenant **portal** client (`kind=portal`) — it backs the portal SPA sign-in and is **NOT** your app's `appId`. Your app's `appId` is the `client_id` issued in 5.2b when you register the app.
 - **Registration returns 5xx `trial provisioning failed`** → the tenant was **compensated (soft-deleted)** because admin/RBAC provisioning failed; nothing is half-created. Retry once with the same name; if it fails again, stop and report `request_id` + the failing step.
 - **Login fails 401 `invalid credentials`** (older servers, or a manual portal flow) → the tenant exists but its admin was NOT provisioned. Do **not** re-submit the registration (it burns the per-IP trial quota and returns 409). Tell the user, give them the tenantId/slug, and use a fallback path: invitation-code tenant, or the developer portal. Report `request_id` and the tenantId.
 
@@ -508,7 +508,8 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 
 ```
 - Admin password: shown ONCE. Tell the user to save it in their password manager now. Never write it to code or config files.
-- tenantId / appId / issuer / api URL / tenant slug: public configuration — write to .env (public block) and src/autional.ts. The slug drives tenant-scoped portal links (see 8.2).
+- tenantId / issuer / api URL / tenant slug: public configuration — write to .env (public block) and src/autional.ts. The slug drives tenant-scoped portal links (see 8.2).
+- `appId` = the `client_id` of **your app's own client**, issued in 5.2b. Never the auth-config `oauth_client_id` (that one is the tenant portal client).
 ```
 
 ### 3.3 Test accounts
@@ -543,7 +544,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 → login({ email: adminEmail, password: adminPassword, tenantId })
 ```
 
-- **登录成功** → 继续 3.2。`appId` 从公开 auth-config 取（`GET /identity/api/v1/public/auth-config/{tenantId}` → `data.oauth_client_id`），不要向用户索要。
+- **登录成功** → 继续 3.2。注意：auth-config 的 `oauth_client_id`（`GET /identity/api/v1/public/auth-config/{tenantId}`）是租户**门户**客户端（`kind=portal`），服务门户 SPA 登录，**不是**本应用的 `appId`。应用 `appId` 是 5.2b 注册应用时签发的 `client_id`。
 - **注册返回 5xx `trial provisioning failed`** → 管理员/RBAC 开通失败，租户已**补偿软删**（没有半成品）。可用同名重试一次；仍失败则停止，上报 `request_id` + 失败步骤。
 - **登录 401 `invalid credentials`**（旧服务端或门户手工流程）→ 租户在、管理员没建成。**不要重复提交注册**（会占同 IP 的试用配额，且返回 409）。告知用户并给出 tenantId/slug，改走兜底：邀请码租户，或开发者门户。上报时附 `request_id` 与 tenantId。
 
@@ -551,7 +552,8 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 
 ```
 - 管理员密码：只显示一次。让用户立刻存入密码管理器。绝不写入代码或配置文件。
-- tenantId / appId / issuer / api URL / 租户 slug：公开配置——写入 .env（公开块）与 src/autional.ts。slug 用于拼接带租户的门户链接（见 8.2）。
+- tenantId / issuer / api URL / 租户 slug：公开配置——写入 .env（公开块）与 src/autional.ts。slug 用于拼接带租户的门户链接（见 8.2）。
+- `appId` = **你自己应用客户端**的 `client_id`（5.2b 签发）。绝不用 auth-config 的 `oauth_client_id`（那个是租户门户客户端）。
 ```
 
 ### 3.3 测试账号
@@ -632,7 +634,7 @@ Detect the env-file location and the framework's public env prefix:
 Append to the public env file (never touch other keys):
 
 ```env
-AUTIONAL_APP_ID=<appId>
+AUTIONAL_APP_ID=<appId from 5.2b — do NOT prefill with auth-config's oauth_client_id>
 AUTIONAL_ISSUER={{ISSUER}}
 AUTIONAL_API_URL={{API_URL}}
 ```
@@ -656,7 +658,7 @@ Then generate `src/autional.ts` from the template in `{{REFS_BASE}}/config-templ
 向公开 env 文件追加（不动其它键）：
 
 ```env
-AUTIONAL_APP_ID=<appId>
+AUTIONAL_APP_ID=<5.2b 注册应用后回填；禁止先用 auth-config 的 oauth_client_id 占位>
 AUTIONAL_ISSUER={{ISSUER}}
 AUTIONAL_API_URL={{API_URL}}
 ```
@@ -723,6 +725,8 @@ Label each option with invasiveness / gain / rollback difficulty.
 The app shows one "Continue with Autional" button; the login form and all social providers live on the Autional auth page. Use it when several apps must share one user pool, or when the app should not implement password/social login itself.
 
 1. **Register the app** (admin console {{PORTAL_ADMIN}}/{TENANT_SLUG}/oauth-clients): note the `client_id` (this is the SDK `appId`); set the app's public callback URL as `redirect_uri` (e.g. `https://app.example.com/oauth/callback`); add the app's origin to the client's `cors_origins` (e.g. `https://app.example.com`). **CORS registration is mandatory** — without it the browser blocks the token exchange. Also fill in the app's **website** (public https URL) and optional **short alias / logo**: the end-user portal renders the "Authorized apps" tile from them — **without a website the tile is display-only (not clickable)**.
+   - This `client_id` **IS** the SDK `appId`: write it to `.env` (`AUTIONAL_APP_ID`) and `src/autional.ts`, **overwriting** any value taken earlier.
+   - `redirect_uris` must match the callback **character for character** (the SDK default is `<origin>/oauth/callback` — no trailing slash). A trailing slash turns the entry into a path-prefix rule; a mismatch fails at login with `invalid_request: redirect_uri not registered`.
 2. **Login button**:
    ```ts
    await autional.loginWithOAuth({});   // client_id = appId; PKCE (S256) + state handled by the SDK
@@ -739,6 +743,16 @@ The app shows one "Continue with Autional" button; the login form and all social
    const { user } = await autional.handleOAuthCallback(window.location.href);
    ```
    The SDK verifies `state`, exchanges the code with the stored PKCE verifier (no client_secret — public client), fetches userinfo, and stores the session in SSO mode (token refresh then goes to the OAuth refresh endpoint automatically).
+4. **Preflight the client before wiring the callback** — one request proves the client and the callback are registered:
+   ```bash
+   export APP_ID=<client_id from step 1>
+   export CB=https://app.example.com/oauth/callback
+   curl -sS -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept: application/json" \
+    "{{ISSUER}}/oauth/api/v1/oauth/authorize?response_type=code&client_id=$APP_ID&redirect_uri=$(node -p 'encodeURIComponent(process.env.CB)')&scope=openid&state=preflight&code_challenge=mR_nE7EeJopQmji77eZUdD4_rLzw5A5HdlRSiLQQCzU&code_challenge_method=S256"
+   ```
+   PASS = `302` **and** `redirect_url` starts with your callback **and** contains `error=login_required`. FAIL = `400` + `redirect_uri not registered` (wrong `client_id` — usually the portal client — or a callback that is not byte-identical). A `200` means you hit the auth-site SPA shell instead of the API — that is **not** proof.
+   `{{ISSUER}}` is the **API** plane (e.g. `https://api.autional.{{REGION}}`); `/oauth/...` and `/bff/oauth/...` are both reachable. Do not swap the host for the `auth.` plane — that path is rewritten to the SPA and returns HTML.
+   Skipping this step is how a build "succeeds" and the first real login fails.
 
 Social providers (Google / WeChat / …) are configured once on the Autional side; all apps share the same authorize entry.
 
@@ -854,6 +868,8 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 应用只放一个「用 Autional 登录」按钮；登录表单与全部社交登录都留在 Autional 授权页。适合多应用共用一个用户池，或不想自己实现密码/社交登录的应用。
 
 1. **注册应用**（管理后台 {{PORTAL_ADMIN}}/{TENANT_SLUG}/oauth-clients）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。同时填写应用的**官网地址（`website`，公网 https 地址）**与可选的**简称（`alias`）/ Logo**：用户中心的「已授权应用」用它们渲染磁贴——**缺 `website` 时磁贴只能展示、不可点击**。
+   - 此 `client_id` **就是** SDK 的 `appId`：写回 `.env`（`AUTIONAL_APP_ID`）与 `src/autional.ts`，**覆盖**先前取到的值。
+   - `redirect_uris` 必须与回调地址**逐字一致**（SDK 默认 `<origin>/oauth/callback`，无尾斜杠）。尾斜杠会把该条变成路径前缀规则；不一致会在登录时报 `invalid_request: redirect_uri not registered`。
 2. **登录按钮**：
    ```ts
    await autional.loginWithOAuth({});   // client_id = appId；PKCE（S256）+ state 由 SDK 处理
@@ -870,6 +886,16 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
    const { user } = await autional.handleOAuthCallback(window.location.href);
    ```
    SDK 校验 `state`、用留存的 PKCE verifier 换票（无 client_secret——公开客户端）、拉取 userinfo，并把会话记为 SSO 模式（后续刷新自动走 OAuth 刷新端点）。
+4. **接线前预检客户端** —— 一条请求即可证明 client 与回调已登记：
+   ```bash
+   export APP_ID=<第 1 步的 client_id>
+   export CB=https://app.example.com/oauth/callback
+   curl -sS -o /dev/null -w "%{http_code} %{redirect_url}\n" -H "Accept: application/json" \
+    "{{ISSUER}}/oauth/api/v1/oauth/authorize?response_type=code&client_id=$APP_ID&redirect_uri=$(node -p 'encodeURIComponent(process.env.CB)')&scope=openid&state=preflight&code_challenge=mR_nE7EeJopQmji77eZUdD4_rLzw5A5HdlRSiLQQCzU&code_challenge_method=S256"
+   ```
+   **通过** = `302` 且 `redirect_url` 以你的回调开头并含 `error=login_required`；**失败** = `400` + `redirect_uri not registered`（`client_id` 用错——通常是门户客户端——或回调不是逐字一致）。返回 `200` 说明命中的是 auth 站 SPA 外壳而非 API，**不算通过**。
+   `{{ISSUER}}` 是 **API** 平面（如 `https://api.autional.{{REGION}}`），`/oauth/...` 与 `/bff/oauth/...` 均可达；**勿把 host 换成 `auth.` 平面**——那条路径被 rewrite 成 SPA，只会返回 HTML。
+   跳过这一步，就是「构建通过、首次真实登录失败」的由来。
 
 社交登录（Google / 微信等）在 Autional 侧一次配置；所有应用共用同一个授权入口。
 
@@ -1268,6 +1294,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Multi-tab | logout in tab A → tab B notices | unit test |
 | Wrong password | friendly error, no crash | integration test |
 | CAPTCHA | 3 failures → challenge → retry | integration test |
+| SSO login | authorize returns `302` pointing back to the callback, **not** `invalid_request` | preflight in 5.2b step 4 |
 
 **Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout ends the OP session, not just the local copy (5.2c) · an account switch shows no previous-account data — local cleanup runs even when the session ended without a logout (1.6 guard) · refresh-replay detected · CAPTCHA slows brute force.
 
@@ -1286,6 +1313,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | 多 Tab | A 登出 → B 感知 | 单元测试 |
 | 错误密码 | 友好报错，不崩 | 集成测试 |
 | CAPTCHA | 3 次失败 → 挑战 → 重试 | 集成测试 |
+| SSO 登录 | authorize 返回 `302` 且回指回调，**不是** `invalid_request` | 5.2b 第 4 步预检 |
 
 **安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出终结 OP 会话（非仅清本域——5.2c）· 换号不见前账号残留（不经登出同样清理——1.6 守卫）· 刷新重放可检测 · CAPTCHA 抗爆破。
 
@@ -1303,10 +1331,11 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Autional endpoints unreachable | mark blocked, wait for network, surface to user |
 | Tenant name unavailable 100× | suggest a new naming strategy |
 | User refuses to replace the login page | guard-only mode (5.2 option C) |
-| Several projects, one tenant | skip Phase 3, reuse appId + issuer |
+| Several projects, one tenant | skip Phase 3 (reuse tenantId/issuer), but **register one client per app** (5.2b) — never reuse another app's `appId` |
 | Login page renders zero input fields (or only an OAuth card) | tenant auth-policy dead end: `login_methods` declares a method with no matching provider configured → write the tenant auth policy (`PUT /admin/tenants/:id/auth-policy`; `login_methods` is a JSON string), then re-read the login page — a 200 from identity `PUT /admin/security/auth-config` does not prove the change took effect |
 | Authorize page hangs (~30 s), then lands on the brand portal with no login form | this region's auth host is unhealthy (its backend proxy is failing) → cross-check the other region (swap the region suffix in `auth.autional.{{REGION}}`); pin the healthy region's `authorizeUrl` (5.2b) and report the outage |
 | Tenant portal sign-in shows "This organization's sign-in is not configured" | the tenant's portal OAuth client was never supplied by the platform's auto-provisioning chain (tenant creation → client provisioning; tenants created before the fix, or a provisioning failure). Verify: `GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` present (new tenants: within seconds). If absent → report to platform support for backfill; do not substitute an unrelated client |
+| Consent page: "redirect URI is not registered" | the `client_id` is the tenant **portal** client (`Default Client for <slug>`) or the callback is not byte-identical. Verify by behaviour: the same client with a portal callback returns `302 login_required`, while your callback returns `400 invalid_request`; `GET /oauth/api/v1/oauth/client/{id}` returning `kind=portal` (or a name starting with `Default Client for`) corroborates | register a dedicated app client (5.2b) and use its `client_id` — never add your callback to the portal client |
 
 ### Existing tenant (skip Phase 3)
 
@@ -1314,9 +1343,11 @@ If the project already has Autional config:
 
 ```
 "Found existing Autional config — reusing it.
-  appId: <appId> · issuer: {{ISSUER}} · tenantId: <tenantId>
-  This will be app #N on this tenant. All apps share one user pool (SSO).
-  [Reuse] [Create new tenant]"
+  tenantId: <tenantId> · issuer: {{ISSUER}}
+  This will be app #N on this tenant. All apps share one user pool (SSO),
+  but each app gets its OWN OAuth client: register it now (5.2b) and take
+  its client_id as appId — never reuse another app's appId.
+  [Continue with a new client] [Create new tenant]"
 ```
 
 ### Rollback / uninstall
@@ -1342,10 +1373,11 @@ Note: users already registered in Autional are not migrated back into the local 
 | Autional 端点不可达 | 标记阻塞，等网络恢复，上报用户 |
 | 租户名 100 次不可用 | 建议更换命名策略 |
 | 用户拒绝替换登录页 | 仅加守卫模式（5.2 选项 C） |
-| 多项目共用一个租户 | 跳过 Phase 3，复用 appId + issuer |
+| 多项目共用一个租户 | 跳过 Phase 3（复用 tenantId/issuer），但**每个应用各注册一个客户端**（5.2b）——绝不复用其它应用的 `appId` |
 | 登录页零输入项（或只有 OAuth 卡片） | 租户 auth-policy 死路：`login_methods` 声明的方法没配对应 provider → 写租户认证策略（`PUT /admin/tenants/:id/auth-policy`；`login_methods` 为 JSON 字符串），再回读登录页——identity `PUT /admin/security/auth-config` 返回 200 不代表生效 |
 | 授权页挂起（约 30 秒）后落到品牌门户、无登录表单 | 本区 auth 主机不健康（后端代理故障）→ 对照另一区（替换 `auth.autional.{{REGION}}` 中的区后缀）；引脚健康区的 `authorizeUrl`（5.2b）并上报故障 |
 | 租户门户登录显示「This organization's sign-in is not configured」 | 租户的门户 OAuth 客户端未被平台自动供给链落位（创建租户 → 供给客户端；修复前建的老租户或供给故障）。核验：`GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` 存在（新租户数秒内落位）。缺失 → 上报平台支持补供给；勿用无关客户端顶替 |
+| 同意页「回调地址未在应用中登记」 | `client_id` 用的是租户**门户**客户端（`Default Client for <slug>`），或回调不是逐字一致。行为核验：同一 client 换门户回调得 `302 login_required`，你的回调得 `400 invalid_request`；`GET /oauth/api/v1/oauth/client/{id}` 返回 `kind=portal`（或名称以 `Default Client for` 开头）可佐证 | 按 5.2b 新建独立应用客户端并用其 `client_id`——**绝不**把自己的回调加进门户客户端 |
 
 ### 已有租户（跳过 Phase 3）
 
@@ -1353,9 +1385,11 @@ Note: users already registered in Autional are not migrated back into the local 
 
 ```
 「检测到已有 Autional 配置，直接复用。
-  appId: <appId> · issuer: {{ISSUER}} · tenantId: <tenantId>
-  这将是该租户的第 N 个应用。所有应用共享用户体系（单点登录）。
-  [复用] [创建新租户]」
+  tenantId: <tenantId> · issuer: {{ISSUER}}
+  这将是该租户的第 N 个应用。所有应用共享用户体系（单点登录），
+  但每个应用各有自己的 OAuth 客户端：现在按 5.2b 注册，
+  用它的 client_id 作为 appId——绝不复用其它应用的 appId。
+  [继续（新建客户端）] [创建新租户]」
 ```
 
 ### 回退 / 卸载
@@ -1430,6 +1464,7 @@ Artifacts:
   ☐ AUTIONAL_SETUP.md exists
   ☐ admin password flagged as "shown once"
   ☐ AUTIONAL_CHANGES.md exists
+  ☐ OAuth client preflight returns 302 → callback (not "redirect_uri not registered")
   ☐ npm run dev boots the app
 
 Workspace + delivery:
@@ -1467,6 +1502,7 @@ Phase：
   ☐ AUTIONAL_SETUP.md 存在
   ☐ 管理员密码已提醒「只显示一次」
   ☐ AUTIONAL_CHANGES.md 存在
+  ☐ OAuth 客户端预检返回 302 且回指回调（非「redirect_uri not registered」）
   ☐ npm run dev 可启动
 
 工作区与交付：

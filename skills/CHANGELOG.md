@@ -14,6 +14,18 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## Unreleased（未发布）
+
+**内容**（`_core/PROCEDURE.md`，EN/ZH 对称，9 项）：
+- 3.1a / 3.2 / 4.2：明确 **auth-config 的 `oauth_client_id` 是租户门户客户端（kind=portal），不是应用 appId**；`AUTIONAL_APP_ID` 必须由 5.2b 注册所得回填。
+- 5.2b：第 1 步补「此 client_id 即 appId，覆盖先前值」+「redirect_uris 必须逐字一致（SDK 默认 `<origin>/oauth/callback`）」；新增**第 4 步强制预检**（302 + Location 回指 callback + `error=login_required`；`200` = 命中 SPA 不算通过）。
+- 边界表补「同意页：回调地址未在应用中登记」行；「多项目共用一个租户」改为**每个应用各注册一个客户端**；已有租户模板同步（不再复用别家 appId）。
+- 验证清单 / 完成清单各补一条 OAuth 预检项。
+
+**起因**：2026-10-30 事故 —— 应用按旧 3.1a 取门户客户端当 appId，首次 SSO 登录报 `invalid_request: redirect_uri not registered`。详见 `docs/AUTH-ONBOARD-APPID-CONFLICT-FIX-PLAN.md`。
+
+**待办**：`build-skills` / `check-skills` 已本地全绿（`core@adbfd8f0a0f7`），**尚未发布**（CDN / web 镜像 / npm 三条通道均未动）。
+
 ## [2026-10-30] core@3058b3e8e110 —— 试用注册 401/5xx 语义 + SDK 版本下限（sdk `386921c`）
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称）：

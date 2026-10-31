@@ -33,7 +33,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 **复验（2026-10-31）**：CDN 版本直链 + latest 别名（2 区 × 4 文件）+ 双站 skill/references 共 **22/22 sha256 == sdk blob**；两区 `latest.json` 版本已翻转；`.sha256` 镜像与文件一致；CDN 头 = immutable + CORS `*` + text/markdown。
 
-**流程偏差（登记）**：按 `RELEASING.md` §2.3，本改属「协议类变更」应先跑 T3 干跑（6 夹具 → 47/47）。本轮**发布先行、T3 未跑**（干跑需 lab 夹具 `D:/ws/ai-onboarding-lab/takenote` + 受测 agent 逐场景执行，未在本会话内完成）。补偿：新增 `@autional/onboard` 机器门（`--check-client`，7 项单测）+ 授权预检判据可被脚本断言。**待办：lab 侧补跑 T3；若 FAIL，按铁律发新版本号前滚，不改已发布目录。**
+**T3 干跑（协议类变更，补跑 2026-10-31）**：本轮先发布、后补跑（偏差已登记）。补跑 = `dryrun-prepare.sh` 建 6 夹具 → 受测 agent 按 `dryrun-brief.md` 逐场景执行（S1 保留分支 / S2 脏树停住 / S3 中途放弃 / S4 终点合并 / S5 终点丢弃 / S7 只读）→ `dryrun-audit.sh` 磁盘级审计 **PASS=47 FAIL=0**（`/d/tmp/skill-dryrun`）。另修正 brief 的过期手册路径（`D:\go\auth_ms_new\...` → `D:\ws\autional\sdk\skills\autional-com\SKILL.md`）。
 
 ## [2026-10-30] core@3058b3e8e110 —— 试用注册 401/5xx 语义 + SDK 版本下限（sdk `386921c`）
 

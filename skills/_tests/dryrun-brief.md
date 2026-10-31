@@ -2,7 +2,8 @@
 
 你在扮演一个「按 skill 执行接入」的 AI agent。skill 全文（执行手册）：
 
-`D:\go\auth_ms_new\sdk\skills\autional-com\SKILL.md` —— 严格按它执行。
+`D:\ws\autional\sdk\skills\autional-com\SKILL.md` —— 严格按它执行。
+（2026-10-31 修正：原写 `D:\go\auth_ms_new\...`，那是旧检出；干跑必须对着当前发布源。）
 
 ## 本干跑的硬约束
 

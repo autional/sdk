@@ -14,6 +14,28 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-31] core@952f0b50f0bc —— 5.2b 增加 CORS 预检（第 5 步）+ 边界表/验收表补跨域项
+
+**内容**（`_core/PROCEDURE.md`，EN/ZH 对称 3 处）：
+- 5.2b 新增第 5 步「CORS 预检」：一条 `OPTIONS` 断言 `204` + `Access-Control-Allow-Origin` = 应用源；并给出三种失败原因（源未登记 / 登记值与浏览器 Origin 不逐字一致 / 传播窗口 ≤60s）。
+- 边界情况表新增「浏览器报 `No 'Access-Control-Allow-Origin'`」三查流程。
+- 闭环验证清单新增「SSO 换票跨域」一行。
+
+**通用性**：只用 `bash` + `curl`，不绑定任何 agent 运行时；`/oauth/...` 与 `/bff/oauth/...` 同一 CORS 判定。
+
+**起因**：2026-10-31 animal-world 事故 —— 应用按流程登记了 `cors_origins`，但流程里没有任何一步验证「登记真的生效」（服务端注册表被 FORCE RLS 读成 0 行、网关对非白名单源的预检直接 404），浏览器直到首次真实登录才暴露；换票在服务端已成功、响应被浏览器丢弃，前端重试同一 code 得到 `authorization code already used`。服务端修复与验证见 `docs/AUTIONAL-CN-HK-ENTRY.md` §8.9。
+
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | CDN commit | web commit |
+|---|---|---|---|---|
+| com | `v0.1.0-e58919fa` | `2ef9ae5f5dccb0be090d259a8551bd5f7a8dbd41e365be88f21d96ab2ab5d04c` | `569d3cc` | `68f1c4e` |
+| cn | `v0.1.0-bd8cec3b` | `58de5776586d15f6aeebd206ee9d1b006a7e74f482936422335da0fe24e75513` | 同上 | 同上 |
+
+**复验（2026-10-31）**：站点 canonical + CDN `latest` 四路 sha256 == sdk blob（cn/com × 站点/CDN）；两区 `latest.json` 指针已翻转；`skill.md.sha256` 与 `skill.md` 一致；CDN 版本目录 8 文件 `git hash-object` == sdk blob。
+
+**未做**：通道 C（npm `@autional/onboard`）—— 内容线与 CLI 包是独立版本列车，本波只改 skill 文案、CLI 无需变更；且本机无 npm 凭据。
+
 ## [2026-10-31] core@c12dbd7f72ba —— auth-config 门户客户端改名 `portal_oauth_client_id`（U554，sdk `af0a912`）
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称 6 处）：

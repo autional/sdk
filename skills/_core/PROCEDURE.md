@@ -500,7 +500,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 → login({ email: adminEmail, password: adminPassword, tenantId })
 ```
 
-- **Login succeeds** → continue to 3.2. Note: the auth-config `oauth_client_id` (`GET /identity/api/v1/public/auth-config/{tenantId}`) is the tenant **portal** client (`kind=portal`) — it backs the portal SPA sign-in and is **NOT** your app's `appId`. Your app's `appId` is the `client_id` issued in 5.2b when you register the app.
+- **Login succeeds** → continue to 3.2. Note: the auth-config `portal_oauth_client_id` (`GET /identity/api/v1/public/auth-config/{tenantId}`; same value as the legacy `oauth_client_id`) is the tenant **portal** client (`kind=portal`) — it backs the portal SPA sign-in and is **NOT** your app's `appId`. Your app's `appId` is the `client_id` issued in 5.2b when you register the app.
 - **Registration returns 5xx `trial provisioning failed`** → the tenant was **compensated (soft-deleted)** because admin/RBAC provisioning failed; nothing is half-created. Retry once with the same name; if it fails again, stop and report `request_id` + the failing step.
 - **Login fails 401 `invalid credentials`** (older servers, or a manual portal flow) → the tenant exists but its admin was NOT provisioned. Do **not** re-submit the registration (it burns the per-IP trial quota and returns 409). Tell the user, give them the tenantId/slug, and use a fallback path: invitation-code tenant, or the developer portal. Report `request_id` and the tenantId.
 
@@ -509,7 +509,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 ```
 - Admin password: shown ONCE. Tell the user to save it in their password manager now. Never write it to code or config files.
 - tenantId / issuer / api URL / tenant slug: public configuration — write to .env (public block) and src/autional.ts. The slug drives tenant-scoped portal links (see 8.2).
-- `appId` = the `client_id` of **your app's own client**, issued in 5.2b. Never the auth-config `oauth_client_id` (that one is the tenant portal client).
+- `appId` = the `client_id` of **your app's own client**, issued in 5.2b. Never the auth-config `portal_oauth_client_id` (legacy alias: `oauth_client_id`) — that one is the tenant portal client.
 ```
 
 ### 3.3 Test accounts
@@ -544,7 +544,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 → login({ email: adminEmail, password: adminPassword, tenantId })
 ```
 
-- **登录成功** → 继续 3.2。注意：auth-config 的 `oauth_client_id`（`GET /identity/api/v1/public/auth-config/{tenantId}`）是租户**门户**客户端（`kind=portal`），服务门户 SPA 登录，**不是**本应用的 `appId`。应用 `appId` 是 5.2b 注册应用时签发的 `client_id`。
+- **登录成功** → 继续 3.2。注意：auth-config 的 `portal_oauth_client_id`（`GET /identity/api/v1/public/auth-config/{tenantId}`；与旧名 `oauth_client_id` 同值）是租户**门户**客户端（`kind=portal`），服务门户 SPA 登录，**不是**本应用的 `appId`。应用 `appId` 是 5.2b 注册应用时签发的 `client_id`。
 - **注册返回 5xx `trial provisioning failed`** → 管理员/RBAC 开通失败，租户已**补偿软删**（没有半成品）。可用同名重试一次；仍失败则停止，上报 `request_id` + 失败步骤。
 - **登录 401 `invalid credentials`**（旧服务端或门户手工流程）→ 租户在、管理员没建成。**不要重复提交注册**（会占同 IP 的试用配额，且返回 409）。告知用户并给出 tenantId/slug，改走兜底：邀请码租户，或开发者门户。上报时附 `request_id` 与 tenantId。
 
@@ -553,7 +553,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 ```
 - 管理员密码：只显示一次。让用户立刻存入密码管理器。绝不写入代码或配置文件。
 - tenantId / issuer / api URL / 租户 slug：公开配置——写入 .env（公开块）与 src/autional.ts。slug 用于拼接带租户的门户链接（见 8.2）。
-- `appId` = **你自己应用客户端**的 `client_id`（5.2b 签发）。绝不用 auth-config 的 `oauth_client_id`（那个是租户门户客户端）。
+- `appId` = **你自己应用客户端**的 `client_id`（5.2b 签发）。绝不用 auth-config 的 `portal_oauth_client_id`（旧名 `oauth_client_id`）——那个是租户门户客户端。
 ```
 
 ### 3.3 测试账号
@@ -634,7 +634,7 @@ Detect the env-file location and the framework's public env prefix:
 Append to the public env file (never touch other keys):
 
 ```env
-AUTIONAL_APP_ID=<appId from 5.2b — do NOT prefill with auth-config's oauth_client_id>
+AUTIONAL_APP_ID=<appId from 5.2b — do NOT prefill with auth-config's portal_oauth_client_id (legacy oauth_client_id)>
 AUTIONAL_ISSUER={{ISSUER}}
 AUTIONAL_API_URL={{API_URL}}
 ```
@@ -658,7 +658,7 @@ Then generate `src/autional.ts` from the template in `{{REFS_BASE}}/config-templ
 向公开 env 文件追加（不动其它键）：
 
 ```env
-AUTIONAL_APP_ID=<5.2b 注册应用后回填；禁止先用 auth-config 的 oauth_client_id 占位>
+AUTIONAL_APP_ID=<5.2b 注册应用后回填；禁止先用 auth-config 的 portal_oauth_client_id（旧名 oauth_client_id）占位>
 AUTIONAL_ISSUER={{ISSUER}}
 AUTIONAL_API_URL={{API_URL}}
 ```

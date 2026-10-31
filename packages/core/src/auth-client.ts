@@ -109,6 +109,9 @@ export class AuthClient {
       silentChallengeEnabled: (data.silent_challenge_enabled as boolean) || false,
       transmissionPublicKey: (data.transmission_public_key as string) || '',
       oauthClientId: (data.oauth_client_id as string) || '',
+      // U554：优先用语义明确的新字段；旧字段（oauth_client_id）保留兼容
+      portalOAuthClientId:
+        (data.portal_oauth_client_id as string) || (data.oauth_client_id as string) || '',
       passkeyEnabled: (data.passkey_enabled as boolean) || false,
       magicLinkEnabled: (data.magic_link_enabled as boolean) || false,
       branding: (data.branding ?? null) as TenantAuthConfig['branding'],

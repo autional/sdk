@@ -216,7 +216,15 @@ export interface TenantAuthConfig {
   captchaProvider: string;
   silentChallengeEnabled: boolean;
   transmissionPublicKey: string;
+  /**
+   * 租户**门户**客户端的 client_id（kind=portal）。
+   *
+   * @deprecated 语义易被误读为「应用 appId」。请改用 {@link portalOAuthClientId}；
+   * 本字段仅保留兼容（服务端仍下发同值）。
+   */
   oauthClientId: string;
+  /** 租户门户客户端的 client_id（与 {@link oauthClientId} 同值）。第三方应用应使用自有 OAuth 客户端。 */
+  portalOAuthClientId?: string;
   passkeyEnabled: boolean;
   magicLinkEnabled: boolean;
   branding: BrandingInfo | null;

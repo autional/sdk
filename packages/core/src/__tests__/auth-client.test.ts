@@ -480,6 +480,41 @@ describe('AuthClient', () => {
       expect(config.captchaEnabled).toBe(false);
     });
 
+    it('maps portal client id from portal_oauth_client_id (U554)', async () => {
+      setupClient({
+        [AUTH_CONFIG_KEY]: {
+          data: {
+            tenant_id: 't1',
+            password_policy: { password_transmission: 'plain', min_length: 8 },
+            oauth_client_id: 'client-legacy-portal',
+            portal_oauth_client_id: 'client-portal',
+          },
+        },
+      });
+
+      const config = await client.fetchAuthConfig();
+
+      expect(config.portalOAuthClientId).toBe('client-portal');
+      // 旧字段保留兼容（值仍由服务端下发）
+      expect(config.oauthClientId).toBe('client-legacy-portal');
+    });
+
+    it('falls back to oauth_client_id when portal_oauth_client_id is absent', async () => {
+      setupClient({
+        [AUTH_CONFIG_KEY]: {
+          data: {
+            tenant_id: 't1',
+            password_policy: { password_transmission: 'plain', min_length: 8 },
+            oauth_client_id: 'client-legacy-portal',
+          },
+        },
+      });
+
+      const config = await client.fetchAuthConfig();
+
+      expect(config.portalOAuthClientId).toBe('client-legacy-portal');
+    });
+
     it('second call returns cached data', async () => {
       let callCount = 0;
       const trackingHttp = {

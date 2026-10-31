@@ -12,6 +12,7 @@
 - 禁止：网络调用、npm install、Autional API、租户创建、`git push`。
 - 只在你自己的工作目录内操作（见派发消息）。不要碰 D:\go 下的任何目录（skill 手册除外，只读）。
 - 环境为 git-bash（Windows）；路径可写 `D:/tmp/skill-dryrun/s1` 或 `/d/tmp/skill-dryrun/s1`。
+- **若 `external_directory` 为 deny**（本机默认）：shell 的 `workdir`/`cd` 指到夹具会被拒。做法 = workdir 保持项目内，改用绝对路径：`git -C /d/tmp/skill-dryrun/s1 <cmd>`、`printf ... > /d/tmp/.../file`（2026-10-31 实测有效）。
 
 ## 无人值守的模拟用户
 

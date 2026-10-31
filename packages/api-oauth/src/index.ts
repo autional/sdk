@@ -91,7 +91,7 @@ export interface AdminCreateProviderRequest {
   clientId: string;
   clientSecret: string;
   displayName?: string;
-  enabled?: boolean;
+  enabled?: boolean;  // Enabled 缺省（不传）= true，保持既有 API 行为；显式 false 才创建为禁用。
   name: string;
   redirectUrl?: string;
   scopes?: string;
@@ -142,6 +142,10 @@ export interface BindInitiateRequest {
 export interface BindInitiateResponse {
   authUrl?: string;  // 授权跳转URL
   state?: string;  // 签名后的 state
+}
+
+export interface CORSOriginsResponse {
+  origins?: string[];
 }
 
 /** OAuth 2.0 Dynamic Client Registration request (RFC 7591 §2) */
@@ -232,6 +236,7 @@ export interface ConsentCheckResult {
 }
 
 export interface ConsentResponse {
+  alias?: string;  // Alias 显示简称（metadata.alias）：优先于 ClientName 展示，空则由前端回退。
   clientId?: string;
   clientName?: string;
   grantedAt?: string;
@@ -242,6 +247,7 @@ export interface ConsentResponse {
 }
 
 export interface CreateClientRequest {
+  alias?: string;  // Alias 显示简称（可选）：前台列表优先展示，空则用 Name。
   clientAuthMethods?: string[];
   corsOrigins?: string[];
   fapiProfile?: string;
@@ -371,6 +377,7 @@ export interface OAuthCallbackResponse {
 }
 
 export interface OAuthClientItem {
+  alias?: string;  // Alias 显示简称（metadata.alias）
   clientAuthMethods?: string;
   clientId?: string;
   corsOrigins?: string[];
@@ -432,6 +439,7 @@ export interface OAuthErrorResponse {
   error?: string;  // 错误码
   errorDescription?: string;  // 错误描述
   errorUri?: string;  // 错误URI
+  i18nKey?: string;  // I18nKey 本地化键（AUTH-46①/U416）：协议字段 error/error_description 保持 RFC 6749 §5.2 原样， 本字段是**附加**信息（omitempty；未知错误码不填），供前端/AI ...
   state?: string;  // 状态
 }
 
@@ -481,6 +489,8 @@ export interface OIDCUserInfoResponse {
   ageGroup?: string;
   birthdate?: string;
   clientId?: string;  // Internal
+  email?: string;  // Email Claims（scope=email 时填充；真源 = identity 的邮箱身份与验证状态）
+  emailVerified?: boolean;
   familyName?: string;
   gender?: string;
   givenName?: string;
@@ -563,6 +573,7 @@ export interface TokenIntrospectionResponse {
 }
 
 export interface UpdateClientRequest {
+  alias?: string;
   clientAuthMethods?: string[];
   corsOrigins?: string[];
   fapiProfile?: string;
@@ -584,6 +595,20 @@ export interface UpdateClientRequest {
 export interface UserOAuthExportResponse {
   connections?: OAuthConnectionItem[];
   consents?: ConsentResponse[];
+}
+
+export interface ClientInventoryItem {
+  alias?: string;
+  clientId?: string;
+  corsOrigins?: string[];
+  createdAt?: string;
+  isConfidential?: boolean;
+  kind?: string;  // portal / idp / app（空 metadata 归一为 app）
+  name?: string;
+  redirectHosts?: string[];
+  status?: string;
+  tenantId?: string;
+  website?: string;
 }
 
 export interface AuthorizeCodeResponse {
@@ -627,6 +652,11 @@ export function postAdminOauthClients(client: ApiClient, data: CreateClientReque
 /** 按 Application 查询 OAuth 客户端 */
 export function getAdminOauthClientsByApplicationByByApplication(client: ApiClient, appId: string): Promise<OAuthClientItem[]> {
   return client.get(`/oauth/api/v1/admin/oauth/clients/by-application/${appId}`);
+}
+
+/** OAuth 客户端台账（跨租户只读） */
+export function getAdminOauthClientsInventory(client: ApiClient): Promise<ClientInventoryItem[]> {
+  return client.get(`/oauth/api/v1/admin/oauth/clients/inventory`);
 }
 
 /** Portal 访问统计 */

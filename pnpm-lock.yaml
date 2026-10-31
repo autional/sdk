@@ -206,7 +206,7 @@ importers:
   packages/api-oauth:
     devDependencies:
       '@autional/core':
-        specifier: '>=0.4.1'
+        specifier: '>=0.1.0'
         version: 0.4.1
       rimraf:
         specifier: ^5.0.0

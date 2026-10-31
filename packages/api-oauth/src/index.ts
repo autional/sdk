@@ -1,6 +1,6 @@
 /**
  * @autional/api-oauth — Auto-generated from oauth-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-10-31
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -499,6 +499,7 @@ export interface OIDCUserInfoResponse {
 
 export interface PublicClientInfo {
   clientName?: string;
+  kind?: string;  // Kind 客户端用途分类（portal/idp；空 = 普通应用）。只用于同意页与接入工具 区分「租户门户客户端」与「应用客户端」，不暴露 redirect_uris / metadata 其它键。
   logoUri?: string;
   scopes?: string[];
   tenantId?: string;

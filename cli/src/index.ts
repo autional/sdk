@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import inquirer from 'inquirer';
+import { checkOAuthClient, describeVerdict } from './oauth-client-guard.js';
 
 const AUTIONAL_DEPS = {
   react: ['react', 'react-dom', 'react-router-dom', '@autional/react', '@autional/core'],
@@ -41,6 +42,22 @@ const REGION_FLAG: string | undefined = (() => {
   const eq = process.argv.find((a) => a.startsWith('--region='));
   if (eq) return eq.slice('--region='.length);
   const i = process.argv.indexOf('--region');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/** `--app-id=<id>`: skip the prompt and prefill (used by CI / agents). */
+const APP_ID_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--app-id='));
+  if (eq) return eq.slice('--app-id='.length);
+  const i = process.argv.indexOf('--app-id');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/** `--check-client=<id>`: probe only, never scaffold. Exit 0 = usable app client. */
+const CHECK_CLIENT_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--check-client='));
+  if (eq) return eq.slice('--check-client='.length);
+  const i = process.argv.indexOf('--check-client');
   return i !== -1 ? process.argv[i + 1] : undefined;
 })();
 
@@ -805,6 +822,19 @@ async function main() {
     process.exit(1);
   }
 
+  // Probe-only mode: assert an appId before scaffolding (CI / agents / humans).
+  if (CHECK_CLIENT_FLAG !== undefined) {
+    const region = REGION_DEFAULTS[(REGION_FLAG as RegionKey | undefined) ?? 'com'];
+    const verdict = await checkOAuthClient(region.issuer, CHECK_CLIENT_FLAG.trim());
+    const text = describeVerdict(CHECK_CLIENT_FLAG.trim(), verdict);
+    if (verdict.status === 'ok') {
+      console.log(text);
+      process.exit(0);
+    }
+    console.error(text);
+    process.exit(1);
+  }
+
   console.log(`
   █████╗ ██╗   ██╗████████╗██╗  ██╗███╗   ███╗███████╗
  ██╔══██╗██║   ██║╚══██╔══╝██║  ██║████╗ ████║██╔════╝
@@ -861,13 +891,25 @@ async function main() {
       name: 'appId',
       message: 'App ID (from OAuth client registration):',
       default: 'my-app',
+      when: () => APP_ID_FLAG === undefined,
       validate: (v: string) => v.trim().length > 0 || 'App ID is required',
     },
   ]);
 
   answers.region = (REGION_FLAG as RegionKey | undefined) ?? answers.region ?? 'com';
   answers.projectName = answers.projectName.trim();
-  answers.appId = answers.appId.trim();
+  answers.appId = (APP_ID_FLAG ?? answers.appId ?? '').trim();
+
+  // Guard (5.2b step 4): reject the tenant portal client before writing anything.
+  const guard = await checkOAuthClient(REGION_DEFAULTS[answers.region].issuer, answers.appId);
+  if (guard.status === 'ok') {
+    console.log(`\n  ${describeVerdict(answers.appId, guard)}\n`);
+  } else if (guard.status === 'unverified') {
+    console.warn(`\n  ${describeVerdict(answers.appId, guard)}\n`);
+  } else {
+    console.error(`\n  ${describeVerdict(answers.appId, guard)}\n`);
+    process.exit(1);
+  }
 
   const projectDir = path.resolve(process.cwd(), answers.projectName);
 

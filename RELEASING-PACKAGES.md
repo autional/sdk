@@ -58,10 +58,23 @@ npm **不支持**覆盖已发版本。发错了只有一个办法：**修完发�
 
 ## 6. 当前待发（2026-10-31）
 
-| 包 | 级别 | 来源 |
-|---|---|---|
-| `@autional/api-oauth` | patch | `.changeset/api-oauth-client-kind.md`（U556 波：补 `kind` 字段） |
-| `@autional/core` | patch | `.changeset/core-portal-oauth-client-id.md`（U554 波：`portalOAuthClientId`，回落旧字段） |
+**已发（2026-10-31）**：
 
-前置校验现状（2026-10-31 实测）：`core` tsc 通过 / 单测 **186/186**；`api-oauth` tsc 通过。
-**唯一阻塞 = npm 凭据**，拿到即可按 §3–§4 一条线走完。
+| 包 | 版本 | 说明 |
+|---|---|---|
+| `@autional/core` | **0.4.1** | `portalOAuthClientId`（U554） |
+| `@autional/api-oauth` | **0.6.1** | `PublicClientInfo.kind`（U556） |
+
+复核：`https://registry.npmjs.org/-/package/@autional%2fcore/dist-tags` → `latest=0.4.1`；
+`…/api-oauth/dist-tags` → `latest=0.6.1`。git tag `@autional/core@0.4.1`、`@autional/api-oauth@0.6.1` 已推。
+
+## 7. 本机发版踩过的坑（都在 2026-10-31 实测）
+
+| 坑 | 现象 | 正确做法 |
+|---|---|---|
+| 默认 registry = 国内镜像 | `npm whoami` 报 `need auth`；镜像根本不接受发布 | 发布与校验一律显式 `--registry https://registry.npmjs.org`（或 `NPM_CONFIG_REGISTRY`）；镜像只能读 |
+| 内部依赖顺序 | `changeset version` 把 `api-oauth` 的 `@autional/core` 抬到 `>=0.4.1`，core 未发时 `pnpm install` 解析失败 → node_modules 被清、tsup 变悬空链接 | **先发 core，再装再看 api-oauth**；顺序错了靠 revert 回滚重来 |
+| lockfile 写入方版本 | 用 pnpm 12 生成 → peer 后缀整体重写（600+ 行噪音）；且 12 会顺手写 `minimumReleaseAgeExclude` | 用 **pnpm 10**（`npx pnpm@10 install --lockfile-only`）维护 lockfileVersion 9.0；frozen 校验加 `CI=true` 免 TTY 中止 |
+| `allowBuilds.sharp` 占位符 | 值写成 `set this to true or false` → pnpm 12 判为未获准 → `ERR_PNPM_IGNORED_BUILDS` | 已修（`sharp: true`，见 `a56a201`） |
+| 新版本刚发就装 | pnpm 12 的 `minimumReleaseAge` 会拒绝「太新」的包 | 用 pnpm 10，或加 `minimumReleaseAgeExclude` |
+

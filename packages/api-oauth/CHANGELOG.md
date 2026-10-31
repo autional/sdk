@@ -1,5 +1,15 @@
 # @autional/api-oauth
 
+## 0.6.1
+
+### Patch Changes
+
+- c7ac451: 同步服务 API：OAuth 客户端新增 `kind` 字段（`portal` / `idp`，空 = 普通应用），
+  供同意页与接入工具区分「租户门户客户端」与独立应用客户端。
+- Updated dependencies [c7ac451]
+- Updated dependencies [c7ac451]
+  - @autional/core@0.4.1
+
 ## 0.6.0
 
 ### Minor Changes

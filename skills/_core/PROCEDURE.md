@@ -753,6 +753,16 @@ The app shows one "Continue with Autional" button; the login form and all social
    PASS = `302` **and** `redirect_url` starts with your callback **and** contains `error=login_required`. FAIL = `400` + `redirect_uri not registered` (wrong `client_id` — usually the portal client — or a callback that is not byte-identical). A `200` means you hit the auth-site SPA shell instead of the API — that is **not** proof.
    `{{ISSUER}}` is the **API** plane (e.g. `https://api.autional.{{REGION}}`); `/oauth/...` and `/bff/oauth/...` are both reachable. Do not swap the host for the `auth.` plane — that path is rewritten to the SPA and returns HTML.
    Skipping this step is how a build "succeeds" and the first real login fails.
+5. **Preflight CORS before touching the browser** — the token exchange, userinfo and refresh calls are cross-origin, so the browser sends a preflight first. One request proves the origin is registered **and** already live:
+   ```bash
+   ORIGIN=https://app.example.com
+   curl -sS -o /dev/null -D - -X OPTIONS "{{ISSUER}}/oauth/api/v1/oauth/token" \
+     -H "Origin: $ORIGIN" -H 'Access-Control-Request-Method: POST' \
+     -H 'Access-Control-Request-Headers: content-type' | grep -i 'HTTP/\|access-control-allow-origin'
+   ```
+   PASS = `204` **and** `Access-Control-Allow-Origin: $ORIGIN` (exactly one such header).
+   No header means one of three things: the origin is not on **this client's** `cors_origins`; the registered value is not byte-identical to the browser Origin (`https://host[:port]` — no path, no trailing slash); or the registration is newer than the propagation window (the API caches the registered origin set for **≤ 60 s** — wait a minute and retry).
+   A failing preflight is a hard stop: the browser blocks the token exchange, so the first real login fails even though the build passes. The `/bff/oauth/...` form of the token endpoint is the same CORS decision.
 
 Social providers (Google / WeChat / …) are configured once on the Autional side; all apps share the same authorize entry.
 
@@ -896,6 +906,16 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
    **通过** = `302` 且 `redirect_url` 以你的回调开头并含 `error=login_required`；**失败** = `400` + `redirect_uri not registered`（`client_id` 用错——通常是门户客户端——或回调不是逐字一致）。返回 `200` 说明命中的是 auth 站 SPA 外壳而非 API，**不算通过**。
    `{{ISSUER}}` 是 **API** 平面（如 `https://api.autional.{{REGION}}`），`/oauth/...` 与 `/bff/oauth/...` 均可达；**勿把 host 换成 `auth.` 平面**——那条路径被 rewrite 成 SPA，只会返回 HTML。
    跳过这一步，就是「构建通过、首次真实登录失败」的由来。
+5. **动浏览器之前先做 CORS 预检** —— 换票、userinfo、刷新都是跨域请求，浏览器会先发预检。一条请求即可证明「源已登记**且已生效**」：
+   ```bash
+   ORIGIN=https://app.example.com
+   curl -sS -o /dev/null -D - -X OPTIONS "{{ISSUER}}/oauth/api/v1/oauth/token" \
+     -H "Origin: $ORIGIN" -H 'Access-Control-Request-Method: POST' \
+     -H 'Access-Control-Request-Headers: content-type' | grep -i 'HTTP/\|access-control-allow-origin'
+   ```
+   **通过** = `204` **且** `Access-Control-Allow-Origin: $ORIGIN`（该头恰好一条）。
+   没有该头只有三种可能：源没登记在**这个客户端**的 `cors_origins`；登记值与浏览器 Origin 不逐字一致（`https://host[:port]`，无路径、无尾斜杠）；刚登记还没到生效窗口（API 侧缓存已登记源集 **≤60 秒** —— 等一分钟重试）。
+   预检不过就是硬停：浏览器会拦掉换票，构建再绿，首次真实登录也会失败。换票端点的 `/bff/oauth/...` 形态是同一个 CORS 判定。
 
 社交登录（Google / 微信等）在 Autional 侧一次配置；所有应用共用同一个授权入口。
 
@@ -1295,6 +1315,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Wrong password | friendly error, no crash | integration test |
 | CAPTCHA | 3 failures → challenge → retry | integration test |
 | SSO login | authorize returns `302` pointing back to the callback, **not** `invalid_request` | preflight in 5.2b step 4 |
+| SSO token exchange over CORS | preflight returns `204` with `Access-Control-Allow-Origin` = the app origin | preflight in 5.2b step 5 |
 
 **Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout ends the OP session, not just the local copy (5.2c) · an account switch shows no previous-account data — local cleanup runs even when the session ended without a logout (1.6 guard) · refresh-replay detected · CAPTCHA slows brute force.
 
@@ -1314,6 +1335,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | 错误密码 | 友好报错，不崩 | 集成测试 |
 | CAPTCHA | 3 次失败 → 挑战 → 重试 | 集成测试 |
 | SSO 登录 | authorize 返回 `302` 且回指回调，**不是** `invalid_request` | 5.2b 第 4 步预检 |
+| SSO 换票跨域 | 预检返回 `204` 且 `Access-Control-Allow-Origin` = 应用源 | 5.2b 第 5 步预检 |
 
 **安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出终结 OP 会话（非仅清本域——5.2c）· 换号不见前账号残留（不经登出同样清理——1.6 守卫）· 刷新重放可检测 · CAPTCHA 抗爆破。
 
@@ -1335,6 +1357,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Login page renders zero input fields (or only an OAuth card) | tenant auth-policy dead end: `login_methods` declares a method with no matching provider configured → write the tenant auth policy (`PUT /admin/tenants/:id/auth-policy`; `login_methods` is a JSON string), then re-read the login page — a 200 from identity `PUT /admin/security/auth-config` does not prove the change took effect |
 | Authorize page hangs (~30 s), then lands on the brand portal with no login form | this region's auth host is unhealthy (its backend proxy is failing) → cross-check the other region (swap the region suffix in `auth.autional.{{REGION}}`); pin the healthy region's `authorizeUrl` (5.2b) and report the outage |
 | Tenant portal sign-in shows "This organization's sign-in is not configured" | the tenant's portal OAuth client was never supplied by the platform's auto-provisioning chain (tenant creation → client provisioning; tenants created before the fix, or a provisioning failure). Verify: `GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` present (new tenants: within seconds). If absent → report to platform support for backfill; do not substitute an unrelated client |
+| Browser console: `No 'Access-Control-Allow-Origin' header is present` | three checks in order: ① the origin is on **this client's** `cors_origins` — byte-identical `https://host[:port]`, no path, no trailing slash; ② registered just now → the API refreshes its registered-origin set every **≤ 60 s**, wait a minute and retry; ③ re-run the 5.2b step 5 preflight. Still no `Access-Control-Allow-Origin` → report to platform support with the Origin, the `client_id` and a timestamp |
 | Consent page: "redirect URI is not registered" | the `client_id` is the tenant **portal** client (`Default Client for <slug>`) or the callback is not byte-identical. Verify by behaviour: the same client with a portal callback returns `302 login_required`, while your callback returns `400 invalid_request`; `GET /oauth/api/v1/oauth/client/{id}` returning `kind=portal` (or a name starting with `Default Client for`) corroborates | register a dedicated app client (5.2b) and use its `client_id` — never add your callback to the portal client |
 
 ### Existing tenant (skip Phase 3)
@@ -1377,6 +1400,7 @@ Note: users already registered in Autional are not migrated back into the local 
 | 登录页零输入项（或只有 OAuth 卡片） | 租户 auth-policy 死路：`login_methods` 声明的方法没配对应 provider → 写租户认证策略（`PUT /admin/tenants/:id/auth-policy`；`login_methods` 为 JSON 字符串），再回读登录页——identity `PUT /admin/security/auth-config` 返回 200 不代表生效 |
 | 授权页挂起（约 30 秒）后落到品牌门户、无登录表单 | 本区 auth 主机不健康（后端代理故障）→ 对照另一区（替换 `auth.autional.{{REGION}}` 中的区后缀）；引脚健康区的 `authorizeUrl`（5.2b）并上报故障 |
 | 租户门户登录显示「This organization's sign-in is not configured」 | 租户的门户 OAuth 客户端未被平台自动供给链落位（创建租户 → 供给客户端；修复前建的老租户或供给故障）。核验：`GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` 存在（新租户数秒内落位）。缺失 → 上报平台支持补供给；勿用无关客户端顶替 |
+| 浏览器报 `No 'Access-Control-Allow-Origin' header is present` | 按序三查：① 该源是否登记在**这个客户端**的 `cors_origins`——逐字 `https://host[:port]`，无路径、无尾斜杠；② 刚登记 → API 侧每 **≤60 秒**刷新一次已登记源集，等一分钟重试；③ 重跑 5.2b 第 5 步预检。仍无 `Access-Control-Allow-Origin` → 带 Origin、`client_id`、时间上报平台支持 |
 | 同意页「回调地址未在应用中登记」 | `client_id` 用的是租户**门户**客户端（`Default Client for <slug>`），或回调不是逐字一致。行为核验：同一 client 换门户回调得 `302 login_required`，你的回调得 `400 invalid_request`；`GET /oauth/api/v1/oauth/client/{id}` 返回 `kind=portal`（或名称以 `Default Client for` 开头）可佐证 | 按 5.2b 新建独立应用客户端并用其 `client_id`——**绝不**把自己的回调加进门户客户端 |
 
 ### 已有租户（跳过 Phase 3）

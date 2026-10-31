@@ -4,6 +4,6 @@ packages:
   - "cli"
 allowBuilds:
   esbuild: true
-  sharp: set this to true or false
+  sharp: true
 overrides:
   undici: 7.30.0

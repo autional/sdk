@@ -1,6 +1,6 @@
 {
   "name": "@autional/core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Autional Core SDK — framework-agnostic token management, API client, and auth flows",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

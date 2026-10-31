@@ -14,17 +14,26 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
-## Unreleased（未发布）
+## [2026-10-31] core@adbfd8f0a0f7 —— appId 不再取门户客户端 + 5.2b 强制预检（sdk `9992498`）
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称，9 项）：
-- 3.1a / 3.2 / 4.2：明确 **auth-config 的 `oauth_client_id` 是租户门户客户端（kind=portal），不是应用 appId**；`AUTIONAL_APP_ID` 必须由 5.2b 注册所得回填。
-- 5.2b：第 1 步补「此 client_id 即 appId，覆盖先前值」+「redirect_uris 必须逐字一致（SDK 默认 `<origin>/oauth/callback`）」；新增**第 4 步强制预检**（302 + Location 回指 callback + `error=login_required`；`200` = 命中 SPA 不算通过）。
-- 边界表补「同意页：回调地址未在应用中登记」行；「多项目共用一个租户」改为**每个应用各注册一个客户端**；已有租户模板同步（不再复用别家 appId）。
+- 3.1a / 3.2 / 4.2：明确 **auth-config 的 `oauth_client_id` 是租户门户客户端（kind=portal），不是应用 appId**；`AUTIONAL_APP_ID` 只能由 5.2b 注册所得回填，禁止占位。
+- 5.2b：第 1 步补「此 client_id 即 appId，覆盖先前值」+「redirect_uris 逐字一致（SDK 默认 `<origin>/oauth/callback`）」；新增**第 4 步强制预检**（302 + Location 回指 callback + `error=login_required`；`200` = 命中 SPA 不算通过）。
+- 边界表补「同意页：回调地址未在应用中登记」；「多项目共用一个租户」改为**每个应用各注册一个客户端**；已有租户模板同步（不再复用别家 appId）。
 - 验证清单 / 完成清单各补一条 OAuth 预检项。
 
 **起因**：2026-10-30 事故 —— 应用按旧 3.1a 取门户客户端当 appId，首次 SSO 登录报 `invalid_request: redirect_uri not registered`。详见 `docs/AUTH-ONBOARD-APPID-CONFLICT-FIX-PLAN.md`。
 
-**待办**：`build-skills` / `check-skills` 已本地全绿（`core@adbfd8f0a0f7`），**尚未发布**（CDN / web 镜像 / npm 三条通道均未动）。
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | CDN commit | web commit |
+|---|---|---|---|---|
+| com | `v0.1.0-06ab7823` | `62b83f36238c063cadd618baef130b4666a2578ae13cd2f36602a4248f36681d` | `441cf56` | `46ec3b8` |
+| cn | `v0.1.0-b55075c2` | `f4e3c9de5afc5158ad9bfa9dbdf35734321908dc3fdead734424f8a578f2af25` | 同上 | 同上 |
+
+**复验（2026-10-31）**：CDN 版本直链 + latest 别名（2 区 × 4 文件）+ 双站 skill/references 共 **22/22 sha256 == sdk blob**；两区 `latest.json` 版本已翻转；`.sha256` 镜像与文件一致；CDN 头 = immutable + CORS `*` + text/markdown。
+
+**流程偏差（登记）**：按 `RELEASING.md` §2.3，本改属「协议类变更」应先跑 T3 干跑（6 夹具 → 47/47）。本轮**发布先行、T3 未跑**（干跑需 lab 夹具 `D:/ws/ai-onboarding-lab/takenote` + 受测 agent 逐场景执行，未在本会话内完成）。补偿：新增 `@autional/onboard` 机器门（`--check-client`，7 项单测）+ 授权预检判据可被脚本断言。**待办：lab 侧补跑 T3；若 FAIL，按铁律发新版本号前滚，不改已发布目录。**
 
 ## [2026-10-30] core@3058b3e8e110 —— 试用注册 401/5xx 语义 + SDK 版本下限（sdk `386921c`）
 

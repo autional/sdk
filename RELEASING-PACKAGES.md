@@ -32,6 +32,10 @@ npx tsc -p packages/api-oauth --noEmit
 ```bash
 cd sdk
 npx changeset version        # 改各包 version + 生成 CHANGELOG，删除已消费的 changeset
+# ⚠️ version 会把「内部依赖下限」抬高（updateInternalDependencies=patch），
+#    与生成器不变量冲突 ⇒ 必须紧接两步还原：
+cd .. && python sdk/scripts/generate-api-packages.py   # 依赖下限回到 >=0.1.0
+cd sdk && npx pnpm@10 install --lockfile-only          # lockfile 跟着回到一致
 git add -A && git commit -m "RELEASING: Releasing <N> package(s)"
 git push origin main
 ```
@@ -77,4 +81,5 @@ npm **不支持**覆盖已发版本。发错了只有一个办法：**修完发�
 | lockfile 写入方版本 | 用 pnpm 12 生成 → peer 后缀整体重写（600+ 行噪音）；且 12 会顺手写 `minimumReleaseAgeExclude` | 用 **pnpm 10**（`npx pnpm@10 install --lockfile-only`）维护 lockfileVersion 9.0；frozen 校验加 `CI=true` 免 TTY 中止 |
 | `allowBuilds.sharp` 占位符 | 值写成 `set this to true or false` → pnpm 12 判为未获准 → `ERR_PNPM_IGNORED_BUILDS` | 已修（`sharp: true`，见 `a56a201`） |
 | 新版本刚发就装 | pnpm 12 的 `minimumReleaseAge` 会拒绝「太新」的包 | 用 pnpm 10，或加 `minimumReleaseAgeExclude` |
+| `changeset version` 抬高内部依赖下限 | api-oauth 的 `@autional/core` 被抬到 `>=0.4.1` → SDK Gate 判「生成物漂移」，且 frozen 安装报 `OUTDATED_LOCKFILE` | version 后必须重跑 `generate-api-packages.py` + `pnpm@10 install --lockfile-only`，再提交（见 §3） |
 

@@ -24,10 +24,10 @@
     "src"
   ],
   "peerDependencies": {
-    "@autional/core": ">=0.4.1"
+    "@autional/core": ">=0.1.0"
   },
   "devDependencies": {
-    "@autional/core": ">=0.4.1",
+    "@autional/core": ">=0.1.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",

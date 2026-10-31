@@ -14,6 +14,25 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-10-31] core@c12dbd7f72ba —— auth-config 门户客户端改名 `portal_oauth_client_id`（U554，sdk `af0a912`）
+
+**内容**（`_core/PROCEDURE.md`，EN/ZH 对称 6 处）：
+- 3.1a / 3.2 / 4.2 env 块：改指 `auth-config.portal_oauth_client_id`（旧名 `oauth_client_id` 括注兼容），明确「这是租户门户客户端，不是 appId」。
+- 5.2b / 边界表 / 完成清单：不变（上一版已写死「一应用一客户端 + 预检」）。
+
+**起因**：契约层歧义 —— `oauth_client_id` 实为 `kind=portal` 的门户客户端，命名无法自证。服务端 `service-identity@8504691` 已增同值新字段，SDK `@autional/core` 增 `portalOAuthClientId`（旧字段标 `@deprecated`，值保留）。
+
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | CDN commit | web commit |
+|---|---|---|---|---|
+| com | `v0.1.0-9e28a8fb` | `909d1382f6600316e5c93b117110126f4e4c443a0fa38879afe13fade309f118` | `a582d27` | `5288b6a` |
+| cn | `v0.1.0-7f6f1914` | `9f3c933d19cb9b823a6813ab0f60de6ff1d98911248671ed230dcfb322028497` | 同上 | 同上 |
+
+**字节复核**：CDN 版本目录 8/8 文件 `git hash-object` == sdk blob；web 镜像 6/6 一致；`.sha256` 已重算。
+
+**未完成**：`@autional/core` npm 发版（本机无 npm 凭据）；发版前旧版 npm 包仍无 `portalOAuthClientId`。
+
 ## [2026-10-31] core@adbfd8f0a0f7 —— appId 不再取门户客户端 + 5.2b 强制预检（sdk `9992498`）
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称，9 项）：

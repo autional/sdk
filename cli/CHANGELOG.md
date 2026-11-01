@@ -1,5 +1,15 @@
 # @autional/onboard
 
+## 0.5.1
+
+### Patch Changes
+
+- **新增 `--check-cors=<origin>` 跨域预检探针**：一条 `OPTIONS` 打到换票端点，判据 = 204/200 且 `Access-Control-Allow-Origin` **逐字**等于该源。失败按序给出三种原因（未登记在该 client 的 `cors_origins` / 值与浏览器 Origin 不逐字一致 / 刚登记未到 ~60s 生效窗口），退出码 1；不可达 = 2。
+
+  为什么：第三方应用浏览器直连换票时，源没登记会表现为「服务端成功、前端报 CORS」，只能在用户登录时暴露（2026-10-31 事故）。
+
+  另修：`start-worker` 自愈判据用 `-f`（仓内 `.sh` 是 644，`-x` 恒假）——属 CI 侧，本条仅记录 CLI 变更。
+
 ## 0.5.0
 
 ### Minor Changes

@@ -10,6 +10,22 @@ npx @autional/onboard
 pnpm build && node dist/index.js
 ```
 
+### Probe-only modes (no scaffolding)
+
+| Flag | What it proves | Exit |
+|---|---|---|
+| `--check-client=<client_id>` | the `client_id` exists **and** is an app client (not the tenant portal client) | 0 ok / 1 fail |
+| `--check-cors=<origin>` | the origin passes the CORS preflight (registered on **this** client, already propagated) | 0 ok / 1 no ACAO / 2 unreachable |
+
+```bash
+node dist/index.js --check-client=client-xxxxxxxx --region=cn
+node dist/index.js --check-cors=https://app.example.com --region=cn
+```
+
+`--check-cors` sends one `OPTIONS` to the token endpoint with your `Origin`; nothing is authenticated.
+It fails with the three usual causes (not registered / not byte-identical — origin only, no path or
+trailing slash / registered seconds ago, propagation is ≤60 s).
+
 You'll be prompted for:
 
 | Prompt | Description |

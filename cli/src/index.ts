@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import inquirer from 'inquirer';
-import { checkOAuthClient, describeVerdict } from './oauth-client-guard.js';
+import { checkOAuthClient, describeVerdict, describeCorsVerdict, probeCors } from './oauth-client-guard.js';
 
 const AUTIONAL_DEPS = {
   react: ['react', 'react-dom', 'react-router-dom', '@autional/react', '@autional/core'],
@@ -58,6 +58,17 @@ const CHECK_CLIENT_FLAG: string | undefined = (() => {
   const eq = process.argv.find((a) => a.startsWith('--check-client='));
   if (eq) return eq.slice('--check-client='.length);
   const i = process.argv.indexOf('--check-client');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/**
+ * `--check-cors=<origin>`: 探针模式，验证该源能否通过跨域预检（skill 5.2b 第 5 步）。
+ * 只读、不脚手架。Exit 0 = 已登记且已生效；1 = 无 ACAO（未登记/不逐字一致/未到生效窗口）；2 = 不可达。
+ */
+const CHECK_CORS_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--check-cors='));
+  if (eq) return eq.slice('--check-cors='.length);
+  const i = process.argv.indexOf('--check-cors');
   return i !== -1 ? process.argv[i + 1] : undefined;
 })();
 
@@ -833,6 +844,20 @@ async function main() {
     }
     console.error(text);
     process.exit(1);
+  }
+
+  // CORS probe-only mode: 证明「该源已登记且在网关生效」（skill 5.2b 第 5 步）。
+  // 只发 OPTIONS，不读任何凭据；判据 = 204/200 且 ACAO 逐字等于该源。
+  if (CHECK_CORS_FLAG !== undefined) {
+    const region = REGION_DEFAULTS[(REGION_FLAG as RegionKey | undefined) ?? 'com'];
+    const verdict = await probeCors(region.issuer, CHECK_CORS_FLAG.trim());
+    const text = describeCorsVerdict(CHECK_CORS_FLAG.trim(), verdict);
+    if (verdict.status === 'ok') {
+      console.log(text);
+      process.exit(0);
+    }
+    console.error(text);
+    process.exit(verdict.status === 'unreachable' ? 2 : 1);
   }
 
   console.log(`

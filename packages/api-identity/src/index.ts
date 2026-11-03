@@ -1,6 +1,6 @@
 /**
  * @autional/api-identity — Auto-generated from identity-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-04
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -1208,11 +1208,12 @@ export interface PublicAuthConfigResponse {
   magicLinkEnabled?: boolean;
   maxConcurrentSessions?: number;
   membershipApproval?: string;
-  oauthClientId?: string;
+  oauthClientId?: string;  // OAuthClientID 租户**门户**客户端的 client_id（kind=portal）。 兼容保留：历史接入文档/SDK 曾把它当作「应用 appId」读取，导致应用回调必然登记失败 （门户客户端只登记平台门户域）。语义清...
   oauthProviders?: string[];
   passkeyEnabled?: boolean;
   passwordPolicy?: PasswordPolicyResponse;
   pepperEnabled?: boolean;
+  portalOauthClientId?: string;  // PortalOAuthClientID 与 OAuthClientID 同值，仅用于表达「这是门户客户端，不是应用 appId」。 第三方应用应使用自有 OAuth 客户端（管理后台 oauth-clients 页登记后签发的 cli...
   silentChallengeEnabled?: boolean;
   ssoProviders?: string[];
   tenantId?: string;

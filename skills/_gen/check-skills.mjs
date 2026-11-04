@@ -328,6 +328,26 @@ const GATES = [
           re: /cors_origins/,
           why: 'cors_origins 必填项必须出现（漏登记会在换票时被浏览器拦）',
         },
+        {
+          id: 'server-verification',
+          re: /identity\/api\/v1\/auth\/me(?![\w/])/,
+          why: '服务端认证契约必须给出可执行路径（/me）',
+        },
+        {
+          id: 'token-ttl-rule',
+          re: /(?=[\s\S]*JWT[\s\S]{0,8}exp)(?=[\s\S]*(single-flight|单飞|Web Locks?))/i,
+          why: 'TTL 以 JWT exp 为准 + 刷新单飞必须写死',
+        },
+        {
+          id: 'recovery-path',
+          re: /(恢复码|recovery code)/i,
+          why: '账号找回方式必须出现',
+        },
+        {
+          id: 'isolation-gate',
+          re: /(namespace the existing storage|键名空间|实现隔离|implement isolation)[\s\S]{0,300}(downgrade to single-user|降级为单用户)/i,
+          why: '数据隔离三出口必须同现',
+        },
       ];
       for (const p of products) {
         if (!existsSync(p.path)) {

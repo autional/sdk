@@ -14,6 +14,26 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [Unreleased] core@feb2db8f64f2 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
+
+**内容**（`_core/PROCEDURE.md`，EN/ZH 对称）：
+- 标题、meta description、1.4、About：去掉 multi-user / multiplayer / RBAC，收窄为身份层。
+- 2.2：新增标识符策略、账号找回、注册防护（合并为一条“必须记录”项）。
+- 新增 5.5「Protect your backend」：`/me` 权威校验、JWT `exp`、单飞刷新、禁止用公开 JWKS；原 5.5 构建验证改为 5.6。
+- 1.6：数据隔离从“只读报告”升级为完成门禁（隔离 / 降级单用户 / 停止）。
+- 验收 +3（6 分钟空闲、双标签、伪造 token 401）；边界情况 +2（Preview 回调、revoked 处理）；完成清单 +5。
+- `_core/references/` 新增 `backend-verification.md`、`account-recovery.md`。
+- `_gen/check-skills.mjs` G6 新增 4 条双语 invariant（`/me`、JWT exp + 单飞、找回、隔离门禁），并完成负向测试。
+
+**状态**：未发布。本次只改源码与生成物，未发 CDN / 站点镜像 / npm。
+
+**预算**：主文件单语言 zh 752 / en 754 行（新增 5.5 为必做安全段；1.4/1.5 已压缩）。
+
+**验证**：
+- `build-skills.mjs`：12 files，gates PASS
+- `check-skills.mjs`：6/6 gates PASS
+- 负向测试：4/4 按预期失败
+
 ## [2026-10-31] core@952f0b50f0bc —— 5.2b 增加 CORS 预检（第 5 步）+ 边界表/验收表补跨域项
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称 3 处）：

@@ -1,12 +1,12 @@
 <!-- meta:description:en -->
-Add Autional multi-user identity to an existing app — guided onboarding that turns a single-player app into a multi-user product: OIDC login, accounts, sessions, token management, test accounts and verification. Supports React, Vue, Next.js and Node.
+Add Autional login, sessions and account lifecycle to an existing app: OIDC, token management, server-side request authentication, test accounts and verification. Supports React, Vue, Next.js and Node.
 <!-- /meta:description:en -->
 <!-- meta:description:zh -->
-为现有应用接入 Autional 多用户身份——引导式接入流程，把单机应用变成多人产品：OIDC 登录、账号、会话、Token 管理、测试账号与验证。支持 React、Vue、Next.js 与 Node。
+为现有应用接入 Autional 登录、会话与账号生命周期：OIDC、Token 管理、服务端请求认证、测试账号与验证。支持 React、Vue、Next.js 与 Node。
 <!-- /meta:description:zh -->
 
 <!-- lang:en -->
-# Autional Onboarding — add multi-user identity to your app
+# Autional Onboarding — add login and sessions to your app
 
 > **Region:** `.{{REGION}}` · **Language:** English
 > **Issuer:** {{ISSUER}}
@@ -20,7 +20,7 @@ Add Autional multi-user identity to an existing app — guided onboarding that t
 > **Integrity:** {{SKILL_SHA_URL}}
 <!-- /lang:en -->
 <!-- lang:zh -->
-# Autional 接入 — 为你的应用加上多用户身份
+# Autional 接入 — 为你的应用加上登录与会话
 
 > **Region:** `.{{REGION}}` · **Language:** 中文
 > **Issuer:** {{ISSUER}}
@@ -37,17 +37,19 @@ Add Autional multi-user identity to an existing app — guided onboarding that t
 <!-- lang:en -->
 ## About this skill
 
-Autional gives applications an identity layer. This skill turns a single-player app (or an app with no accounts) into a multi-user product: login, registration, profiles, sessions, token lifecycle.
+Autional gives applications an identity layer. This skill adds an identity boundary to an existing app: who can sign in, how the session is kept, how your server authenticates a request, and how sign-out works.
 
 You are an AI agent executing this procedure inside the user's project. Work in the user's conversation language. Follow every phase in order; each phase ends with a user confirmation gate.
 
 **What the user gets**
 
-- Email + password login (and optional OAuth / SMS / magic-link) powered by Autional OIDC
-- Registration, password reset, profile, device/session management
-- Automatic token refresh with multi-tab sync
+- Email/password or username/password login, plus optional OAuth / SMS / magic link
+- Registration, account recovery, profile, device/session management
+- Automatic token refresh with multi-tab safety
+- Server-side request authentication for your own API
 - Audit trail, CAPTCHA, breach checks, compliance-driven password policy
-- Multiple users on one backend — the multiplayer layer for an AI-generated app
+
+**Non-goals**: business data migration, database/encryption/backup, role/permission models, deployment/UI.
 
 **Boundaries**
 
@@ -57,17 +59,19 @@ You are an AI agent executing this procedure inside the user's project. Work in 
 <!-- lang:zh -->
 ## 关于本 Skill
 
-Autional 为应用提供身份层。本 Skill 把单机应用（或没有账号体系的应用）升级为多人产品：登录、注册、资料、会话、Token 生命周期。
+Autional 为应用提供身份层。本 Skill 为已有应用建立身份边界：谁能登录、会话如何维持、服务端如何认证请求、如何安全退出。
 
 你是 AI agent，在用户的项目里执行本流程。跟随用户的对话语言工作。按 Phase 顺序执行；每个 Phase 结束都要向用户确认。
 
 **用户将获得**
 
-- 邮箱 + 密码登录（可选 OAuth / 短信 / 魔法链接），由 Autional OIDC 支撑
-- 注册、找回密码、个人资料、设备/会话管理
-- Token 自动刷新 + 多 Tab 同步
+- 邮箱密码或用户名密码登录，可选 OAuth / 短信 / 魔法链接
+- 注册、账号找回、资料、设备/会话管理
+- Token 自动刷新 + 多标签页安全
+- 自有 API 的服务端请求认证
 - 审计留痕、CAPTCHA、泄露密码检查、合规驱动的密码策略
-- 一个后端多个用户——给 AI 生成的应用补上多人层
+
+**非目标**：业务数据迁移、数据库/加密/备份、角色权限模型、部署/UI。
 
 **边界**
 
@@ -274,20 +278,15 @@ Replacing hand-rolled auth with Autional:
   manual token refresh → automatic refresh with concurrent de-dup
   no CAPTCHA → progressive PoW
   no audit trail → full event tracking
-  single user → multi-user + RBAC
+  single user → user accounts (+ per-user data isolation, if you keep multi-user)
 
-Impact:
-  New users are created in Autional. Existing users need a one-time link (Phase 5.3).
-  The existing login page is replaced (option-based, Phase 5.2).
-  The app must be able to reach the Autional endpoints above.
+Impact: new users are created in Autional; existing users need a one-time link (5.3); the login page is replaced (5.2); the app must reach the Autional endpoints.
 ```
 
 ### 1.5 Bundle-size impact
 
 ```
-core + framework package adds ≈ 15 KB (≈ 5 KB gzipped).
-First load: +≈ 50 ms (OIDC discovery, cached afterwards). Token refresh only on 401.
-Identical weight to the auth code it replaces — plus security updates you no longer maintain.
+core + framework adds ≈15 KB (≈5 KB gzipped); first load +≈50 ms (OIDC discovery, then cached); refresh only on 401.
 ```
 
 ### 1.6 App-data isolation check (read-only)
@@ -318,8 +317,10 @@ If NOT isolated, present options — **do not touch the data layer on your own; 
 ```
 [A] Namespace the existing storage per user id (small; local-first apps)
 [B] Move app data behind a backend with per-user scoping (larger; enables multi-device)
-[C] Keep as-is for now (e.g. single-machine demo) — record the finding instead
+[C] Downgrade to single-user — disable registration/invites and stop claiming multi-user
 ```
+
+**Completion condition.** Multi-user is "done" only when data is isolated per user, or the product is explicitly downgraded to single-user (recorded in `AUTIONAL_CHANGES.md`). No silent "keep as-is".
 
 **Account-switch guard (local-first apps).** A session does not always end with a logout — token expiry, a platform-side kill, or a cleared cookie ends it too. If local data is only cleared at logout, the previous account's residue survives into the next account: it merges into that account's view, and the next sync pushes it into their cloud state. Guard the switch: persist the last signed-in user id; when a session starts, compare it with the current user id — mismatch (including "no marker yet") → clear the local user data and full-reload BEFORE any pull / merge / push; same id → leave data untouched. Reuse the logout's clear list so the two paths cannot drift apart.
 
@@ -376,20 +377,15 @@ Record the finding and the user's decision in `AUTIONAL_CHANGES.md`. An approved
   手动刷新 Token → 自动刷新 + 并发去重
   无 CAPTCHA → 渐进式 PoW
   无审计 → 全链路事件追踪
-  单用户 → 多用户 + RBAC
+  单用户 → 用户账号（若保留多用户，再加按用户隔离数据）
 
-影响：
-  新用户在 Autional 创建；存量用户做一次性关联（Phase 5.3）。
-  现有登录页会被替换（选项制，Phase 5.2）。
-  应用必须能访问上方 Autional 端点。
+影响：新用户在 Autional 创建；存量用户做一次性关联（5.3）；登录页会被替换（5.2）；应用必须能访问上方端点。
 ```
 
 ### 1.5 体积影响
 
 ```
-core + 框架包 增加约 15 KB（gzip 后约 5 KB）。
-首屏 +约 50 ms（OIDC discovery，之后走缓存）。Token 刷新仅 401 时触发。
-与被替换掉的认证代码等重——还免去了后续安全维护。
+core + 框架包 增加约 15 KB（gzip 后约 5 KB）；首屏 +约 50 ms（OIDC discovery，之后走缓存）；刷新仅 401 时触发。
 ```
 
 ### 1.6 应用数据隔离检查（只读）
@@ -419,8 +415,10 @@ core + 框架包 增加约 15 KB（gzip 后约 5 KB）。
 ```
 [A] 现有存储按用户 id 做键名空间（小改；本地优先应用）
 [B] 业务数据迁到带用户维度的后端（较大；可跨设备）
-[C] 暂不处理（如单机演示）——把结论记录下来即可
+[C] 降级为单用户——关闭注册/邀请，产品不再宣称多用户
 ```
+
+**完成条件。** 满足其一：数据已按用户隔离；或产品明确降级为单用户并记录在 `AUTIONAL_CHANGES.md`。不允许“静默保持现状”。
 
 **换号守卫（本地优先应用）。** 会话不一定以登出收场——Token 过期、平台侧终结、清掉 Cookie 同样终结会话。若本地数据只在登出时清理，上一账号的残留会活到下一账号：并入其视图，并在下次同步时推进对方的云端状态。守好换号边界：持久化「上次登录的 userId」标记；会话开始时与当前用户 id 比对——不一致（含「尚无标记」）→ 先清本机用户数据，再做整页重载，之后才拉取 / 合并 / 推送；一致 → 数据不动。清理清单与登出共用，防两处漂移。
 
@@ -445,6 +443,8 @@ Match the user's scenario against the full matrix in `{{REFS_BASE}}/compliance-m
 [D] Custom
 ```
 
+**Decisions to record**: identifier (username/password default; email/phone optional) · recovery (recovery code default; admin reset fallback) · registration protection (CAPTCHA + rate limit; email verification is not anti-bot). Option matrix: `{{REFS_BASE}}/account-recovery.md`.
+
 ### 2.3 Login methods
 
 Recommend from the user's audience: password (default), magic link, OAuth, SMS code. Enterprise → password + SSO; consumer → password + OAuth + SMS.
@@ -468,6 +468,8 @@ After the auth policy is written, re-open the login page and confirm the intende
 [C] 高安全（强制 MFA、泄露密码检查）
 [D] 自定义
 ```
+
+**必须记录**：标识符（默认用户名+密码；邮箱/手机可选）· 找回（默认恢复码；管理员重置兜底）· 注册防护（CAPTCHA + 限流；邮箱验证不是防机器人）。选项矩阵：`{{REFS_BASE}}/account-recovery.md`。
 
 ### 2.3 登录方式
 
@@ -708,6 +710,8 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 
 > **API surface note:** the exports above are this procedure's target API surface. If the installed package version exports different names, read the package's `.d.ts`/README and wire the equivalent provider/hook/guard — keep the same structure (provider wraps the app, guard protects routes). Vue: `createAutional(config)` + install; Next.js: provider in the app root + middleware for protected routes.
 
+> The guard above protects the UI only. If the app stores user data on a server, every API request must also be authenticated (see 5.5).
+
 ### 5.2 Login page
 
 Detect the existing login page, then:
@@ -860,6 +864,8 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 ```
 
 > **API 面注记：**上方导出名是本流程的目标 API 面。若安装版本的实际导出名不同，读包内 `.d.ts`/README，接线等价实现——保持同一结构（Provider 包应用、守卫保护路由）。Vue：`createAutional(config)` + install；Next.js：根组件放 Provider + middleware 保护路由。
+
+> 上面的守卫只保护界面。若应用在服务端保存用户数据，每个 API 请求也必须做认证（见 5.5）。
 
 ### 5.2 登录页
 
@@ -1016,7 +1022,13 @@ After login, users manage their own account:
 
 > Sensitive operations (`deleteAccount()`) run step-up re-authentication internally (`X-StepUp-Token`; call `reauthenticate()` directly for custom flows); these endpoints currently support `plain` / `hash` transmission modes only.
 
-### 5.5 Build verification (mandatory)
+### 5.5 Protect your backend (required when the server stores user data)
+
+Front-end guards are not a boundary. If the server stores user data, authenticate every request: reject expired JWT `exp`, validate with `GET {{API_URL}}/identity/api/v1/auth/me` (cache 30–60s), filter by `data.id`, and refresh single-flight (Web Lock) on 401. Full contract: `{{REFS_BASE}}/backend-verification.md`.
+
+Do **not** use the public JWKS for access tokens; `{{NPM_SCOPE}}/node` only decodes.
+
+### 5.6 Build verification (mandatory)
 
 ```
 npm run build (or the project's build command)
@@ -1069,7 +1081,13 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 
 > 敏感操作（`deleteAccount()`）内部自动完成 step-up 重认证（`X-StepUp-Token`；自定义流程可直接调 `reauthenticate()`）；此类端点当前仅支持 `plain` / `hash` 传输模式。
 
-### 5.5 构建验证（强制）
+### 5.5 保护你的后端（服务端保存用户数据时必做）
+
+前端守卫不是边界。服务端保存用户数据时，每个请求都要认证：拒绝过期的 JWT `exp`，用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验（缓存 30–60 秒），按 `data.id` 过滤，401 时单飞刷新（Web Lock）。完整契约：`{{REFS_BASE}}/backend-verification.md`。
+
+**不要**用公开 JWKS 验 access token；`{{NPM_SCOPE}}/node` 只解码。
+
+### 5.6 构建验证（强制）
 
 ```
 npm run build（或项目等效构建命令）
@@ -1316,8 +1334,11 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | CAPTCHA | 3 failures → challenge → retry | integration test |
 | SSO login | authorize returns `302` pointing back to the callback, **not** `invalid_request` | preflight in 5.2b step 4 |
 | SSO token exchange over CORS | preflight returns `204` with `Access-Control-Allow-Origin` = the app origin | preflight in 5.2b step 5 |
+| Silent refresh | idle 6 minutes → next edit still saves | manual / integration |
+| Multi-tab | two tabs editing at once → no session loss | manual |
+| Forged token | tampered / unsigned token → 401 (server-backed apps only) | integration |
 
-**Security**: password never in URL (hash mode) · tokens not in plaintext localStorage · logout ends the OP session, not just the local copy (5.2c) · an account switch shows no previous-account data — local cleanup runs even when the session ended without a logout (1.6 guard) · refresh-replay detected · CAPTCHA slows brute force.
+**Security**: password never in URL (hash mode) · tokens are stored in localStorage as plain JSON by default — say so, and mitigate with CSP + short TTL + rotation; use sessionStorage or a BFF (`useCookie`) if you need a stricter boundary · logout ends the OP session, not just the local copy (5.2c) · an account switch shows no previous-account data — local cleanup runs even when the session ended without a logout (1.6 guard) · refresh-replay detected · CAPTCHA slows brute force.
 
 **Config**: .env.local gitignored · password shown once · AUTIONAL_SETUP.md generated · summary contains everything.
 <!-- /lang:en -->
@@ -1336,8 +1357,11 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | CAPTCHA | 3 次失败 → 挑战 → 重试 | 集成测试 |
 | SSO 登录 | authorize 返回 `302` 且回指回调，**不是** `invalid_request` | 5.2b 第 4 步预检 |
 | SSO 换票跨域 | 预检返回 `204` 且 `Access-Control-Allow-Origin` = 应用源 | 5.2b 第 5 步预检 |
+| 静默刷新 | 空闲 6 分钟后继续编辑仍能保存 | 手工 / 集成 |
+| 多标签页 | 两个标签页同时编辑不失效 | 手工 |
+| 伪造 Token | 改 payload / 无签名 → 401（仅限有服务端 API 的应用） | 集成 |
 
-**安全**：密码不走 URL（hash 模式）· Token 不明文落 localStorage · 登出终结 OP 会话（非仅清本域——5.2c）· 换号不见前账号残留（不经登出同样清理——1.6 守卫）· 刷新重放可检测 · CAPTCHA 抗爆破。
+**安全**：密码不走 URL（hash 模式）· Token 默认以明文 JSON 存 localStorage——要写明，并用 CSP + 短 TTL + 轮换缓解；需要更严边界时改用 sessionStorage 或 BFF（`useCookie`）· 登出终结 OP 会话（非仅清本域——5.2c）· 换号不见前账号残留（不经登出同样清理——1.6 守卫）· 刷新重放可检测 · CAPTCHA 抗爆破。
 
 **配置**：.env.local 已 gitignore · 密码只显示一次 · AUTIONAL_SETUP.md 已生成 · 摘要信息完整。
 <!-- /lang:zh -->
@@ -1359,6 +1383,8 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Tenant portal sign-in shows "This organization's sign-in is not configured" | the tenant's portal OAuth client was never supplied by the platform's auto-provisioning chain (tenant creation → client provisioning; tenants created before the fix, or a provisioning failure). Verify: `GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` present (new tenants: within seconds). If absent → report to platform support for backfill; do not substitute an unrelated client |
 | Browser console: `No 'Access-Control-Allow-Origin' header is present` | three checks in order: ① the origin is on **this client's** `cors_origins` — byte-identical `https://host[:port]`, no path, no trailing slash; ② registered just now → the API refreshes its registered-origin set every **≤ 60 s**, wait a minute and retry; ③ re-run the 5.2b step 5 preflight. Still no `Access-Control-Allow-Origin` → report to platform support with the Origin, the `client_id` and a timestamp |
 | Consent page: "redirect URI is not registered" | the `client_id` is the tenant **portal** client (`Default Client for <slug>`) or the callback is not byte-identical. Verify by behaviour: the same client with a portal callback returns `302 login_required`, while your callback returns `400 invalid_request`; `GET /oauth/api/v1/oauth/client/{id}` returning `kind=portal` (or a name starting with `Default Client for`) corroborates | register a dedicated app client (5.2b) and use its `client_id` — never add your callback to the portal client |
+| Preview / temporary domain: SSO returns "redirect URI is not registered" | the callback whitelist only has the production origin. Use password login on preview, or register the temporary origin explicitly; do not weaken the production whitelist |
+| `refresh token revoked` | SDK ApiClient: 401 triggers `clear()` + `onForceLogout()`; raw fetch + `getAccessToken()`: refresh failure returns null — the app must prompt and clear the session itself |
 
 ### Existing tenant (skip Phase 3)
 
@@ -1402,6 +1428,8 @@ Note: users already registered in Autional are not migrated back into the local 
 | 租户门户登录显示「This organization's sign-in is not configured」 | 租户的门户 OAuth 客户端未被平台自动供给链落位（创建租户 → 供给客户端；修复前建的老租户或供给故障）。核验：`GET auth.autional.{{REGION}}/bff/identity/api/v1/public/auth-config/by-slug/{slug}` → `oauth_client_id` 存在（新租户数秒内落位）。缺失 → 上报平台支持补供给；勿用无关客户端顶替 |
 | 浏览器报 `No 'Access-Control-Allow-Origin' header is present` | 按序三查：① 该源是否登记在**这个客户端**的 `cors_origins`——逐字 `https://host[:port]`，无路径、无尾斜杠；② 刚登记 → API 侧每 **≤60 秒**刷新一次已登记源集，等一分钟重试；③ 重跑 5.2b 第 5 步预检。仍无 `Access-Control-Allow-Origin` → 带 Origin、`client_id`、时间上报平台支持 |
 | 同意页「回调地址未在应用中登记」 | `client_id` 用的是租户**门户**客户端（`Default Client for <slug>`），或回调不是逐字一致。行为核验：同一 client 换门户回调得 `302 login_required`，你的回调得 `400 invalid_request`；`GET /oauth/api/v1/oauth/client/{id}` 返回 `kind=portal`（或名称以 `Default Client for` 开头）可佐证 | 按 5.2b 新建独立应用客户端并用其 `client_id`——**绝不**把自己的回调加进门户客户端 |
+| Preview / 临时域名 SSO 报「回调地址未在应用中登记」 | 回调白名单只登记了生产源。Preview 改用密码登录，或显式登记临时源；不要放宽生产白名单 |
+| `refresh token revoked` | 走 SDK ApiClient：401 会 `clear()` + `onForceLogout()`；走自建 fetch + `getAccessToken()`：刷新失败返回 null，应用需自己提示并清理会话 |
 
 ### 已有租户（跳过 Phase 3）
 
@@ -1488,6 +1516,11 @@ Artifacts:
   ☐ AUTIONAL_SETUP.md exists
   ☐ admin password flagged as "shown once"
   ☐ AUTIONAL_CHANGES.md exists
+  ☐ recovery path answered (code / optional email / admin / none recorded)
+  ☐ identifier strategy recorded (username / email / phone)
+  ☐ data-isolation gate answered (isolated / downgraded / stopped)
+  ☐ backend request authentication implemented (if the server stores user data)
+  ☐ forged-token test passed (server-backed apps)
   ☐ OAuth client preflight returns 302 → callback (not "redirect_uri not registered")
   ☐ npm run dev boots the app
 
@@ -1526,6 +1559,11 @@ Phase：
   ☐ AUTIONAL_SETUP.md 存在
   ☐ 管理员密码已提醒「只显示一次」
   ☐ AUTIONAL_CHANGES.md 存在
+  ☐ 找回方式已回答（恢复码 / 可选邮箱 / 管理员 / 不支持并记录）
+  ☐ 标识符策略已记录（用户名 / 邮箱 / 手机号）
+  ☐ 数据隔离门禁已回答（已隔离 / 降级单用户 / 停止）
+  ☐ 服务端请求认证已实现（服务端保存用户数据时）
+  ☐ 伪造 Token 测试通过（有服务端 API 的应用）
   ☐ OAuth 客户端预检返回 302 且回指回调（非「redirect_uri not registered」）
   ☐ npm run dev 可启动
 

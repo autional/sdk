@@ -1,4 +1,4 @@
-<!-- generated: core@feb2db8f64f2 · region: cn · lang: zh — do not edit directly -->
+<!-- generated: core@d7304ea45499 · region: cn · lang: zh — do not edit directly -->
 
 # 服务端请求认证
 
@@ -13,13 +13,17 @@
 3. 用同一 token 调 `GET https://api.autional.cn/bff/identity/api/v1/auth/me`。
 4. 正结果缓存 30–60 秒（token 哈希 → user id）。
 5. 用 `data.id` 作为每条查询的 owner 条件。
-6. 401 时刷新并重试一次；仍失败则登出。
+6. 401/403 时刷新并重试一次；仍失败则登出。403 可能是缺少严格 claim（`principal_type` / `entry_plane`）。
 
 ## 为什么不能用 JWKS
 
 Access token 没有 `kid`，签名密钥也不在
 `https://api.autional.cn/.well-known/jwks.json`（那个密钥服务的是 id_token）。
 用 JWKS 验真实 access token 会失败。
+RS256 密钥分发尚未上线；在此之前，服务端可用路径是 `/me`、`userinfo` 或 `introspect`。
+
+不要写死 `iss`：不同流程会变（SAML 用 SP EntityID）。
+用 `/me` 或 `userinfo` 做校验。
 
 ## Next.js（App Router）
 
@@ -64,6 +68,16 @@ app.use(async (req, res, next) => {
   }
 });
 ```
+
+## Node SDK
+
+使用 `@autional/node` 时，中间件默认会校验：
+
+- `verify: 'userinfo'`（默认）——调 OAuth userinfo；
+- `verify: 'introspect'`——需要 `clientId` / `clientSecret`，可拿到 scope；
+- `verify: 'decode-only'`——仅本地调试；注入的 user 会标记 `verified: false`。
+
+保护路由不要开 `decode-only`。
 
 ## `useCookie` / BFF
 

@@ -1,4 +1,4 @@
-<!-- generated: core@feb2db8f64f2 · region: com · lang: en — do not edit directly -->
+<!-- generated: core@d7304ea45499 · region: com · lang: en — do not edit directly -->
 
 # Backend request verification
 
@@ -13,13 +13,18 @@
 3. Call `GET https://api.autional.com/bff/identity/api/v1/auth/me` with the same token.
 4. Cache positive results for 30–60s (token hash → user id).
 5. Use `data.id` as the owner key in every query.
-6. On 401: refresh once and retry; still failing → sign out.
+6. On 401/403: refresh once and retry; still failing → sign out. A 403 can mean missing strict claims (`principal_type` / `entry_plane`).
 
 ## Why not JWKS
 
 Access tokens have no `kid`, and their signing key is not the one published at
 `https://api.autional.com/.well-known/jwks.json` (that key serves id_tokens).
 JWKS verification therefore fails for real access tokens.
+RS256 key distribution is still pending; until it ships, the supported server-side
+paths are `/me`, `userinfo`, or `introspect`.
+
+Do not hard-code `iss`: it varies by flow (SAML uses the SP EntityID).
+Validate through `/me` or `userinfo` instead.
 
 ## Next.js (App Router)
 
@@ -64,6 +69,16 @@ app.use(async (req, res, next) => {
   }
 });
 ```
+
+## Node SDK
+
+If you use `@autional/node`, the middleware verifies by default:
+
+- `verify: 'userinfo'` (default) — calls the OAuth userinfo endpoint;
+- `verify: 'introspect'` — requires `clientId` / `clientSecret`, returns scope;
+- `verify: 'decode-only'` — local debugging only; the injected user is marked `verified: false`.
+
+Do not enable `decode-only` on protected routes.
 
 ## `useCookie` / BFF
 

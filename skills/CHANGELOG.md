@@ -14,7 +14,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
-## [Unreleased] core@feb2db8f64f2 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
+## [Unreleased] core@d7304ea45499 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称）：
 - 标题、meta description、1.4、About：去掉 multi-user / multiplayer / RBAC，收窄为身份层。
@@ -24,10 +24,15 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 - 验收 +3（6 分钟空闲、双标签、伪造 token 401）；边界情况 +2（Preview 回调、revoked 处理）；完成清单 +5。
 - `_core/references/` 新增 `backend-verification.md`、`account-recovery.md`。
 - `_gen/check-skills.mjs` G6 新增 4 条双语 invariant（`/me`、JWT exp + 单飞、找回、隔离门禁），并完成负向测试。
+- **跟进 token trust boundary 发布（2026-11-05）**：
+  - `@autional/node` 已改为默认服务端校验（userinfo；可选 introspect；decode-only 仅调试），5.5 措辞同步修正。
+  - 认证失败范围从 401 扩到 401/403（严格 claim 缺失会 403）。
+  - backend-verification 补充：RS256 密钥分发未上线、不要写死 `iss`（SAML 用 SP EntityID）。
+  - 边界情况补充：`.com` discovery 的 token_endpoint 指向 `.cn`、authorization_endpoint 浏览器不可用（2026-10-30 已知问题）。
 
 **状态**：未发布。本次只改源码与生成物，未发 CDN / 站点镜像 / npm。
 
-**预算**：主文件单语言 zh 752 / en 754 行（新增 5.5 为必做安全段；1.4/1.5 已压缩）。
+**预算**：主文件单语言 zh 753 / en 755 行（新增 5.5 为必做安全段；1.4/1.5 已压缩）。
 
 **验证**：
 - `build-skills.mjs`：12 files，gates PASS

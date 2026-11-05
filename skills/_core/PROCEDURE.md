@@ -1024,9 +1024,9 @@ After login, users manage their own account:
 
 ### 5.5 Protect your backend (required when the server stores user data)
 
-Front-end guards are not a boundary. If the server stores user data, authenticate every request: reject expired JWT `exp`, validate with `GET {{API_URL}}/identity/api/v1/auth/me` (cache 30–60s), filter by `data.id`, and refresh single-flight (Web Lock) on 401. Full contract: `{{REFS_BASE}}/backend-verification.md`.
+Front-end guards are not a boundary. If the server stores user data, authenticate every request: reject expired JWT `exp`, validate with `GET {{API_URL}}/identity/api/v1/auth/me` (cache 30–60s), filter by `data.id`, and on 401/403 refresh single-flight (Web Lock). Full contract: `{{REFS_BASE}}/backend-verification.md`.
 
-Do **not** use the public JWKS for access tokens; `{{NPM_SCOPE}}/node` only decodes.
+Do **not** use the public JWKS for access tokens. `{{NPM_SCOPE}}/node` verifies by default (`verify: 'userinfo'`; `introspect` optional); `decode-only` is for local debugging only.
 
 ### 5.6 Build verification (mandatory)
 
@@ -1083,9 +1083,9 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 
 ### 5.5 保护你的后端（服务端保存用户数据时必做）
 
-前端守卫不是边界。服务端保存用户数据时，每个请求都要认证：拒绝过期的 JWT `exp`，用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验（缓存 30–60 秒），按 `data.id` 过滤，401 时单飞刷新（Web Lock）。完整契约：`{{REFS_BASE}}/backend-verification.md`。
+前端守卫不是边界。服务端保存用户数据时，每个请求都要认证：拒绝过期的 JWT `exp`，用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验（缓存 30–60 秒），按 `data.id` 过滤，401/403 时单飞刷新（Web Lock）。完整契约：`{{REFS_BASE}}/backend-verification.md`。
 
-**不要**用公开 JWKS 验 access token；`{{NPM_SCOPE}}/node` 只解码。
+**不要**用公开 JWKS 验 access token。`{{NPM_SCOPE}}/node` 默认会校验（`verify: 'userinfo'`，可选 `introspect`）；`decode-only` 仅供本地调试。
 
 ### 5.6 构建验证（强制）
 
@@ -1385,6 +1385,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | Consent page: "redirect URI is not registered" | the `client_id` is the tenant **portal** client (`Default Client for <slug>`) or the callback is not byte-identical. Verify by behaviour: the same client with a portal callback returns `302 login_required`, while your callback returns `400 invalid_request`; `GET /oauth/api/v1/oauth/client/{id}` returning `kind=portal` (or a name starting with `Default Client for`) corroborates | register a dedicated app client (5.2b) and use its `client_id` — never add your callback to the portal client |
 | Preview / temporary domain: SSO returns "redirect URI is not registered" | the callback whitelist only has the production origin. Use password login on preview, or register the temporary origin explicitly; do not weaken the production whitelist |
 | `refresh token revoked` | SDK ApiClient: 401 triggers `clear()` + `onForceLogout()`; raw fetch + `getAccessToken()`: refresh failure returns null — the app must prompt and clear the session itself |
+| `.com` discovery returns a `.cn` token endpoint / an authorization endpoint browsers cannot use | known issue (2026-10-30): international clients may hit `login_required` or `iss` mismatch. Until fixed, configure the `.cn` endpoints explicitly or exchange tokens in a BFF |
 
 ### Existing tenant (skip Phase 3)
 
@@ -1430,6 +1431,7 @@ Note: users already registered in Autional are not migrated back into the local 
 | 同意页「回调地址未在应用中登记」 | `client_id` 用的是租户**门户**客户端（`Default Client for <slug>`），或回调不是逐字一致。行为核验：同一 client 换门户回调得 `302 login_required`，你的回调得 `400 invalid_request`；`GET /oauth/api/v1/oauth/client/{id}` 返回 `kind=portal`（或名称以 `Default Client for` 开头）可佐证 | 按 5.2b 新建独立应用客户端并用其 `client_id`——**绝不**把自己的回调加进门户客户端 |
 | Preview / 临时域名 SSO 报「回调地址未在应用中登记」 | 回调白名单只登记了生产源。Preview 改用密码登录，或显式登记临时源；不要放宽生产白名单 |
 | `refresh token revoked` | 走 SDK ApiClient：401 会 `clear()` + `onForceLogout()`；走自建 fetch + `getAccessToken()`：刷新失败返回 null，应用需自己提示并清理会话 |
+| `.com` discovery 的 token_endpoint 指向 `.cn`、authorization_endpoint 浏览器不可用 | 已知问题（2026-10-30）：国际接入可能 `login_required` 或 `iss` 校验失败。修复前显式配置 `.cn` 端点，或在 BFF 内换票 |
 
 ### 已有租户（跳过 Phase 3）
 

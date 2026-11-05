@@ -14,6 +14,17 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [Unreleased] core@edbbc165e043 —— 账号生命周期指南（加入 / 绑定 / TOTP）
+
+**内容**（`_core/PROCEDURE.md` + `_core/references/`，EN/ZH 对称）：
+- 5.2b：首次 SSO 登录显示「加入 <应用>？」确认（默认勾选；拒绝不建账号；按 `(issuer, subject)` 绑定，不按邮箱）。
+- 2.2：TOTP 定位为第二因素，不是找回通道；启用前必须有恢复码；SSO 用户在 IdP 找回。
+- 新增 `references/account-lifecycle.md`：加入流程、显式绑定、数据模型、TOTP 规则、决策记录。
+
+**影响**：下次发布版本目录为 **7 文件**（新增 `account-lifecycle.md`）。
+
+**状态**：未发布。
+
 ## [2026-11-05] core@1ad71c67fc69 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称）：

@@ -445,6 +445,8 @@ Match the user's scenario against the full matrix in `{{REFS_BASE}}/compliance-m
 
 **Decisions to record**: identifier (username/password default; email/phone optional) · recovery (recovery code default; admin reset fallback) · registration protection (CAPTCHA + rate limit; email verification is not anti-bot). Option matrix: `{{REFS_BASE}}/account-recovery.md`.
 
+**TOTP is a second factor, not a recovery channel.** Enable it only after a recovery code exists; SSO users recover at the IdP.
+
 ### 2.3 Login methods
 
 Recommend from the user's audience: password (default), magic link, OAuth, SMS code. Enterprise → password + SSO; consumer → password + OAuth + SMS.
@@ -470,6 +472,8 @@ After the auth policy is written, re-open the login page and confirm the intende
 ```
 
 **必须记录**：标识符（默认用户名+密码；邮箱/手机可选）· 找回（默认恢复码；管理员重置兜底）· 注册防护（CAPTCHA + 限流；邮箱验证不是防机器人）。选项矩阵：`{{REFS_BASE}}/account-recovery.md`。
+
+**TOTP 是第二因素，不是找回通道。** 先有恢复码再启用；SSO 用户在 IdP 找回。
 
 ### 2.3 登录方式
 
@@ -770,6 +774,8 @@ The app shows one "Continue with Autional" button; the login form and all social
 
 Social providers (Google / WeChat / …) are configured once on the Autional side; all apps share the same authorize entry.
 
+**First login — optional join confirmation.** If the app creates its own account on first SSO login, show a one-time "Join <app>?" confirmation (default checked). Decline → do not create an account; keep the IdP session when possible. Link by `(issuer, subject)`, never by email. Details: `{{REFS_BASE}}/account-lifecycle.md`.
+
 ### 5.2c · Logout — end the SSO session, not just the local copy
 
 A local-only logout is a half logout. Clearing the app's own tokens leaves the Autional session alive: the next "Continue with Autional" click signs the same user straight back in — and switching accounts takes an incognito window. OIDC standardizes the real thing as RP-Initiated Logout; do not invent a private logout endpoint. The flow is two steps, in this order:
@@ -924,6 +930,8 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
    预检不过就是硬停：浏览器会拦掉换票，构建再绿，首次真实登录也会失败。换票端点的 `/bff/oauth/...` 形态是同一个 CORS 判定。
 
 社交登录（Google / 微信等）在 Autional 侧一次配置；所有应用共用同一个授权入口。
+
+**首次登录——可选的加入确认。** 若应用在首次 SSO 登录时创建自己的账号，显示一次「加入 <应用>？」确认（默认勾选）。拒绝 → 不创建账号；尽量保留 IdP 会话。按 `(issuer, subject)` 绑定，**不要按邮箱**。细节：`{{REFS_BASE}}/account-lifecycle.md`。
 
 ### 5.2c · 登出——终结 SSO 会话，而非只清本域
 

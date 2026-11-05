@@ -597,6 +597,8 @@ npm install {{NPM_SCOPE}}/core {{NPM_SCOPE}}/node {{NPM_SCOPE}}/api-identity
 ```
 
 > `{{NPM_SCOPE}}/core` must be **>= 0.3.8**. Versions 0.3.0–0.3.7 shipped a wrong `createTrialTenant()` path (public trial registration answered 401/`40000502` from the gateway) and are deprecated on npm. Verify with `npm ls {{NPM_SCOPE}}/core`; upgrade with `npm install {{NPM_SCOPE}}/core@^0.3.8`.
+
+> `{{NPM_SCOPE}}/node` must be **>= 0.4.0** — earlier versions only decoded tokens; 0.4.0 verifies server-side by default.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 4 · 依赖安装
@@ -618,6 +620,8 @@ npm install {{NPM_SCOPE}}/core {{NPM_SCOPE}}/node {{NPM_SCOPE}}/api-identity
 ```
 
 > `{{NPM_SCOPE}}/core` 必须 **>= 0.3.8**。0.3.0–0.3.7 的 `createTrialTenant()` 路径写错（公开试用注册会被网关挡成 401/`40000502`），已在 npm 标记弃用。用 `npm ls {{NPM_SCOPE}}/core` 核对；升级：`npm install {{NPM_SCOPE}}/core@^0.3.8`。
+
+> `{{NPM_SCOPE}}/node` 必须 **>= 0.4.0**——更早版本只解码；0.4.0 默认做服务端校验。
 <!-- /lang:zh -->
 
 <!-- region:cn -->
@@ -1048,7 +1052,7 @@ A front-end guard is not a boundary. If the server stores user data, authenticat
 1. Read `Authorization: Bearer <token>`; reject expired JWT `exp`.
 2. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`).
 3. Owner key: the app's own user id (linked via `external_id`), or `data.id` if there is no user table. Never use email.
-4. Invalid/expired → 401 · `entry_plane`/claims mismatch → 403, do not refresh · 5xx → 503.
+4. Invalid/expired → 401 · 403 = claims / `entry_plane` / scope / authorization, do not refresh · 5xx → 503.
 5. Cache positive results ≤60s; clear the cache on logout/delete.
 
 **Client**: on 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
@@ -1118,7 +1122,7 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 1. 读取 `Authorization: Bearer <token>`；JWT `exp` 过期直接拒绝。
 2. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）。
 3. owner key：应用自己的 user id（经 `external_id` 关联），没有用户表时用 `data.id`。**不要用邮箱**。
-4. 无效/过期 → 401 · `entry_plane`/claims 不匹配 → 403，不刷新 · 5xx → 503。
+4. 无效/过期 → 401 · 403 = claims / `entry_plane` / scope / 授权，不刷新 · 5xx → 503。
 5. 正结果缓存 ≤60 秒；登出/删号时清缓存。
 
 **客户端**：401 时刷新一次（单飞 + Web Lock）并重试；403 不重试。

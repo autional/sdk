@@ -52,11 +52,11 @@ On 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
 Access tokens have no `kid`, and their signing key is not the one published at
 `{{ISSUER}}/.well-known/jwks.json` (that key serves id_tokens).
 JWKS verification therefore fails for real access tokens.
-RS256 key distribution is still pending; until it ships, the supported server-side
-paths are `/me`, `userinfo`, or `introspect`.
+RS256 signing is live (2026-11-05), but kid/JWKS distribution for access tokens is still pending;
+until it ships, the supported server-side paths are `/me`, `userinfo`, or `introspect`.
 
-Do not hard-code `iss`: it varies by flow (SAML uses the SP EntityID).
-Validate through `/me` or `userinfo` instead.
+Do not hard-code `iss`: it can vary by region/flow (SAML now unifies to identity-service,
+2026-11-05). Validate through `/me` or `userinfo` instead of pinning it.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## 为什么不能用 JWKS
@@ -64,10 +64,11 @@ Validate through `/me` or `userinfo` instead.
 Access token 没有 `kid`，签名密钥也不在
 `{{ISSUER}}/.well-known/jwks.json`（那个密钥服务的是 id_token）。
 用 JWKS 验真实 access token 会失败。
-RS256 密钥分发尚未上线；在此之前，服务端可用路径是 `/me`、`userinfo` 或 `introspect`。
+RS256 签发已于 2026-11-05 上线，但 access token 的 kid/JWKS 分发仍未上线；
+在此之前，服务端可用路径是 `/me`、`userinfo` 或 `introspect`。
 
-不要写死 `iss`：不同流程会变（SAML 用 SP EntityID）。
-用 `/me` 或 `userinfo` 做校验。
+不要写死 `iss`：它会随区域/流程变化（SAML 已于 2026-11-05 统一到 identity-service）。
+用 `/me` 或 `userinfo` 做校验，不要 pin 死。
 <!-- /lang:zh -->
 
 <!-- lang:en -->

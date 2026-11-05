@@ -43,6 +43,20 @@
 | optional email | yes (unverified) | no recovery | only a hint, not proof |
 | admin reset | yes | requires operator | document the process |
 | none | yes | account unrecoverable | must be recorded in AUTIONAL_SETUP.md |
+
+Limits: recovery codes are single-use (10 per batch; 5 attempts/hour); email links expire in 15–30 minutes; admin resets must be audited.
+
+## Decision → implementation
+
+| Decision | Where to apply | How to verify |
+|---|---|---|
+| Identifier | tenant auth policy / `login_methods` | open the login page; the chosen field renders |
+| Recovery code | app-side table + settings page | generate once, redeem once, reject reuse |
+| Optional email | profile + verification flow | send a test email; only verified emails can reset |
+| Admin reset | operator runbook | one test account reset, audited |
+| Registration protection | CAPTCHA + rate limit | 3 failures → challenge; per-IP limit trips |
+
+Exact portal field names vary by region and version; verify behaviour instead of trusting a 200.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## 找回方式
@@ -53,6 +67,20 @@
 | 可选邮箱 | 是（未验证） | 无法找回 | 只是线索，不是证明 |
 | 管理员重置 | 是 | 需要人工 | 把流程写进文档 |
 | 不支持找回 | 是 | 账号不可恢复 | 必须记录在 AUTIONAL_SETUP.md |
+
+限制：恢复码一次性（一批 10 个；每小时最多尝试 5 次）；邮件链接 15–30 分钟过期；管理员重置必须审计。
+
+## 决策 → 落地
+
+| 决策 | 落地位置 | 怎么验证 |
+|---|---|---|
+| 标识符 | 租户认证策略 / `login_methods` | 打开登录页，目标输入项已渲染 |
+| 恢复码 | 应用侧表 + 设置页 | 生成一次、兑换一次、拒绝复用 |
+| 可选邮箱 | 资料页 + 验证流程 | 发一封测试邮件；只有已验证邮箱能重置 |
+| 管理员重置 | 运维手册 | 重置一个测试账号并留审计 |
+| 注册防护 | CAPTCHA + 限流 | 3 次失败出挑战；同 IP 限流生效 |
+
+门户字段名随区域与版本变化；用行为验证，不要只信 200。
 <!-- /lang:zh -->
 
 <!-- lang:en -->

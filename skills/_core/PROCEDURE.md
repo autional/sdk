@@ -1024,9 +1024,20 @@ After login, users manage their own account:
 
 ### 5.5 Protect your backend (required when the server stores user data)
 
-Front-end guards are not a boundary. If the server stores user data, authenticate every request: reject expired JWT `exp`, validate with `GET {{API_URL}}/identity/api/v1/auth/me` (cache 30–60s), filter by `data.id`, and on 401/403 refresh single-flight (Web Lock). Full contract: `{{REFS_BASE}}/backend-verification.md`.
+A front-end guard is not a boundary. If the server stores user data, authenticate every request.
 
-Do **not** use the public JWKS for access tokens. `{{NPM_SCOPE}}/node` verifies by default (`verify: 'userinfo'`; `introspect` optional); `decode-only` is for local debugging only.
+**Server**:
+1. Read `Authorization: Bearer <token>`; reject expired JWT `exp`.
+2. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`).
+3. Owner key: the app's own user id (linked via `external_id`), or `data.id` if there is no user table. Never use email.
+4. Invalid/expired → 401 · `entry_plane`/claims mismatch → 403, do not refresh · 5xx → 503.
+5. Cache positive results ≤60s; clear the cache on logout/delete.
+
+**Client**: on 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
+
+Do **not** use the public JWKS for access tokens. `{{NPM_SCOPE}}/node` verifies by default (`userinfo`; `introspect` optional); `decode-only` is debug only.
+
+Full contract: `{{REFS_BASE}}/backend-verification.md`.
 
 ### 5.6 Build verification (mandatory)
 
@@ -1083,9 +1094,20 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 
 ### 5.5 保护你的后端（服务端保存用户数据时必做）
 
-前端守卫不是边界。服务端保存用户数据时，每个请求都要认证：拒绝过期的 JWT `exp`，用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验（缓存 30–60 秒），按 `data.id` 过滤，401/403 时单飞刷新（Web Lock）。完整契约：`{{REFS_BASE}}/backend-verification.md`。
+前端守卫不是边界。服务端保存用户数据时，每个请求都要认证。
 
-**不要**用公开 JWKS 验 access token。`{{NPM_SCOPE}}/node` 默认会校验（`verify: 'userinfo'`，可选 `introspect`）；`decode-only` 仅供本地调试。
+**服务端**：
+1. 读取 `Authorization: Bearer <token>`；JWT `exp` 过期直接拒绝。
+2. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）。
+3. owner key：应用自己的 user id（经 `external_id` 关联），没有用户表时用 `data.id`。**不要用邮箱**。
+4. 无效/过期 → 401 · `entry_plane`/claims 不匹配 → 403，不刷新 · 5xx → 503。
+5. 正结果缓存 ≤60 秒；登出/删号时清缓存。
+
+**客户端**：401 时刷新一次（单飞 + Web Lock）并重试；403 不重试。
+
+**不要**用公开 JWKS 验 access token。`{{NPM_SCOPE}}/node` 默认会校验（`userinfo`，可选 `introspect`）；`decode-only` 仅供调试。
+
+完整契约：`{{REFS_BASE}}/backend-verification.md`。
 
 ### 5.6 构建验证（强制）
 

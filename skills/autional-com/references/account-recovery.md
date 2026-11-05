@@ -1,4 +1,4 @@
-<!-- generated: core@36d05db9d969 · region: com · lang: en — do not edit directly -->
+<!-- generated: core@1ad71c67fc69 · region: com · lang: en — do not edit directly -->
 
 # Identifier and account recovery
 
@@ -23,6 +23,20 @@
 | optional email | yes (unverified) | no recovery | only a hint, not proof |
 | admin reset | yes | requires operator | document the process |
 | none | yes | account unrecoverable | must be recorded in AUTIONAL_SETUP.md |
+
+Limits: recovery codes are single-use (10 per batch; 5 attempts/hour); email links expire in 15–30 minutes; admin resets must be audited.
+
+## Decision → implementation
+
+| Decision | Where to apply | How to verify |
+|---|---|---|
+| Identifier | tenant auth policy / `login_methods` | open the login page; the chosen field renders |
+| Recovery code | app-side table + settings page | generate once, redeem once, reject reuse |
+| Optional email | profile + verification flow | send a test email; only verified emails can reset |
+| Admin reset | operator runbook | one test account reset, audited |
+| Registration protection | CAPTCHA + rate limit | 3 failures → challenge; per-IP limit trips |
+
+Exact portal field names vary by region and version; verify behaviour instead of trusting a 200.
 
 ## SSO users
 

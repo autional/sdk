@@ -1,4 +1,4 @@
-<!-- generated: core@36d05db9d969 · region: com · lang: en — do not edit directly -->
+<!-- generated: core@1ad71c67fc69 · region: com · lang: en — do not edit directly -->
 
 # Backend request verification
 
@@ -8,12 +8,18 @@
 
 ## Contract
 
+**Server**
+
 1. Read `Authorization: Bearer <token>`.
 2. Decode `exp`; reject expired tokens without a network call.
-3. Call `GET https://api.autional.com/bff/identity/api/v1/auth/me` with the same token.
-4. Cache positive results for 30–60s (token hash → user id).
-5. Use `data.id` as the owner key in every query.
-6. On 401/403: refresh once and retry; still failing → sign out. A 403 can mean missing strict claims (`principal_type` / `entry_plane`).
+3. Validate with `GET https://api.autional.com/bff/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`).
+4. Owner key: the app's own user id (linked via `external_identities`), or `data.id` when there is no user table. Never email.
+5. Invalid/expired → 401 · `entry_plane`/claims mismatch → 403 (do not refresh) · 5xx → 503.
+6. Cache positive results ≤60s; clear on logout/delete.
+
+**Client**
+
+On 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
 
 ## Why not JWKS
 
@@ -25,6 +31,12 @@ paths are `/me`, `userinfo`, or `introspect`.
 
 Do not hard-code `iss`: it varies by flow (SAML uses the SP EntityID).
 Validate through `/me` or `userinfo` instead.
+
+## Owner key
+
+- App has its own user table: `app_user.id` is the owner; map `(issuer, subject)` → `external_identities.app_user_id`.
+- No user table: `data.id` (or `sub`) is the owner.
+- Never use email as the owner key.
 
 ## Next.js (App Router)
 
@@ -45,17 +57,33 @@ export async function requireCaller(req: Request) {
   const hit = cache.get(token);
   if (hit && hit.exp > Date.now()) return hit.id;
 
-  const res = await fetch(ME, { headers: { authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Response("unauthorized", { status: 401 });
+  const res = await fetch(ME, {
+    headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(3000),
+  });
+  if (res.status === 401 || res.status === 403) {
+    throw new Response("unauthorized", { status: 401 });
+  }
+  if (!res.ok) throw new Response("auth unavailable", { status: 503 });
 
   const body = await res.json();
-  const id = body?.data?.id ?? body?.id;
-  if (!id || (sub && sub !== id)) throw new Response("unauthorized", { status: 401 });
+  const id = body?.data?.id;
+  if (!id) throw new Response("unauthorized", { status: 401 });
+  // /me returns the same subject as `sub`; a mismatch means schema drift.
+  if (sub && sub !== id) throw new Response("unauthorized", { status: 401 });
 
+  if (cache.size >= 500) cache.delete(cache.keys().next().value!);
   cache.set(token, { id, exp: Date.now() + 60_000 });
-  return id as string;
+  return id;
+}
+
+/** Call on logout / account deletion. */
+export function clearCallerCache() {
+  cache.clear();
 }
 ```
+
+> `jose` is only used to decode `exp`. To avoid the dependency, decode the payload with `Buffer.from(token.split(".")[1], "base64url")`.
 
 ## Express
 
@@ -91,7 +119,10 @@ and does not read tokens from cookies. A BFF must:
 
 Without this, a page refresh logs the user out.
 
-## Cache side effects
+## Cache
 
-A 30–60s positive cache means revocation and logout can lag up to 60s.
-Clear local state immediately on logout; do not rely on the cache expiring.
+- Positive results only; TTL ≤60s.
+- Bound the map (e.g. 500 entries) to avoid unbounded growth in long-lived processes.
+- Clear on logout and account deletion; do not wait for the TTL.
+- Serverless instances each keep their own cache; a logout on one instance does not clear the others, so keep the TTL short.
+- Revocation and logout can therefore lag up to 60s. For immediate revocation, query `/me` on every request or use Redis-backed introspection.

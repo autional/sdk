@@ -14,7 +14,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
-## [Unreleased] core@238e3bbefe9c —— 账号生命周期指南（加入 / 绑定 / TOTP）
+## [2026-11-05] core@acc04bbf46f0 —— 账号生命周期指南（加入 / 绑定 / TOTP）
 
 **内容**（`_core/PROCEDURE.md` + `_core/references/`，EN/ZH 对称）：
 - 5.2b：首次 SSO 登录显示「加入 <应用>？」确认（默认勾选；拒绝不建账号；按 `(issuer, subject)` 绑定，不按邮箱）。
@@ -23,11 +23,20 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 - 顶部与底部的“参考文件”清单补齐 5 个 references（原来只列 2 个）。
 - `RELEASING.md` 的版本目录取材改为 `ls-tree -r` 全量，不再写死 4 文件。
 
-**影响**：下次发布版本目录为 **7 文件**（新增 `account-lifecycle.md`）。
+**影响**：版本目录为 **7 文件**（新增 `account-lifecycle.md`）。
 
-**预算**：主文件 zh 773 / en 775（上限 780）。
+**预算**：主文件 zh 775 / en 777（上限 780）。
 
-**状态**：未发布。
+**状态**：已发布（2026-11-05）；T4 54/54 PASS；npm 未涉及。
+
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | CDN commit | web commit |
+|---|---|---|---|---|
+| com | `v0.1.0-289884a7` | `f4e872ac7b525afc8df0dabab4c0d1de4a139dc03441e7d6ed20bc49df870e17` | `e23f2a7` | `0772922` |
+| cn | `v0.1.0-ebc7057e` | `cba335c6d0e31ec2cc784a97f4ee3c257f958a01039d73087b8eb3608d1dda6c` | `e23f2a7` | `0772922` |
+
+版本目录 7 文件；复验：direct 14 + latest 14 + 站点资产 16 + `.sha256` 6 + 响应头 2 + CORS 2 = **54/54 PASS**。
 
 ## [2026-11-05] core@1ad71c67fc69 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
 

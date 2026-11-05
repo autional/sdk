@@ -14,14 +14,21 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
-## [Unreleased] core@23aef5aa3d26 —— 跟进 ISS 收口（RS256 / kid / scope / node 0.4.0）
+## [2026-11-05] core@23aef5aa3d26 —— 跟进 ISS 收口（RS256 / kid / scope / node 0.4.0）
 
 **内容**（`_core/PROCEDURE.md` + `_core/references/`，EN/ZH 对称）：
 - Phase 4：`@autional/node` 最低 **0.4.0**（更早版本只解码）。
 - 5.5：403 原因扩为 claims / `entry_plane` / scope / 授权（scope 门禁已 enforce）。
 - `backend-verification.md`：RS256 签发已上线，但 access token 仍无 kid/JWKS 分发；SAML `iss` 已统一到 identity-service。
 
-**状态**：未发布。
+**状态**：已发布（2026-11-05）；T4 54/54 PASS；npm 未涉及。
+
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | CDN commit | web commit |
+|---|---|---|---|---|
+| com | `v0.1.0-c28cd049` | `231d6ff409c43847cd2472262e49c7b3ba26fbca2777d811be94e0c8304edb1d` | `492d8a6` | `c67a0cb` |
+| cn | `v0.1.0-4a07587b` | `84bea38b90498953c7a668e93fbb1d53eabb893a3b8e4cab8eaabb82925b69de` | `492d8a6` | `c67a0cb` |
 
 ## [2026-11-05] core@acc04bbf46f0 —— 账号生命周期指南（加入 / 绑定 / TOTP）
 

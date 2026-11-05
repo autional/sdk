@@ -21,7 +21,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 - 5.2b：已有租户新增应用时先建 `Application`，client 填 **Application ID**；有自有后端时填 **Default resource (aud)**。
 - `config-template.md`：`AUTIONAL_SETUP.md` 不再记录测试账号密码（密码只显示一次，存密码管理器）。
 
-**状态**：源已更新、`check-skills` 6 门 PASS；CDN/npm 镜像待发布。
+**状态**：CDN 已发布（cn `v0.1.0-c18e1cb8` / com `v0.1.0-9269b19e`，cdn commit `266d5ac`）；web 镜像 `2b1531e`；npm 待发布。
 
 ---
 

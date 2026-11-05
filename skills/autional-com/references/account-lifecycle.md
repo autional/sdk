@@ -1,4 +1,4 @@
-<!-- generated: core@edbbc165e043 · region: com · lang: en — do not edit directly -->
+<!-- generated: core@238e3bbefe9c · region: com · lang: en — do not edit directly -->
 
 # Account lifecycle: join, link, recover
 
@@ -21,6 +21,8 @@ Rules:
 - Ask **after** authorization: only then do you know the trusted `(issuer, subject)`.
 - Record `join_declined` if you need product analytics; do not create a row.
 - Idempotent: `unique(provider, issuer, subject)`; `on conflict do nothing` then re-read.
+- The confirmation is UX, not a security boundary: the server still decides whether the account exists and enforces ownership.
+- On decline, clear the local app session without calling the OP logout endpoint, so the IdP session can survive.
 
 ## Linking (no auto-merge by email)
 
@@ -56,6 +58,15 @@ create table recovery_codes (
   app_user_id text not null references app_users(id) on delete cascade,
   code_hash text not null,
   used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table mfa_factors (
+  id text primary key,
+  app_user_id text not null references app_users(id) on delete cascade,
+  type text not null,                -- 'totp'
+  secret_enc text not null,
+  confirmed_at timestamptz,
   created_at timestamptz not null default now()
 );
 ```

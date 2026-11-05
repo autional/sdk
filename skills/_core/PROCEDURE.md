@@ -16,6 +16,9 @@ Add Autional login, sessions and account lifecycle to an existing app: OIDC, tok
 > **Reference files (read them, absolute URLs):**
 > - {{REFS_BASE}}/compliance-matrix.md
 > - {{REFS_BASE}}/config-template.md
+> - {{REFS_BASE}}/backend-verification.md
+> - {{REFS_BASE}}/account-recovery.md
+> - {{REFS_BASE}}/account-lifecycle.md
 > **Canonical source of this file:** {{SKILL_SELF_URL}}
 > **Integrity:** {{SKILL_SHA_URL}}
 <!-- /lang:en -->
@@ -30,6 +33,9 @@ Add Autional login, sessions and account lifecycle to an existing app: OIDC, tok
 > **参考文件（请读取，绝对 URL）：**
 > - {{REFS_BASE}}/compliance-matrix.md
 > - {{REFS_BASE}}/config-template.md
+> - {{REFS_BASE}}/backend-verification.md
+> - {{REFS_BASE}}/account-recovery.md
+> - {{REFS_BASE}}/account-lifecycle.md
 > **本文件的 canonical 地址：** {{SKILL_SELF_URL}}
 > **完整性校验：** {{SKILL_SHA_URL}}
 <!-- /lang:zh -->
@@ -1492,6 +1498,9 @@ git checkout <登录页>   # 若用了选项 A
 
 - `{{REFS_BASE}}/compliance-matrix.md` — compliance matrix (NIST / PCI / GDPR / HIPAA and more)
 - `{{REFS_BASE}}/config-template.md` — config, env and AUTIONAL_SETUP.md templates
+- `{{REFS_BASE}}/backend-verification.md` — server-side request verification (`/me`, cache, owner key)
+- `{{REFS_BASE}}/account-recovery.md` — identifier matrix and recovery options
+- `{{REFS_BASE}}/account-lifecycle.md` — join / link / TOTP lifecycle
 - Human-readable tutorial: {{TUTORIAL_URL}}
 - Scaffold CLI (alternative to the manual phases): `{{ONBOARD_CMD}}`
 - This file: {{SKILL_SELF_URL}} · checksum: {{SKILL_SHA_URL}}
@@ -1501,6 +1510,9 @@ git checkout <登录页>   # 若用了选项 A
 
 - `{{REFS_BASE}}/compliance-matrix.md` — 合规对照表（NIST / PCI / GDPR / HIPAA 等）
 - `{{REFS_BASE}}/config-template.md` — 配置、env 与 AUTIONAL_SETUP.md 模板
+- `{{REFS_BASE}}/backend-verification.md` — 服务端请求认证（`/me`、缓存、owner key）
+- `{{REFS_BASE}}/account-recovery.md` — 标识符矩阵与找回方式
+- `{{REFS_BASE}}/account-lifecycle.md` — 加入 / 绑定 / TOTP 生命周期
 - 人类教程：{{TUTORIAL_URL}}
 - 脚手架 CLI（手动接入的替代路径）：`{{ONBOARD_CMD}}`
 - 本文件：{{SKILL_SELF_URL}} · 校验和：{{SKILL_SHA_URL}}

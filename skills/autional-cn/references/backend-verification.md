@@ -1,4 +1,4 @@
-<!-- generated: core@edbbc165e043 · region: cn · lang: zh — do not edit directly -->
+<!-- generated: core@238e3bbefe9c · region: cn · lang: zh — do not edit directly -->
 
 # 服务端请求认证
 

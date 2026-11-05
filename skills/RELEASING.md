@@ -139,7 +139,7 @@ console.log(process.env.REGION, "v0.1.0-" + createHash("sha256").update(entries)
 '; done
 ```
 
-> 版本目录内文件集合 = 4 文件（`SKILL.md` + 次级语言 + `references/`×2）；`ls-tree -r` 自然取材。
+> 版本目录内文件集合 = `ls-tree -r` 全量（当前 7 文件：`SKILL.md` + 次级语言 + `references/`×5）；不要写死文件清单。
 
 ### 4.2 放版本目录（git blob 直落，避 CRLF）
 
@@ -148,7 +148,8 @@ REGION=com                         # or cn
 VER=v0.1.0-xxxxxxxx                # §4.1 输出
 SECOND=SKILL.zh.md                 # com→SKILL.zh.md；cn→SKILL.en.md
 DEST=<cdn>/ai/$VER
-for f in SKILL.md "$SECOND" references/compliance-matrix.md references/config-template.md; do
+FILES=$(git -C <sdk> ls-tree -r --name-only HEAD -- "skills/autional-$REGION" | sed "s|^skills/autional-$REGION/||")
+for f in $FILES; do
   mkdir -p "$DEST/$(dirname "$f")"
   git -C <sdk> cat-file blob HEAD:skills/autional-$REGION/$f > "$DEST/$f"
 done
@@ -205,8 +206,8 @@ commit + push `main` → 双 Vercel 生产部署 → 复验（§6）。
 
 | 链 | 项数 | 判据 |
 |----|------|------|
-| CDN 版本直链（2 区 × 4 文件） | 8 | 落盘散列 == §4.3 blob；头 = immutable + CORS `*` + text/markdown |
-| CDN latest 别名（2 区 × 4 文件逐查） | 8 | latest 路径内容 == 版本直链 |
+| CDN 版本直链（2 区 × N 文件，当前 7） | 14 | 落盘散列 == §4.3 blob；头 = immutable + CORS `*` + text/markdown |
+| CDN latest 别名（2 区 × N 文件逐查，当前 7） | 14 | latest 路径内容 == 版本直链 |
 | 双站资产（skill ×4 + references ×4） | 8 | 落盘散列 == sdk / 镜像真源 |
 | 双站 `.sha256`（skill.md + 双语言镜像） | 6 | 内容 = `<hash>␣␣<名>`，hash == 对应文件线上散列 |
 | 站点指针 `cdn.autional.{com,cn}/ai/latest.json` | 2 | 200 且 version = 新区版本 |
@@ -214,6 +215,7 @@ commit + push `main` → 双 Vercel 生产部署 → 复验（§6）。
 | **合计** | **34** | 全绿 |
 
 > 计数勘正（2026-10-11）：此前记「合计 30」为行合计笔误（行和实为 32）；latest 别名自本轮起按区 × 4 文件逐查（+2），合计 = 34。
+> 2026-11-05 起：N = 版本目录文件数（当前 7，新增 `backend-verification.md` / `account-recovery.md` / `account-lifecycle.md`）；总数随 N 变化，按本表逐项计数，不要再写死 34。
 
 ```bash
 # 落盘散列（⚠ 禁 curl | sha256sum——本机管道散列曾两次误值，见 registry §1）

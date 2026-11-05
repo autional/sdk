@@ -14,6 +14,17 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-11-05] core@d8b11f5407f6 —— 已有租户多应用 + 凭证 hygiene
+
+**内容**（`_core/PROCEDURE.md` + `_core/references/config-template.md`，EN/ZH 对称）：
+- Phase 3 选项 C：复用 `tenantId`/`issuer`，**每个应用新建 OAuth client**；不再写「复用现有 appId」。
+- 5.2b：已有租户新增应用时先建 `Application`，client 填 **Application ID**；有自有后端时填 **Default resource (aud)**。
+- `config-template.md`：`AUTIONAL_SETUP.md` 不再记录测试账号密码（密码只显示一次，存密码管理器）。
+
+**状态**：源已更新、`check-skills` 6 门 PASS；CDN/npm 镜像待发布。
+
+---
+
 ## [2026-11-05] core@23aef5aa3d26 —— 跟进 ISS 收口（RS256 / kid / scope / node 0.4.0）
 
 **内容**（`_core/PROCEDURE.md` + `_core/references/`，EN/ZH 对称）：

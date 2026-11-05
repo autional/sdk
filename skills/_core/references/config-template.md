@@ -147,13 +147,13 @@ AUTIONAL_TENANT_SLUG={TENANT_SLUG}   # 租户 slug —— 门户链接与 SDK te
 - Breached-password check: {BREACHED_CHECK_STATUS}
 
 ## Test accounts
-| Account | Password | Role |
-|---|---|---|
-| {TEST1_EMAIL} | {TEST1_PASSWORD} | test user 1 |
-| {TEST2_EMAIL} | {TEST2_PASSWORD} | test user 2 |
-| {TEST3_EMAIL} | {TEST3_PASSWORD} | test user 3 |
+| Account | Role |
+|---|---|
+| {TEST1_EMAIL} | test user 1 |
+| {TEST2_EMAIL} | test user 2 |
+| {TEST3_EMAIL} | test user 3 |
 
-> Test passwords are shown once; reset them in the admin portal afterwards.
+> Passwords are shown once at creation and are **not** written to this file. Store them in a password manager; reset them in the admin portal if lost.
 
 ## Portals
 | Portal | Address | Purpose |
@@ -200,13 +200,13 @@ AUTIONAL_TENANT_SLUG={TENANT_SLUG}   # 租户 slug —— 门户链接与 SDK te
 - 泄露密码检查: {BREACHED_CHECK_STATUS}
 
 ## 测试账号
-| 账号 | 密码 | 角色 |
-|---|---|---|
-| {TEST1_EMAIL} | {TEST1_PASSWORD} | 测试用户 1 |
-| {TEST2_EMAIL} | {TEST2_PASSWORD} | 测试用户 2 |
-| {TEST3_EMAIL} | {TEST3_PASSWORD} | 测试用户 3 |
+| 账号 | 角色 |
+|---|---|
+| {TEST1_EMAIL} | 测试用户 1 |
+| {TEST2_EMAIL} | 测试用户 2 |
+| {TEST3_EMAIL} | 测试用户 3 |
 
-> 测试密码仅显示一次；后续可在管理后台重置。
+> 密码只在创建时显示一次，**不写入本文件**；请存入密码管理器，丢失则在管理后台重置。
 
 ## 门户
 | Portal | 地址 | 用途 |

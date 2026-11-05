@@ -9,6 +9,8 @@ import {
   isPortalClient,
   normalizeOriginInput,
   probeCors,
+  probeAuthorize,
+  authorizePreflightUrl,
 } from './oauth-client-guard.ts';
 
 function stubFetch(impl: (url: string) => Promise<Response> | Response) {
@@ -196,6 +198,78 @@ test('probeCors: invalid origin never hits the network', async () => {
     const verdict = await probeCors('https://api.example.test', 'https://app.example.com/path');
     assert.equal(verdict.status, 'invalid-origin');
     assert.equal(called, false);
+  } finally {
+    restore();
+  }
+});
+
+/* ---- tenant / scope / authorize 预检（2026-11-05 加固）---- */
+
+test('checkOAuthClient: rejects a client owned by another tenant', async () => {
+  const restore = stubFetch(
+    () =>
+      new Response(JSON.stringify({ data: { client_name: 'app-a', tenant_id: 'tenant-B', scopes: ['openid'] } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+  );
+  try {
+    const verdict = await checkOAuthClient('https://api.example.test', 'client-a', { tenantId: 'tenant-A' });
+    assert.equal(verdict.status, 'tenant-mismatch');
+    assert.match(describeVerdict('client-a', verdict), /tenant/);
+  } finally {
+    restore();
+  }
+});
+
+test('checkOAuthClient: rejects a client missing required scope', async () => {
+  const restore = stubFetch(
+    () =>
+      new Response(JSON.stringify({ data: { client_name: 'app-a', tenant_id: 'tenant-A', scopes: ['profile'] } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+  );
+  try {
+    const verdict = await checkOAuthClient('https://api.example.test', 'client-a', {
+      tenantId: 'tenant-A',
+      requiredScopes: ['openid'],
+    });
+    assert.equal(verdict.status, 'missing-scope');
+  } finally {
+    restore();
+  }
+});
+
+test('authorizePreflightUrl: api plane, encoded callback, PKCE S256', () => {
+  const u = authorizePreflightUrl('https://api.autional.cn/', 'client-1', 'https://app.example.com/oauth/callback');
+  assert.match(u, /^https:\/\/api\.autional\.cn\/oauth\/api\/v1\/oauth\/authorize\?/);
+  assert.match(u, /client_id=client-1/);
+  assert.match(u, /code_challenge_method=S256/);
+  assert.match(u, /redirect_uri=https%3A%2F%2Fapp\.example\.com%2Foauth%2Fcallback/);
+});
+
+test('probeAuthorize: 302 back to callback with login_required passes', async () => {
+  const callback = 'https://app.example.com/oauth/callback';
+  const restore = stubFetchWithInit(() =>
+    new Response(null, {
+      status: 302,
+      headers: { location: `${callback}?error=login_required&state=preflight` },
+    }),
+  );
+  try {
+    const verdict = await probeAuthorize('https://api.example.test', 'client-1', callback);
+    assert.equal(verdict.status, 'ok');
+  } finally {
+    restore();
+  }
+});
+
+test('probeAuthorize: 400 redirect_uri not registered fails', async () => {
+  const restore = stubFetchWithInit(() => new Response('{"error":"invalid_request"}', { status: 400 }));
+  try {
+    const verdict = await probeAuthorize('https://api.example.test', 'client-1', 'https://app.example.com/oauth/callback');
+    assert.equal(verdict.status, 'not-redirected');
   } finally {
     restore();
   }

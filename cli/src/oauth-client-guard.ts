@@ -13,6 +13,9 @@
 export interface OAuthClientInfo {
   client_name?: string;
   kind?: string;
+  tenant_id?: string;
+  scopes?: string[];
+  is_confidential?: boolean;
 }
 
 export type ClientProbe =
@@ -23,6 +26,8 @@ export type ClientProbe =
 export type GuardVerdict =
   | { status: 'ok'; info: OAuthClientInfo }
   | { status: 'portal'; info: OAuthClientInfo }
+  | { status: 'tenant-mismatch'; info: OAuthClientInfo }
+  | { status: 'missing-scope'; info: OAuthClientInfo; missing: string[] }
   | { status: 'not-found' }
   | { status: 'unverified'; detail: string };
 
@@ -63,11 +68,35 @@ export async function probeClient(
   }
 }
 
-export async function checkOAuthClient(issuer: string, appId: string): Promise<GuardVerdict> {
+export interface CheckClientOptions {
+  /** Expected tenant id; when set, reject a client owned by another tenant. */
+  tenantId?: string;
+  /** Required scopes (e.g. openid); missing entries are rejected. */
+  requiredScopes?: string[];
+}
+
+export async function checkOAuthClient(
+  issuer: string,
+  appId: string,
+  opts: CheckClientOptions = {},
+): Promise<GuardVerdict> {
   const probe = await probeClient(issuer, appId);
   if (probe.status === 'not-found') return { status: 'not-found' };
   if (probe.status === 'unreachable') return { status: 'unverified', detail: probe.detail };
   if (isPortalClient(probe.info)) return { status: 'portal', info: probe.info };
+
+  const expectedTenant = (opts.tenantId ?? '').trim();
+  if (expectedTenant && probe.info.tenant_id && probe.info.tenant_id !== expectedTenant) {
+    return { status: 'tenant-mismatch', info: probe.info };
+  }
+
+  const required = (opts.requiredScopes ?? []).map((s) => s.trim()).filter(Boolean);
+  if (required.length > 0) {
+    const have = new Set(probe.info.scopes ?? []);
+    const missing = required.filter((s) => !have.has(s));
+    if (missing.length > 0) return { status: 'missing-scope', info: probe.info, missing };
+  }
+
   return { status: 'ok', info: probe.info };
 }
 
@@ -176,9 +205,96 @@ export function describeVerdict(appId: string, verdict: GuardVerdict): string {
         'Register a dedicated app client (admin console → OAuth clients), then use ITS client_id as appId.',
       ].join('\n');
     }
+    case 'tenant-mismatch':
+      return [
+        `Refusing appId ${appId}: client belongs to tenant ${verdict.info.tenant_id ?? '(unknown)'},`,
+        'but the expected tenant is different. Use a client from the tenant you are onboarding.',
+      ].join('\n');
+    case 'missing-scope':
+      return [
+        `Refusing appId ${appId}: client is missing required scope(s): ${verdict.missing.join(' ')}.`,
+        'Add them in the admin console → OAuth clients → scopes, then retry.',
+      ].join('\n');
     case 'not-found':
       return `OAuth client ${appId} not found on this issuer. Check the client_id (or the --region flag).`;
     case 'unverified':
       return `Could not verify OAuth client ${appId} (${verdict.detail}). Continuing WITHOUT verification — confirm manually that it is your app client, not the portal client.`;
+  }
+}
+
+/* ------------------------------------------------------------------------- *
+ * Authorize 预检（skill 5.2b 第 4 步）
+ *
+ * 为什么：client_id 用错、redirect_uri 差一个斜杠、或客户端属于别的租户，
+ * 构建都能过，但第一次真实登录才报 invalid_request。这个探针在写文件前判定。
+ * 只发一个无凭据 GET；PASS = 302 + Location 回指 callback + error=login_required。
+ * ------------------------------------------------------------------------- */
+
+export type AuthorizeProbe =
+  | { status: 'ok'; httpStatus: number; location: string }
+  | { status: 'not-redirected'; httpStatus: number; location: string | null; body?: string }
+  | { status: 'unreachable'; detail: string };
+
+const PREFLIGHT_CHALLENGE = 'mR_nE7EeJopQmji77eZUdD4_rLzw5A5HdlRSiLQQCzU';
+
+export function authorizePreflightUrl(issuer: string, appId: string, redirectUri: string): string {
+  const base = issuer.replace(/\/+$/, '');
+  const q = new URLSearchParams({
+    response_type: 'code',
+    client_id: appId,
+    redirect_uri: redirectUri,
+    scope: 'openid',
+    state: 'preflight',
+    code_challenge: PREFLIGHT_CHALLENGE,
+    code_challenge_method: 'S256',
+  });
+  return `${base}/oauth/api/v1/oauth/authorize?${q.toString()}`;
+}
+
+export async function probeAuthorize(
+  issuer: string,
+  appId: string,
+  redirectUri: string,
+  timeoutMs = 8000,
+): Promise<AuthorizeProbe> {
+  try {
+    const res = await fetch(authorizePreflightUrl(issuer, appId, redirectUri), {
+      headers: { Accept: 'application/json' },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const location = res.headers.get('location');
+    if (res.status === 302 && location) {
+      const want = redirectUri.replace(/\/+$/, '');
+      const got = location.replace(/\/+$/, '');
+      if (got.startsWith(want) && got.includes('error=login_required')) {
+        return { status: 'ok', httpStatus: res.status, location };
+      }
+      return { status: 'not-redirected', httpStatus: res.status, location };
+    }
+    // 200 说明命中了 auth 站 SPA 外壳（不是 API 面），不能当通过。
+    const body = res.status === 200 ? (await res.text()).slice(0, 200) : undefined;
+    return { status: 'not-redirected', httpStatus: res.status, location, body };
+  } catch (err) {
+    return { status: 'unreachable', detail: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export function describeAuthorizeVerdict(redirectUri: string, verdict: AuthorizeProbe): string {
+  switch (verdict.status) {
+    case 'ok':
+      return `Authorize OK: ${redirectUri} is registered and redirects back to the app.`;
+    case 'not-redirected':
+      return [
+        `Authorize preflight FAILED (HTTP ${verdict.httpStatus}).`,
+        verdict.httpStatus === 200
+          ? 'HTTP 200 means you hit the auth-site SPA shell, not the API — use the api base (e.g. https://api.autional.cn), not auth.*.'
+          : verdict.location
+            ? `Location: ${verdict.location}`
+            : 'No Location header — redirect_uri is likely not registered for this client.',
+        'Register the exact callback in the admin console (byte-identical, no trailing slash) and retry.',
+      ].join('\n');
+    case 'unreachable':
+      return `Could not reach the authorize endpoint (${verdict.detail}). Check the issuer / network, then retry.`;
   }
 }

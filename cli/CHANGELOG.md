@@ -1,5 +1,13 @@
 # @autional/onboard
 
+## Unreleased
+
+### Minor Changes
+
+- **已有租户多应用接入**：`--tenant=<tenant_id>` 校验 client 归属；`--redirect=<url>` / `--origin=<url>` 在写文件前跑 authorize + CORS 预检；新增 `--check-authorize=<redirect_uri> + --app-id` 纯探针。
+- **client 校验增强**：除 `kind=portal` 外，新增租户不匹配、缺 `openid` scope 两类硬失败。
+- **安全**：脚手架 README 改指管理后台（developer 站只是文档）；skill/config-template 不再把测试账号密码写入 `AUTIONAL_SETUP.md`。
+
 ## 0.5.1
 
 ### Patch Changes

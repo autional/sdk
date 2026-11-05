@@ -1,5 +1,13 @@
 # @autional/node
 
+## Unreleased
+
+### Minor Changes
+
+- 新增 `verify: 'jwks'`：本地 RS256 验签 + `jwt-status` 撤销/`require_kid_after` 检查；
+  支持 `jwksUrl` / `statusUrl` / `allowedIssuers` / `audience` / `jwksTtlMs`。
+  默认缓存 JWKS 5 分钟、status 10 秒；未知 kid fail-closed。
+
 ## 0.4.0
 
 ### Minor Changes

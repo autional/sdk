@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import inquirer from 'inquirer';
-import { checkOAuthClient, describeVerdict, describeCorsVerdict, probeCors } from './oauth-client-guard.js';
+import { checkOAuthClient, describeVerdict, describeCorsVerdict, probeCors, probeAuthorize, describeAuthorizeVerdict } from './oauth-client-guard.js';
 
 const AUTIONAL_DEPS = {
   react: ['react', 'react-dom', 'react-router-dom', '@autional/react', '@autional/core'],
@@ -69,6 +69,38 @@ const CHECK_CORS_FLAG: string | undefined = (() => {
   const eq = process.argv.find((a) => a.startsWith('--check-cors='));
   if (eq) return eq.slice('--check-cors='.length);
   const i = process.argv.indexOf('--check-cors');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/** `--check-authorize=<redirect_uri>` + `--app-id`: 授权预检（skill 5.2b 第 4 步）。 */
+const CHECK_AUTHORIZE_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--check-authorize='));
+  if (eq) return eq.slice('--check-authorize='.length);
+  const i = process.argv.indexOf('--check-authorize');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/** `--tenant=<tenant_id>`: expected tenant for the app client (anti cross-tenant onboarding). */
+const TENANT_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--tenant='));
+  if (eq) return eq.slice('--tenant='.length);
+  const i = process.argv.indexOf('--tenant');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/** `--redirect=<url>`: exact callback to preflight before writing files. */
+const REDIRECT_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--redirect='));
+  if (eq) return eq.slice('--redirect='.length);
+  const i = process.argv.indexOf('--redirect');
+  return i !== -1 ? process.argv[i + 1] : undefined;
+})();
+
+/** `--origin=<origin>`: exact browser origin to preflight CORS before writing files. */
+const ORIGIN_FLAG: string | undefined = (() => {
+  const eq = process.argv.find((a) => a.startsWith('--origin='));
+  if (eq) return eq.slice('--origin='.length);
+  const i = process.argv.indexOf('--origin');
   return i !== -1 ? process.argv[i + 1] : undefined;
 })();
 
@@ -836,7 +868,10 @@ async function main() {
   // Probe-only mode: assert an appId before scaffolding (CI / agents / humans).
   if (CHECK_CLIENT_FLAG !== undefined) {
     const region = REGION_DEFAULTS[(REGION_FLAG as RegionKey | undefined) ?? 'com'];
-    const verdict = await checkOAuthClient(region.issuer, CHECK_CLIENT_FLAG.trim());
+    const verdict = await checkOAuthClient(region.issuer, CHECK_CLIENT_FLAG.trim(), {
+      tenantId: TENANT_FLAG,
+      requiredScopes: ['openid'],
+    });
     const text = describeVerdict(CHECK_CLIENT_FLAG.trim(), verdict);
     if (verdict.status === 'ok') {
       console.log(text);
@@ -844,6 +879,24 @@ async function main() {
     }
     console.error(text);
     process.exit(1);
+  }
+
+  // Authorize probe-only mode: prove the client + callback are registered (5.2b step 4).
+  if (CHECK_AUTHORIZE_FLAG !== undefined) {
+    const region = REGION_DEFAULTS[(REGION_FLAG as RegionKey | undefined) ?? 'com'];
+    const appId = (APP_ID_FLAG ?? '').trim();
+    if (!appId) {
+      console.error('--check-authorize requires --app-id=<client_id> (or --app-id <client_id>).');
+      process.exit(1);
+    }
+    const verdict = await probeAuthorize(region.issuer, appId, CHECK_AUTHORIZE_FLAG.trim());
+    const text = describeAuthorizeVerdict(CHECK_AUTHORIZE_FLAG.trim(), verdict);
+    if (verdict.status === 'ok') {
+      console.log(text);
+      process.exit(0);
+    }
+    console.error(text);
+    process.exit(verdict.status === 'unreachable' ? 2 : 1);
   }
 
   // CORS probe-only mode: 证明「该源已登记且在网关生效」（skill 5.2b 第 5 步）。
@@ -926,7 +979,10 @@ async function main() {
   answers.appId = (APP_ID_FLAG ?? answers.appId ?? '').trim();
 
   // Guard (5.2b step 4): reject the tenant portal client before writing anything.
-  const guard = await checkOAuthClient(REGION_DEFAULTS[answers.region].issuer, answers.appId);
+  const guard = await checkOAuthClient(REGION_DEFAULTS[answers.region].issuer, answers.appId, {
+    tenantId: TENANT_FLAG,
+    requiredScopes: ['openid'],
+  });
   if (guard.status === 'ok') {
     console.log(`\n  ${describeVerdict(answers.appId, guard)}\n`);
   } else if (guard.status === 'unverified') {
@@ -934,6 +990,31 @@ async function main() {
   } else {
     console.error(`\n  ${describeVerdict(answers.appId, guard)}\n`);
     process.exit(1);
+  }
+
+  // Optional preflight: if the caller supplied the exact callback/origin, prove them
+  // before writing files. Skipping is allowed but printed as a warning (agent-visible).
+  if (REDIRECT_FLAG) {
+    const verdict = await probeAuthorize(REGION_DEFAULTS[answers.region].issuer, answers.appId, REDIRECT_FLAG.trim());
+    const text = describeAuthorizeVerdict(REDIRECT_FLAG.trim(), verdict);
+    if (verdict.status !== 'ok') {
+      console.error(`\n  ${text}\n`);
+      process.exit(verdict.status === 'unreachable' ? 2 : 1);
+    }
+    console.log(`  ${text}\n`);
+  } else {
+    console.warn('  [preflight skipped] pass --redirect=<url> to verify the exact callback before scaffolding.\n');
+  }
+  if (ORIGIN_FLAG) {
+    const verdict = await probeCors(REGION_DEFAULTS[answers.region].issuer, ORIGIN_FLAG.trim());
+    const text = describeCorsVerdict(ORIGIN_FLAG.trim(), verdict);
+    if (verdict.status !== 'ok') {
+      console.error(`\n  ${text}\n`);
+      process.exit(verdict.status === 'unreachable' ? 2 : 1);
+    }
+    console.log(`  ${text}\n`);
+  } else {
+    console.warn('  [preflight skipped] pass --origin=<origin> to verify CORS before scaffolding.\n');
   }
 
   const projectDir = path.resolve(process.cwd(), answers.projectName);
@@ -1133,7 +1214,7 @@ Sign in at [http://localhost:3000/login](http://localhost:3000/login) — passwo
 ## Register your OAuth client
 
 Browser login (password and SSO) requires the app to be registered on your Autional
-tenant — developer portal → OAuth clients, or the registration endpoint:
+tenant — admin console → \`/{TENANT_SLUG}/oauth-clients\` (the developer site is documentation only):
 
 | Field | Value |
 |-------|-------|

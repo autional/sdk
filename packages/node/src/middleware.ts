@@ -4,13 +4,16 @@
  * 服务端令牌验证。默认走「问服务端」：
  *   - userinfo：用 Bearer token 调 /oauth/api/v1/oauth/userinfo（无需客户端密钥）
  *   - introspect：调 /oauth/api/v1/oauth/introspect（需要 clientId/clientSecret，可拿到 scope）
+ *   - jwks：本地验签（RS256）+ jwt-status 撤销检查；适合高流量资源服务
  *
  * 安全说明（2026-11-04）：旧实现只做 base64 解码 + 本地 exp 判断，不验签、不校验
  * iss/aud —— 任何自造 token 都能通过。现在默认改为服务端验证；`decode-only` 仅供
  * 本地调试，必须显式开启，且注入的 user 会标记 unverified。
  */
 
-export type VerifyMode = 'userinfo' | 'introspect' | 'decode-only';
+import { createPublicKey, verify as cryptoVerify, type KeyObject } from 'node:crypto';
+
+export type VerifyMode = 'userinfo' | 'introspect' | 'jwks' | 'decode-only';
 
 export interface NodeAutionalConfig {
   issuer: string;
@@ -23,6 +26,16 @@ export interface NodeAutionalConfig {
   /** introspect 模式必填 */
   clientId?: string;
   clientSecret?: string;
+  /** jwks 模式：JWKS URL（默认 `${apiUrl||issuer}/.well-known/jwks.json`） */
+  jwksUrl?: string;
+  /** jwks 模式：status URL（默认 `${apiUrl||issuer}/.well-known/jwt-status.json`） */
+  statusUrl?: string;
+  /** jwks 模式：允许的 issuer（默认 [issuer]） */
+  allowedIssuers?: string[];
+  /** jwks 模式：允许的 audience（默认 [appId]；为空则不校验 aud） */
+  audience?: string[];
+  /** jwks 缓存（毫秒），默认 300000 */
+  jwksTtlMs?: number;
   /** 单次验证超时（毫秒），默认 3000 */
   timeoutMs?: number;
   /** 验证结果缓存（毫秒），默认 15000；0 关闭 */
@@ -118,6 +131,165 @@ async function verifyWithIntrospect(config: NodeAutionalConfig, token: string): 
   }
 }
 
+interface JWKSState {
+  keys: Map<string, KeyObject>;
+  fetchedAt: number;
+}
+
+let jwksCache: JWKSState | null = null;
+let jwksInflight: Promise<JWKSState | null> | null = null;
+
+interface StatusState {
+  revoked: Set<string>;
+  requireKidAfter: number;
+  version: number;
+  fetchedAt: number;
+}
+
+let statusCache: StatusState | null = null;
+let statusInflight: Promise<StatusState | null> | null = null;
+
+async function fetchJSON(url: string, timeoutMs: number): Promise<Record<string, unknown> | null> {
+  const { signal, cancel } = withTimeout(timeoutMs);
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal });
+    if (!res.ok) return null;
+    return (await res.json()) as Record<string, unknown>;
+  } finally {
+    cancel();
+  }
+}
+
+async function getJWKS(config: NodeAutionalConfig): Promise<JWKSState | null> {
+  const ttl = config.jwksTtlMs ?? 300_000;
+  if (jwksCache && Date.now() - jwksCache.fetchedAt < ttl) return jwksCache;
+  if (jwksInflight) return jwksInflight;
+
+  jwksInflight = (async () => {
+    const url = config.jwksUrl || `${baseUrl(config)}/.well-known/jwks.json`;
+    const body = await fetchJSON(url, config.timeoutMs ?? 3000);
+    if (!body || !Array.isArray(body.keys)) return jwksCache;
+    const keys = new Map<string, KeyObject>();
+    for (const raw of body.keys as Array<Record<string, unknown>>) {
+      if (raw.kty !== 'RSA' || typeof raw.kid !== 'string') continue;
+      try {
+        keys.set(raw.kid, createPublicKey({ key: raw as never, format: 'jwk' }));
+      } catch {
+        // Ignore malformed keys; fail closed if none remain.
+      }
+    }
+    if (keys.size === 0) return jwksCache;
+    jwksCache = { keys, fetchedAt: Date.now() };
+    return jwksCache;
+  })().finally(() => {
+    jwksInflight = null;
+  });
+
+  return jwksInflight;
+}
+
+async function getStatus(config: NodeAutionalConfig): Promise<StatusState | null> {
+  const ttl = 10_000;
+  if (statusCache && Date.now() - statusCache.fetchedAt < ttl) return statusCache;
+  if (statusInflight) return statusInflight;
+
+  statusInflight = (async () => {
+    const url = config.statusUrl || `${baseUrl(config)}/.well-known/jwt-status.json`;
+    const body = await fetchJSON(url, config.timeoutMs ?? 3000);
+    if (!body) return statusCache;
+    const version = typeof body.version === 'number' ? body.version : 0;
+    // Reject version rollback (cache replay).
+    if (statusCache && version < statusCache.version) return statusCache;
+    const revoked = new Set<string>();
+    if (Array.isArray(body.revoked_kids)) {
+      for (const item of body.revoked_kids as Array<Record<string, unknown>>) {
+        if (typeof item.kid === 'string') revoked.add(item.kid);
+      }
+    }
+    statusCache = {
+      revoked,
+      requireKidAfter: typeof body.require_kid_after === 'number' ? body.require_kid_after : 0,
+      version,
+      fetchedAt: Date.now(),
+    };
+    return statusCache;
+  })().finally(() => {
+    statusInflight = null;
+  });
+
+  return statusInflight;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  return [];
+}
+
+async function verifyWithJWKS(config: NodeAutionalConfig, token: string): Promise<VerifiedUser | null> {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  let header: Record<string, unknown>;
+  let payload: Record<string, unknown>;
+  try {
+    header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8')) as Record<string, unknown>;
+    payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const alg = typeof header.alg === 'string' ? header.alg : '';
+  if (alg !== 'RS256') return null;
+  const typ = typeof header.typ === 'string' ? header.typ : '';
+  if (typ && typ !== 'JWT' && typ !== 'at+jwt') return null;
+
+  const kid = typeof header.kid === 'string' ? header.kid : '';
+  const status = await getStatus(config);
+  if (!status) return null; // fail closed: status is authoritative for revocation
+  if (kid && status.revoked.has(kid)) return null;
+  if (!kid && status.requireKidAfter > 0 && Math.floor(Date.now() / 1000) >= status.requireKidAfter) return null;
+
+  const jwks = await getJWKS(config);
+  if (!jwks) return null;
+  const key = kid ? jwks.keys.get(kid) : jwks.keys.size === 1 ? [...jwks.keys.values()][0] : undefined;
+  if (!key) return null;
+
+  const signingInput = Buffer.from(`${parts[0]}.${parts[1]}`);
+  const signature = Buffer.from(parts[2], 'base64url');
+  if (!cryptoVerify('RSA-SHA256', signingInput, key, signature)) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  if (typeof payload.exp !== 'number' || payload.exp <= now) return null;
+  if (typeof payload.nbf === 'number' && payload.nbf > now + 30) return null;
+  if (typeof payload.type === 'string' && payload.type !== 'access') return null;
+
+  const iss = typeof payload.iss === 'string' ? payload.iss : '';
+  const allowedIssuers = config.allowedIssuers?.length ? config.allowedIssuers : [config.issuer];
+  if (iss && !allowedIssuers.includes(iss)) return null;
+
+  const allowedAud = config.audience?.length ? config.audience : config.appId ? [config.appId] : [];
+  if (allowedAud.length) {
+    const aud = asStringArray(payload.aud);
+    if (!aud.some((a) => allowedAud.includes(a))) return null;
+  }
+
+  const sub =
+    (typeof payload.sub === 'string' && payload.sub) ||
+    (typeof payload.user_id === 'string' && payload.user_id) ||
+    '';
+  if (!sub) return null;
+
+  return {
+    id: sub,
+    tenantId: typeof payload.tenant_id === 'string' ? payload.tenant_id : undefined,
+    scope: typeof payload.scope === 'string' ? payload.scope : undefined,
+    verified: true,
+    aid: typeof payload.aid === 'string' ? payload.aid : undefined,
+    ...payload,
+  };
+}
+
 function decodeOnly(token: string): VerifiedUser | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
@@ -147,6 +319,9 @@ export async function verifyToken(config: NodeAutionalConfig, token: string): Pr
   switch (config.verify ?? 'userinfo') {
     case 'introspect':
       user = await verifyWithIntrospect(config, token);
+      break;
+    case 'jwks':
+      user = await verifyWithJWKS(config, token);
       break;
     case 'decode-only':
       user = decodeOnly(token);

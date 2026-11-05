@@ -14,13 +14,19 @@ pnpm build && node dist/index.js
 
 | Flag | What it proves | Exit |
 |---|---|---|
-| `--check-client=<client_id>` | the `client_id` exists **and** is an app client (not the tenant portal client) | 0 ok / 1 fail |
+| `--check-client=<client_id>` | the `client_id` exists, is an app client (not the tenant portal client), belongs to `--tenant` (when given), and has `openid` | 0 ok / 1 fail / 2 unreachable |
+| `--check-authorize=<redirect_uri>` | the client + exact callback are registered (`302` back to callback with `login_required`) | 0 ok / 1 fail / 2 unreachable |
 | `--check-cors=<origin>` | the origin passes the CORS preflight (registered on **this** client, already propagated) | 0 ok / 1 no ACAO / 2 unreachable |
 
 ```bash
-node dist/index.js --check-client=client-xxxxxxxx --region=cn
+node dist/index.js --check-client=client-xxxxxxxx --tenant=tenant-xxxxxxxx --region=cn
+node dist/index.js --check-authorize=https://app.example.com/oauth/callback --app-id=client-xxxxxxxx --region=cn
 node dist/index.js --check-cors=https://app.example.com --region=cn
 ```
+
+For scaffolding, `--app-id=<id>` skips the appId prompt; `--tenant=<id>`, `--redirect=<url>` and
+`--origin=<url>` run the same client/authorize/CORS gates before any file is written. Skipping the
+preflight prints a visible warning.
 
 `--check-cors` sends one `OPTIONS` to the token endpoint with your `Origin`; nothing is authenticated.
 It fails with the three usual causes (not registered / not byte-identical — origin only, no path or

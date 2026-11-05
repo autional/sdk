@@ -498,7 +498,7 @@ Ask the user:
 ```
 [A] Trial tenant — fastest, no invitation code (recommended to start)
 [B] Invitation code — permanent tenant
-[C] I already have a tenant — skip registration, reuse existing appId/issuer (see "Existing tenant" edge case)
+[C] I already have a tenant — skip tenant registration and reuse tenantId/issuer; **register a new OAuth client for this app** (never reuse another app's appId; see "Existing tenant" edge case)
 ```
 
 For [A]/[B]: if the installed SDK client exposes `createTrialTenant(...)` / an invitation-based registration call, drive it programmatically (it creates the tenant and the admin user). If the installed version does not expose it, open the developer portal ({{PORTAL_DEVELOPER}}) and walk the user through the same flow in the browser. Do not invent API calls that are not exposed by the installed SDK or documented by the portal.
@@ -530,7 +530,7 @@ Offer to create 3 test accounts (`player1`…`player3` by default, named to the 
 - [A] create 3 (recommended) — via the SDK register call
 - [B] skip — later via the admin portal
 
-Record the test accounts in `AUTIONAL_SETUP.md` (passwords shown once).
+Record the test account **identifiers** in `AUTIONAL_SETUP.md`. Never write passwords to any file: display each password once and ask the user to store it in their password manager.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Phase 3 · 租户与应用凭证
@@ -542,7 +542,7 @@ Record the test accounts in `AUTIONAL_SETUP.md` (passwords shown once).
 ```
 [A] 试用租户——最快，无需邀请码（推荐起步）
 [B] 邀请码——永久租户
-[C] 我已有租户——跳过注册，直接复用现有 appId/issuer（见「已有租户」边界情况）
+[C] 我已有租户——跳过租户注册，复用现有 tenantId/issuer；**为本应用新建一个 OAuth 客户端**（绝不复用其它应用的 appId；见「已有租户」边界情况）
 ```
 
 [A]/[B]：若安装的 SDK 客户端提供 `createTrialTenant(...)` / 带邀请码的注册调用，直接编程驱动（它会同时创建租户与管理员）。若当前版本未提供，打开开发者门户（{{PORTAL_DEVELOPER}}）带用户在浏览器里走同一流程。不要臆造 SDK 未暴露、门户未记载的 API。
@@ -574,7 +574,7 @@ createTrialTenant(...) → 201 { tenantId, slug, status }
 - [A] 创建 3 个（推荐）——走 SDK 注册调用
 - [B] 跳过——之后在 admin 门户添加
 
-测试账号记录进 `AUTIONAL_SETUP.md`（密码只显示一次）。
+测试账号只把**账号标识**记录进 `AUTIONAL_SETUP.md`。**密码不得写入任何文件**：只显示一次，让用户存入密码管理器。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -743,6 +743,8 @@ Label each option with invasiveness / gain / rollback difficulty.
 The app shows one "Continue with Autional" button; the login form and all social providers live on the Autional auth page. Use it when several apps must share one user pool, or when the app should not implement password/social login itself.
 
 1. **Register the app** (admin console {{PORTAL_ADMIN}}/{TENANT_SLUG}/oauth-clients): note the `client_id` (this is the SDK `appId`); set the app's public callback URL as `redirect_uri` (e.g. `https://app.example.com/oauth/callback`); add the app's origin to the client's `cors_origins` (e.g. `https://app.example.com`). **CORS registration is mandatory** — without it the browser blocks the token exchange. Also fill in the app's **website** (public https URL) and optional **short alias / logo**: the end-user portal renders the "Authorized apps" tile from them — **without a website the tile is display-only (not clickable)**.
+   - **Existing tenant, new app:** first create the Application under `{TENANT_SLUG}/applications`, then create this OAuth client and set its **Application ID** to that application. This is what makes it a first-class app (members/roles/tiles), not just an OAuth client. Reuse `tenantId`/`issuer`; never reuse another app's `client_id`.
+   - **Audience:** if the app has its own backend API, set the client's **Default resource (aud)** to that API's resource URL (e.g. `{{ISSUER}}/app/<app_id>`). Leave it empty only when the client calls the platform API directly.
    - This `client_id` **IS** the SDK `appId`: write it to `.env` (`AUTIONAL_APP_ID`) and `src/autional.ts`, **overwriting** any value taken earlier.
    - `redirect_uris` must match the callback **character for character** (the SDK default is `<origin>/oauth/callback` — no trailing slash). A trailing slash turns the entry into a path-prefix rule; a mismatch fails at login with `invalid_request: redirect_uri not registered`.
 2. **Login button**:
@@ -902,6 +904,8 @@ import { AutionalProvider, RequireAuth } from '{{NPM_SCOPE}}/react';
 应用只放一个「用 Autional 登录」按钮；登录表单与全部社交登录都留在 Autional 授权页。适合多应用共用一个用户池，或不想自己实现密码/社交登录的应用。
 
 1. **注册应用**（管理后台 {{PORTAL_ADMIN}}/{TENANT_SLUG}/oauth-clients）：记下 `client_id`（即 SDK 的 `appId`）；把应用的公网回调地址登记为 `redirect_uri`（如 `https://app.example.com/oauth/callback`）；把应用源加入该客户端的 `cors_origins`（如 `https://app.example.com`）。**CORS 登记必填**——否则浏览器会拦截换票请求。同时填写应用的**官网地址（`website`，公网 https 地址）**与可选的**简称（`alias`）/ Logo**：用户中心的「已授权应用」用它们渲染磁贴——**缺 `website` 时磁贴只能展示、不可点击**。
+   - **已有租户、新增应用**：先在 `{TENANT_SLUG}/applications` 创建 Application，再创建本 OAuth 客户端并把 **Application ID** 指向它。这样才是完整应用（成员/角色/磁贴），而不只是一个 OAuth 客户端。复用 `tenantId`/`issuer`；绝不复用其它应用的 `client_id`。
+   - **受众（aud）**：如果应用有自己的后端 API，把客户端的 **Default resource (aud)** 设为该 API 的资源 URL（如 `{{ISSUER}}/app/<app_id>`）；只有直接调用平台 API 的客户端才留空。
    - 此 `client_id` **就是** SDK 的 `appId`：写回 `.env`（`AUTIONAL_APP_ID`）与 `src/autional.ts`，**覆盖**先前取到的值。
    - `redirect_uris` 必须与回调地址**逐字一致**（SDK 默认 `<origin>/oauth/callback`，无尾斜杠）。尾斜杠会把该条变成路径前缀规则；不一致会在登录时报 `invalid_request: redirect_uri not registered`。
 2. **登录按钮**：

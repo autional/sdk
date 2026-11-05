@@ -14,7 +14,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
-## [Unreleased] core@1ad71c67fc69 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
+## [2026-11-05] core@1ad71c67fc69 —— 收窄承诺 + 服务端认证 + 标识符/找回 + 隔离门禁
 
 **内容**（`_core/PROCEDURE.md`，EN/ZH 对称）：
 - 标题、meta description、1.4、About：去掉 multi-user / multiplayer / RBAC，收窄为身份层。
@@ -31,7 +31,17 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
   - `.com` discovery 已于 2026-11-05 复验：issuer/authorization/token/jwks 均指向本区，原先的跨区问题已消除，未写入 skill。
   - 独立走查修复（4 个 blocker）：服务端不刷新 token；401/403 分流；owner key 明确（本地 user id / data.id，禁用邮箱）；缓存失效、上限与 serverless 说明；2.2 补“决策→落地”表。
 
-**状态**：未发布。本次只改源码与生成物，未发 CDN / 站点镜像 / npm。
+**状态**：已发布（2026-11-05）；T4 48/48 PASS；npm 未涉及。
+
+**发布（两区各算内容指纹）**：
+
+| 区 | 版本 | SKILL.md sha256 | CDN commit | web commit |
+|---|---|---|---|---|
+| com | `v0.1.0-f2c6f739` | `21227a2c7247986f24985f810f466565a01a6e9d148e280f337d6cd99aab38f1` | `fc1613e` | `1ff1c03` |
+| cn | `v0.1.0-dd12a796` | `6ff0ea656f7a2488ee45a2dc38ddd7031bd03fb0a93bd42c9f984efa18250c88` | `fc1613e` | `1ff1c03` |
+
+版本目录 6 文件（新增 `backend-verification.md`、`account-recovery.md`）。
+复验：版本直链 12 + latest 12 + 站点资产 14 + `.sha256` 6 + 响应头 2 + CORS 2 = **48/48 PASS**；另有指针 2 项单独确认。
 
 **预算**：主文件单语言 zh 763 / en 765 行（上限 770；新增 5.5 为必做安全段）。
 

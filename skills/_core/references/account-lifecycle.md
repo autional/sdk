@@ -30,7 +30,7 @@ Rules:
 - Record `join_declined` if you need product analytics; do not create a row.
 - Idempotent: `unique(provider, issuer, subject)`; `on conflict do nothing` then re-read.
 - The confirmation is UX, not a security boundary: the server still decides whether the account exists and enforces ownership.
-- On decline, clear the local app session without calling the OP logout endpoint, so the IdP session can survive.
+- On decline, clear the local app session without calling the OP logout endpoint, so the IdP session can survive. Do not call the SDK's `logout()` — it ends the OP session.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## 加入确认（首次 SSO 登录）
@@ -49,7 +49,7 @@ IdP 授权成功 → (issuer, subject)
 - 如需产品分析，记录 `join_declined`；不要创建账号行。
 - 幂等：`unique(provider, issuer, subject)`；`on conflict do nothing` 后再读一次。
 - 加入确认是 UX，不是安全边界：服务端仍要决定账号是否存在，并强制 owner 校验。
-- 拒绝时清本地应用会话，**不要**调 OP 的 logout 端点，这样 IdP 会话可以保留。
+- 拒绝时清本地应用会话，**不要**调 OP 的 logout 端点，这样 IdP 会话可以保留；**不要**调 SDK 的 `logout()`——它会结束 OP 会话。
 <!-- /lang:zh -->
 
 <!-- lang:en -->

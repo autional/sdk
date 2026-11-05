@@ -1,4 +1,4 @@
-<!-- generated: core@238e3bbefe9c · region: com · lang: en — do not edit directly -->
+<!-- generated: core@acc04bbf46f0 · region: com · lang: en — do not edit directly -->
 
 # Account lifecycle: join, link, recover
 
@@ -22,7 +22,7 @@ Rules:
 - Record `join_declined` if you need product analytics; do not create a row.
 - Idempotent: `unique(provider, issuer, subject)`; `on conflict do nothing` then re-read.
 - The confirmation is UX, not a security boundary: the server still decides whether the account exists and enforces ownership.
-- On decline, clear the local app session without calling the OP logout endpoint, so the IdP session can survive.
+- On decline, clear the local app session without calling the OP logout endpoint, so the IdP session can survive. Do not call the SDK's `logout()` — it ends the OP session.
 
 ## Linking (no auto-merge by email)
 

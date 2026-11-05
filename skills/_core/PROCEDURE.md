@@ -833,6 +833,8 @@ What the user sees: with a valid `id_token_hint` the OP revokes the session and 
 [C] Dual-write during a transition window
 ```
 
+> For more than one identity provider (password + SSO, or multiple SSOs), use the `external_identities` table from `{{REFS_BASE}}/account-lifecycle.md` instead of a single `external_id` column. Never auto-link existing users by email; require an explicit link while signed in.
+
 Migration template (option A, PostgreSQL):
 <!-- /lang:en -->
 <!-- lang:zh -->
@@ -989,6 +991,8 @@ window.location.assign(logoutUrl);  // 第 2 步——无条件
 [B] 删表，完全用 Autional（有数据丢失风险）
 [C] 过渡期双写
 ```
+
+> 多身份（密码 + SSO，或多种 SSO）时，用 `{{REFS_BASE}}/account-lifecycle.md` 的 `external_identities` 表，不要用单列 `external_id`。**不要按邮箱自动关联存量用户**；必须登录后显式绑定。
 
 迁移模板（选项 A，PostgreSQL）：
 <!-- /lang:zh -->

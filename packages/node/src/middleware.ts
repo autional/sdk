@@ -12,6 +12,7 @@
  */
 
 import { createPublicKey, verify as cryptoVerify, type KeyObject } from 'node:crypto';
+import { wellKnownURL } from './wellknown';
 
 export type VerifyMode = 'userinfo' | 'introspect' | 'jwks' | 'decode-only';
 
@@ -26,9 +27,9 @@ export interface NodeAutionalConfig {
   /** introspect 模式必填 */
   clientId?: string;
   clientSecret?: string;
-  /** jwks 模式：JWKS URL（默认 `${apiUrl||issuer}/.well-known/jwks.json`） */
+  /** jwks 模式：JWKS URL（默认为 `${apiUrl||issuer}` 的 **origin** + `/.well-known/jwks.json`，路径前缀会被剥离） */
   jwksUrl?: string;
-  /** jwks 模式：status URL（默认 `${apiUrl||issuer}/.well-known/jwt-status.json`） */
+  /** jwks 模式：status URL（默认同上，挂 origin 根） */
   statusUrl?: string;
   /** jwks 模式：允许的 issuer（默认 [issuer]） */
   allowedIssuers?: string[];
@@ -166,7 +167,9 @@ async function getJWKS(config: NodeAutionalConfig): Promise<JWKSState | null> {
   if (jwksInflight) return jwksInflight;
 
   jwksInflight = (async () => {
-    const url = config.jwksUrl || `${baseUrl(config)}/.well-known/jwks.json`;
+    // `.well-known` 恒在 origin 根：apiUrl 可能带 /bff 前缀（脚手架默认），
+    // 直接拼会 404 → 所有受保护请求恒 401。见 wellknown.ts。
+    const url = config.jwksUrl || wellKnownURL(baseUrl(config), '/.well-known/jwks.json');
     const body = await fetchJSON(url, config.timeoutMs ?? 3000);
     if (!body || !Array.isArray(body.keys)) return jwksCache;
     const keys = new Map<string, KeyObject>();
@@ -194,7 +197,7 @@ async function getStatus(config: NodeAutionalConfig): Promise<StatusState | null
   if (statusInflight) return statusInflight;
 
   statusInflight = (async () => {
-    const url = config.statusUrl || `${baseUrl(config)}/.well-known/jwt-status.json`;
+    const url = config.statusUrl || wellKnownURL(baseUrl(config), '/.well-known/jwt-status.json');
     const body = await fetchJSON(url, config.timeoutMs ?? 3000);
     if (!body) return statusCache;
     const version = typeof body.version === 'number' ? body.version : 0;

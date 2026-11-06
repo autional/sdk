@@ -340,8 +340,13 @@ const GATES = [
         },
         {
           id: 'recovery-path',
-          re: /(邮箱\/手机验证码|email\/phone OTP|恢复联系人|recovery contact)/i,
-          why: '账号找回必须指向邮箱/手机验证码或恢复联系人',
+          re: /(应用侧恢复码|app-side recovery code)/i,
+          why: '账号找回默认必须是应用侧恢复码（客户无邮件/短信发送能力）',
+        },
+        {
+          id: 'no-sending',
+          re: /(默认不发送验证码|no code is sent by default)/i,
+          why: '必须写明默认不发送验证码，避免依赖客户的邮件/短信能力',
         },
         {
           id: 'identifier-contract',

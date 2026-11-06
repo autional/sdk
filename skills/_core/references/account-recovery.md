@@ -1,16 +1,16 @@
 <!-- lang:en -->
 # Identifier and account recovery
 
-> Reference file for the Autional Onboarding skill.
-> Registration requires email or phone; username is only a login alias.
-> Both answers are required before signup is considered complete.
+> Registration requires email or phone (platform `RegisterRequest.Validate`); username is only a login alias.
+> The app does not send email/SMS codes by default.
+> Recovery uses an app-side recovery code; admin reset is the fallback.
 <!-- /lang:en -->
 <!-- lang:zh -->
 # 标识符与账号找回
 
-> Autional 接入 Skill 的引用文件。
-> 注册必须使用邮箱或手机号；用户名只作登录别名。
-> 两个答案都必须在注册流程完成前给出。
+> 注册必须填邮箱或手机号（平台 `RegisterRequest.Validate`）；用户名只作登录别名。
+> 默认不发送邮件/短信验证码。
+> 找回用应用侧恢复码；管理员重置兜底。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -18,34 +18,35 @@
 
 | Identifier | Friction | Recovery | Anti-abuse |
 |---|---|---|---|
-| email + password (default) | low | code to the same email | CAPTCHA + rate limit |
-| phone + password / SMS | medium | code to the same phone | SMS cost + rate limit |
-| email + phone (dual) | high | either channel | both channels |
+| email + password (default) | low | app-side recovery code / admin | CAPTCHA + rate limit |
+| phone + password | medium | app-side recovery code / admin | CAPTCHA + rate limit |
+| email + phone (dual) | high | app-side recovery code / admin | both fields |
 | SSO only | depends on IdP | at the IdP | IdP policy |
 
 Registration without email or phone is rejected (`email or phone is required`).
-An optional username (3–32 chars) can sign in, but cannot replace email/phone at signup.
-Email verification is optional for login; it is required for email-based recovery.
+The email/phone is stored unverified; no code is sent. It is a registration identifier, not a recovery channel by itself.
+An optional username (3–32 chars) is the day-to-day login alias.
 
 ## Recovery options
 
 | Option | Requires | If the user loses it | Notes |
 |---|---|---|---|
-| code to the account's own email/phone | email or phone on file | unrecoverable unless another channel exists | `/auth/recovery/request`, `/verify`, `/complete` |
-| recovery contact | a contact bound in settings | contact must still be reachable | `/auth/me/recovery-contacts`; `/auth/recover-account`, `/reset` |
+| app-side recovery code (default) | codes generated at signup / in settings | account unrecoverable | 10 single-use codes, hashed, shown once; verify, never reuse |
 | admin reset | an operator | requires an operator | audited runbook |
-| none | — | account is unrecoverable | record it in `AUTIONAL_SETUP.md` |
+| email/phone OTP (optional) | the app can send email/SMS | unrecoverable unless another channel exists | do not enable without a delivery channel |
+| recovery contact (optional) | the app can send | contact must still be reachable | only with a delivery channel |
+| none | — | account unrecoverable | record it in `AUTIONAL_SETUP.md` |
 
-There is no user-facing account recovery code. MFA backup codes are a separate second-factor mechanism, not an account recovery channel.
-Codes expire and requests are rate-limited; admin resets must be audited.
+The platform has no account recovery code; the app owns this mechanism.
+The platform's `/auth/recovery/*` endpoints require delivery; use them only when the app can send.
+Admin resets must be audited.
 
 ## Decision → implementation
 
 | Decision | Where to apply | How to verify |
 |---|---|---|
 | Identifier | registration form (`email` or `phone`) + tenant `login_methods` | submit each chosen identifier; a missing email/phone returns 400 |
-| Email/phone recovery | identity `/auth/recovery/*` | request a code, receive it, complete the reset |
-| Recovery contact | `/auth/me/recovery-contacts` | bind a contact, run `/auth/recover-account` |
+| Recovery code | app-side table + settings page | generate once, redeem once, reject reuse |
 | Admin reset | operator runbook | reset one test account and check the audit log |
 | Registration protection | CAPTCHA + rate limit | 3 failures → challenge; per-IP limit trips |
 
@@ -56,34 +57,35 @@ Field names vary by region and version; verify behaviour instead of trusting a 2
 
 | 标识符 | 摩擦 | 找回 | 防滥用 |
 |---|---|---|---|
-| 邮箱 + 密码（默认） | 低 | 验证码发到同一邮箱 | CAPTCHA + 限流 |
-| 手机号 + 密码 / 短信 | 中 | 验证码发到同一手机 | 短信成本 + 限流 |
-| 邮箱 + 手机号（双通道） | 高 | 任一通道 | 双通道 |
+| 邮箱 + 密码（默认） | 低 | 应用侧恢复码 / 管理员 | CAPTCHA + 限流 |
+| 手机号 + 密码 | 中 | 应用侧恢复码 / 管理员 | CAPTCHA + 限流 |
+| 邮箱 + 手机号（双通道） | 高 | 应用侧恢复码 / 管理员 | 双字段 |
 | 仅 SSO | 取决于 IdP | 在 IdP 找回 | IdP 策略 |
 
 注册时邮箱和手机号都没有 → 拒绝（`email or phone is required`）。
-可选用户名（3–32 位）可用于登录，但不能替代注册时的邮箱/手机号。
-邮箱验证对登录可选；但邮箱找回要求邮箱已验证。
+邮箱/手机号按未验证保存，**不发送验证码**。它只是注册标识符，本身不是找回通道。
+可选用户名（3–32 位）是日常登录别名。
 
 ## 找回方式
 
 | 方式 | 前提 | 用户丢失后 | 说明 |
 |---|---|---|---|
-| 验证码发到账号自身邮箱/手机 | 已登记邮箱或手机 | 没有其他通道则不可恢复 | `/auth/recovery/request`、`/verify`、`/complete` |
-| 恢复联系人 | 已在设置中绑定联系人 | 联系人仍须可达 | `/auth/me/recovery-contacts`；`/auth/recover-account`、`/reset` |
+| 应用侧恢复码（默认） | 注册时/设置页生成 | 账号不可恢复 | 10 个一次性码，哈希存储，只显示一次；校验后作废，拒绝复用 |
 | 管理员重置 | 有运维人员 | 需要人工 | 必须审计 |
+| 邮箱/手机验证码（可选） | 客户有邮件/短信发送能力 | 没有其他通道则不可恢复 | 没有投递通道时不要启用 |
+| 恢复联系人（可选） | 客户有发送能力 | 联系人仍须可达 | 仅有投递通道时启用 |
 | 不支持找回 | — | 账号不可恢复 | 写进 `AUTIONAL_SETUP.md` |
 
-没有用户自存的“账号恢复码”。MFA 备份码是独立的第二因素机制，不是账号找回通道。
-验证码会过期，请求有限流；管理员重置必须审计。
+平台没有账号恢复码；这个机制由应用自己实现。
+平台的 `/auth/recovery/*` 依赖投递能力；只有客户能发送时才使用。
+管理员重置必须审计。
 
 ## 决策 → 落地
 
 | 决策 | 落地位置 | 怎么验证 |
 |---|---|---|
 | 标识符 | 注册表单（`email` 或 `phone`）+ 租户 `login_methods` | 分别提交每种标识符；缺邮箱/手机应返回 400 |
-| 邮箱/手机找回 | identity `/auth/recovery/*` | 请求验证码、收到、完成重置 |
-| 恢复联系人 | `/auth/me/recovery-contacts` | 绑定联系人，跑 `/auth/recover-account` |
+| 恢复码 | 应用侧表 + 设置页 | 生成一次、兑换一次、拒绝复用 |
 | 管理员重置 | 运维手册 | 重置一个测试账号并查审计日志 |
 | 注册防护 | CAPTCHA + 限流 | 3 次失败出挑战；同 IP 限流生效 |
 
@@ -109,8 +111,8 @@ SSO 用户没有本应用密码，找回在身份提供方完成。
 Copy this into `AUTIONAL_SETUP.md`:
 
 ```
-Identifier: email | phone | email+phone | SSO only
-Recovery: email/phone OTP | recovery contact | admin | none
+Identifier: email | phone | email+phone | SSO only (username is a login alias)
+Recovery: app-side recovery code | admin | none
 If none: account is unrecoverable (accepted by <user> on <date>)
 ```
 <!-- /lang:en -->
@@ -120,8 +122,8 @@ If none: account is unrecoverable (accepted by <user> on <date>)
 复制到 `AUTIONAL_SETUP.md`：
 
 ```
-Identifier: email | phone | email+phone | SSO only
-Recovery: email/phone OTP | recovery contact | admin | none
+Identifier: email | phone | email+phone | SSO only (username is a login alias)
+Recovery: app-side recovery code | admin | none
 If none: account is unrecoverable (accepted by <user> on <date>)
 ```
 <!-- /lang:zh -->

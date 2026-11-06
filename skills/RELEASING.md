@@ -2,7 +2,7 @@
 
 > 对象：本目录 skill 内容线（`_core/` 单源 → `autional-{com,cn}/` 交付物）与 npm 交付线（`@autional/onboard`）。
 > 每轮发布的交付物记录 → `CHANGELOG.md`；线上可达性矩阵与实测散列 → 工作区 `docs/positioning/12-skill-reachability-registry.md`。
-> 最近执行：2026-11-06（v3.11；com `v0.1.0-939ed589` / cn `v0.1.0-8406868e`；复验 54/54；npm 待发布）。
+> 最近执行：2026-11-06（v3.12；com `v0.1.0-7357360c` / cn `v0.1.0-14ce1e9a`；复验 54/54；npm 待发布）。
 
 ## 0. 一图总览
 

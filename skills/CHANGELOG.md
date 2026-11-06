@@ -14,6 +14,24 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-11-06] core@889ab9186b36 —— 找回恢复为应用侧恢复码（客户无发送能力）
+
+**内容**（`_core/PROCEDURE.md` + `_core/references/account-recovery.md` + `account-lifecycle.md`，EN/ZH 对称）：
+- 注册仍要求 `email` 或 `phone`（平台 `RegisterRequest.Validate`），但**默认不发送验证码**；用户名仅登录别名。
+- 找回默认改为**应用侧恢复码**（10 个一次性、哈希存储、只显示一次）+ 管理员重置；邮箱/手机验证码仅在客户有投递能力时可选。
+- TOTP 恢复为「先有恢复码再启用」；`account-lifecycle.md` 恢复 `recovery_codes` 表（应用侧）。
+- G6：`recovery-path` 改为应用侧恢复码；新增 `no-sending`。
+- v3.11 的「邮箱/手机验证码默认」口径作废：客户没有邮件/短信发送能力。
+
+**状态**：CDN 已发布（cn `v0.1.0-14ce1e9a` / com `v0.1.0-7357360c`，cdn commit `e510da2`）；web 镜像 `ad63131`；复验 **54/54 PASS**；npm 待发布。
+
+| 区 | 版本 | SKILL.md sha256 |
+|---|---|---|
+| com | `v0.1.0-7357360c` | `9398e1f3832eacba77ca5134f621fc46d0686e8c3d1307bf703ab03058f623fe` |
+| cn | `v0.1.0-14ce1e9a` | `d96da9ab05576c8ca5495476c2e0e25bca962eab02ffb4ff836851f36a2f9115` |
+
+---
+
 ## [2026-11-06] core@a8bcf8f2d714 —— 按后端契约修正注册标识符与账号找回（B1/B2）
 
 **内容**（`_core/PROCEDURE.md` + `_core/references/account-recovery.md` + `account-lifecycle.md`，EN/ZH 对称）：

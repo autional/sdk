@@ -1,6 +1,6 @@
 {
   "name": "@autional/node",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Autional Node.js SDK — Express/Fastify middleware for token verification",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -25,10 +25,10 @@
     "src"
   ],
   "peerDependencies": {
-    "@autional/core": ">=0.1.0"
+    "@autional/core": ">=0.4.2"
   },
   "devDependencies": {
-    "@autional/core": ">=0.1.0",
+    "@autional/core": ">=0.4.2",
     "@types/express": "^5.0.0",
     "rimraf": "^5.0.0",
     "tsup": "^8.4.0",

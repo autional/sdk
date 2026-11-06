@@ -1,5 +1,17 @@
 # @autional/node
 
+## 0.5.0
+
+### Minor Changes
+
+- b5b933a: Onboarding: existing-tenant multi-app flow (one OAuth client per app), tenant/authorize/CORS preflight flags, and secret-hygiene in the generated setup doc. Node: add `verify: 'jwks'` local verification with `jwt-status` revocation checks.
+
+### Patch Changes
+
+- 5758462: 修复 OIDC 端点/scope 两类缺陷：`.well-known` 恒挂 origin 根（`@autional/node` 的 `jwks` 模式不再受 `/bff` 前缀影响），默认登录 scope 补 `read`（平台 18 个读服务 + 网关 BFF 强制项）
+- Updated dependencies [5758462]
+  - @autional/core@0.4.2
+
 ## Unreleased
 
 ### Minor Changes

@@ -14,6 +14,24 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-11-06] core@a8bcf8f2d714 —— 按后端契约修正注册标识符与账号找回（B1/B2）
+
+**内容**（`_core/PROCEDURE.md` + `_core/references/account-recovery.md` + `account-lifecycle.md`，EN/ZH 对称）：
+- 注册必须 `email` 或 `phone`（`RegisterRequest.Validate`）；用户名仅登录别名。移除「用户名+密码默认」。
+- 账号找回改为：账号自身邮箱/手机验证码（`/auth/recovery/*`）→ 恢复联系人（`/auth/me/recovery-contacts`、`/auth/recover-account`）→ 管理员重置 → 不支持。移除「账号恢复码」；MFA 备份码明确为第二因素，不是账号找回。
+- TOTP 启用前提改为「已有邮箱/手机找回通道」。
+- 同步修正 5.2c 并发撤销措辞（撤销该用户所有会话）、Express 示例保留 503、缓存 key 用 sha256 前 16 位、验收表改 `Concurrent tabs`、owner key 多身份说明。
+- `_gen/check-skills.mjs` G6：`recovery-path` 改为邮箱/手机验证码或恢复联系人；新增 `identifier-contract`。
+
+**状态**：CDN 已发布（cn `v0.1.0-8406868e` / com `v0.1.0-939ed589`，cdn commit `53ba05c`）；web 镜像 `c12a78b`；复验 **54/54 PASS**；npm 待发布（独立线）。
+
+| 区 | 版本 | SKILL.md sha256 |
+|---|---|---|
+| com | `v0.1.0-939ed589` | `0f882191215567a8b0dfc5972a76fbc239d4c28bc2d75af634b0094a9f96a433` |
+| cn | `v0.1.0-8406868e` | `8f21f76c7d1f5111391860db6c29b1c0f2902d2971303b1bbf3af4618c939684` |
+
+---
+
 ## [2026-11-05] core@d8b11f5407f6 —— 已有租户多应用 + 凭证 hygiene
 
 **内容**（`_core/PROCEDURE.md` + `_core/references/config-template.md`，EN/ZH 对称）：

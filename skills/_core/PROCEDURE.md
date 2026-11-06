@@ -49,7 +49,7 @@ You are an AI agent executing this procedure inside the user's project. Work in 
 
 **What the user gets**
 
-- Email/password or username/password login, plus optional OAuth / SMS / magic link
+- Email or phone + password login, plus optional OAuth / SMS / magic link
 - Registration, account recovery, profile, device/session management
 - Automatic token refresh with multi-tab safety
 - Server-side request authentication for your own API
@@ -71,7 +71,7 @@ Autional 为应用提供身份层。本 Skill 为已有应用建立身份边界�
 
 **用户将获得**
 
-- 邮箱密码或用户名密码登录，可选 OAuth / 短信 / 魔法链接
+- 邮箱或手机号 + 密码登录，可选 OAuth / 短信 / 魔法链接
 - 注册、账号找回、资料、设备/会话管理
 - Token 自动刷新 + 多标签页安全
 - 自有 API 的服务端请求认证
@@ -449,9 +449,9 @@ Match the user's scenario against the full matrix in `{{REFS_BASE}}/compliance-m
 [D] Custom
 ```
 
-**Decisions to record**: identifier (username/password default; email/phone optional) · recovery (recovery code default; admin reset fallback) · registration protection (CAPTCHA + rate limit; email verification is not anti-bot). Option matrix: `{{REFS_BASE}}/account-recovery.md`.
+**Decisions to record**: identifier (register with email or phone; username is a login alias) · recovery (code to the account's own email/phone by default; recovery contacts optional; admin reset fallback) · registration protection (CAPTCHA + rate limit; email verification is not anti-bot). Option matrix: `{{REFS_BASE}}/account-recovery.md`.
 
-**TOTP is a second factor, not a recovery channel.** Enable it only after a recovery code exists; SSO users recover at the IdP.
+**TOTP is a second factor, not a recovery channel.** Enable it only after an email/phone recovery path exists; SSO users recover at the IdP.
 
 ### 2.3 Login methods
 
@@ -477,9 +477,9 @@ After the auth policy is written, re-open the login page and confirm the intende
 [D] 自定义
 ```
 
-**必须记录**：标识符（默认用户名+密码；邮箱/手机可选）· 找回（默认恢复码；管理员重置兜底）· 注册防护（CAPTCHA + 限流；邮箱验证不是防机器人）。选项矩阵：`{{REFS_BASE}}/account-recovery.md`。
+**必须记录**：标识符（注册用邮箱或手机号；用户名仅作登录别名）· 找回（默认发验证码到账号自身邮箱/手机；可选恢复联系人；管理员重置兜底）· 注册防护（CAPTCHA + 限流；邮箱验证不是防机器人）。选项矩阵：`{{REFS_BASE}}/account-recovery.md`。
 
-**TOTP 是第二因素，不是找回通道。** 先有恢复码再启用；SSO 用户在 IdP 找回。
+**TOTP 是第二因素，不是找回通道。** 先有邮箱/手机找回通道再启用；SSO 用户在 IdP 找回。
 
 ### 2.3 登录方式
 
@@ -829,7 +829,7 @@ What the user sees: with a valid `id_token_hint` the OP revokes the session and 
 
 > **No page transition is possible.** The endpoint lives on the API host (`{{ISSUER}}`), so logout always leaves your app for another origin — the browser shows its own loading state. Give local feedback before navigating (disable the button, set a pending label, fade the shell): that is all the UI can do.
 
-> **Multi-tab:** with `syncTabs` on (the default), logout and token refresh broadcast across tabs. A refresh in one tab makes the others re-read storage instead of reusing a stale refresh token — the server treats reuse as compromise and revokes the whole token family. Keep the default.
+> **Multi-tab:** with `syncTabs` on (the default), logout and token refresh broadcast across tabs. A refresh in one tab makes the others re-read storage instead of reusing a stale refresh token — the server treats reuse as compromise and revokes all sessions for that user. Keep the default.
 
 ### 5.3 Existing user table
 
@@ -990,7 +990,7 @@ window.location.assign(logoutUrl);  // 第 2 步——无条件
 
 > **整页跳转没有过渡动画。** 端点在 API 域（`{{ISSUER}}`），登出必然跨域离开应用——浏览器自行显示加载状态。跳转前给本地反馈（禁用按钮、pending 文案、外壳淡出）就是 UI 的全部能做的事。
 
-> **多标签页：** `syncTabs` 默认开启——登出与令牌刷新跨标签广播：一个标签页刷新后，其他标签页重读存储，不会拿旧 refresh token 重复刷新（服务端判定复用即撤销整族令牌）。保持默认即可。
+> **多标签页：** `syncTabs` 默认开启——登出与令牌刷新跨标签广播：一个标签页刷新后，其他标签页重读存储，不会拿旧 refresh token 重复刷新（服务端判定复用即撤销该用户所有会话）。保持默认即可。
 
 ### 5.3 存量用户表
 
@@ -1055,7 +1055,7 @@ A front-end guard is not a boundary. If the server stores user data, authenticat
 **Server**:
 1. Read `Authorization: Bearer <token>`; reject expired JWT `exp`.
 2. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`).
-3. Owner key: the app's own user id (linked via `external_id`), or `data.id` if there is no user table. Never use email.
+3. Owner key: the app's own user id (linked via `external_id`; multiple identities via `external_identities`), or `data.id` if there is no user table. Never use email.
 4. Invalid/expired → 401 · 403 = claims / `entry_plane` / scope / authorization, do not refresh · 5xx → 503.
 5. Cache positive results ≤60s; clear the cache on logout/delete.
 
@@ -1125,7 +1125,7 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 **服务端**：
 1. 读取 `Authorization: Bearer <token>`；JWT `exp` 过期直接拒绝。
 2. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）。
-3. owner key：应用自己的 user id（经 `external_id` 关联），没有用户表时用 `data.id`。**不要用邮箱**。
+3. owner key：应用自己的 user id（单身份经 `external_id`，多身份经 `external_identities`），没有用户表时用 `data.id`。**不要用邮箱**。
 4. 无效/过期 → 401 · 403 = claims / `entry_plane` / scope / 授权，不刷新 · 5xx → 503。
 5. 正结果缓存 ≤60 秒；登出/删号时清缓存。
 
@@ -1383,7 +1383,7 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | SSO login | authorize returns `302` pointing back to the callback, **not** `invalid_request` | preflight in 5.2b step 4 |
 | SSO token exchange over CORS | preflight returns `204` with `Access-Control-Allow-Origin` = the app origin | preflight in 5.2b step 5 |
 | Silent refresh | idle 6 minutes → next edit still saves | manual / integration |
-| Multi-tab | two tabs editing at once → no session loss | manual |
+| Concurrent tabs | two tabs editing at once → no session loss | manual |
 | Forged token | tampered / unsigned token → 401 (server-backed apps only) | integration |
 
 **Security**: password never in URL (hash mode) · tokens are stored in localStorage as plain JSON by default — say so, and mitigate with CSP + short TTL + rotation; use sessionStorage or a BFF (`useCookie`) if you need a stricter boundary · logout ends the OP session, not just the local copy (5.2c) · an account switch shows no previous-account data — local cleanup runs even when the session ended without a logout (1.6 guard) · refresh-replay detected · CAPTCHA slows brute force.
@@ -1406,7 +1406,8 @@ Never merge, push, or delete the branch before the user explicitly picks an opti
 | SSO 登录 | authorize 返回 `302` 且回指回调，**不是** `invalid_request` | 5.2b 第 4 步预检 |
 | SSO 换票跨域 | 预检返回 `204` 且 `Access-Control-Allow-Origin` = 应用源 | 5.2b 第 5 步预检 |
 | 静默刷新 | 空闲 6 分钟后继续编辑仍能保存 | 手工 / 集成 |
-| 多标签页 | 两个标签页同时编辑不失效 | 手工 |
+| 多标签页 | A 标签登出 → B 标签感知 | 单元测试 |
+| 多标签并发 | 两个标签页同时编辑不失效 | 手工 |
 | 伪造 Token | 改 payload / 无签名 → 401（仅限有服务端 API 的应用） | 集成 |
 
 **安全**：密码不走 URL（hash 模式）· Token 默认以明文 JSON 存 localStorage——要写明，并用 CSP + 短 TTL + 轮换缓解；需要更严边界时改用 sessionStorage 或 BFF（`useCookie`）· 登出终结 OP 会话（非仅清本域——5.2c）· 换号不见前账号残留（不经登出同样清理——1.6 守卫）· 刷新重放可检测 · CAPTCHA 抗爆破。
@@ -1570,8 +1571,8 @@ Artifacts:
   ☐ AUTIONAL_SETUP.md exists
   ☐ admin password flagged as "shown once"
   ☐ AUTIONAL_CHANGES.md exists
-  ☐ recovery path answered (code / optional email / admin / none recorded)
-  ☐ identifier strategy recorded (username / email / phone)
+  ☐ recovery path answered (email/phone OTP / recovery contact / admin / none recorded)
+  ☐ identifier strategy recorded (email / phone / email+phone; username is a login alias)
   ☐ data-isolation gate answered (isolated / downgraded / stopped)
   ☐ backend request authentication implemented (if the server stores user data)
   ☐ forged-token test passed (server-backed apps)
@@ -1613,8 +1614,8 @@ Phase：
   ☐ AUTIONAL_SETUP.md 存在
   ☐ 管理员密码已提醒「只显示一次」
   ☐ AUTIONAL_CHANGES.md 存在
-  ☐ 找回方式已回答（恢复码 / 可选邮箱 / 管理员 / 不支持并记录）
-  ☐ 标识符策略已记录（用户名 / 邮箱 / 手机号）
+  ☐ 找回方式已回答（邮箱/手机验证码 / 恢复联系人 / 管理员 / 不支持并记录）
+  ☐ 标识符策略已记录（邮箱 / 手机号 / 双通道；用户名仅作登录别名）
   ☐ 数据隔离门禁已回答（已隔离 / 降级单用户 / 停止）
   ☐ 服务端请求认证已实现（服务端保存用户数据时）
   ☐ 伪造 Token 测试通过（有服务端 API 的应用）

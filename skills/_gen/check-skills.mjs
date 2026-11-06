@@ -340,8 +340,13 @@ const GATES = [
         },
         {
           id: 'recovery-path',
-          re: /(恢复码|recovery code)/i,
-          why: '账号找回方式必须出现',
+          re: /(邮箱\/手机验证码|email\/phone OTP|恢复联系人|recovery contact)/i,
+          why: '账号找回必须指向邮箱/手机验证码或恢复联系人',
+        },
+        {
+          id: 'identifier-contract',
+          re: /(注册用邮箱或手机号|register with email or phone)/i,
+          why: '注册标识符必须写明 email/phone（用户名仅登录别名）',
         },
         {
           id: 'isolation-gate',

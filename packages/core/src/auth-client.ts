@@ -556,7 +556,9 @@ export class AuthClient {
       response_type: 'code',
       client_id: clientId,
       redirect_uri: redirectUri,
-      scope: options.scope || 'openid profile email',
+      // 默认 scope 必须含 `read`：平台读接口（rbac/identity/... 共 18 个服务 + 网关 BFF）
+      // 统一 enforce scope=read，缺它会「登录成功、接口 403」（2026-11-06 事故）。
+      scope: options.scope || 'openid profile email read',
       state,
       code_challenge: challenge,
       code_challenge_method: 'S256',

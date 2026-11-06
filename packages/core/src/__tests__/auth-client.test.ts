@@ -654,7 +654,7 @@ describe('AuthClient', () => {
       expect(p.get('response_type')).toBe('code');
       expect(p.get('client_id')).toBe('app-1');
       expect(p.get('redirect_uri')).toBe('https://app.example.com/oauth/callback');
-      expect(p.get('scope')).toBe('openid profile email');
+      expect(p.get('scope')).toBe('openid profile email read');
       expect(p.get('code_challenge_method')).toBe('S256');
       expect(p.get('code_challenge')).toMatch(/^[A-Za-z0-9_-]{43}$/);
       expect(p.get('state')).toBeTruthy();

@@ -44,7 +44,7 @@ export interface OAuthOptions {
   clientId?: string;
   /** 回调地址（默认 window.location.origin + '/oauth/callback'） */
   redirectUri?: string;
-  /** 请求 scope（默认 'openid profile email'） */
+  /** 请求 scope（默认 'openid profile email read'；read 为平台读接口强制项） */
   scope?: string;
   /** SSO 授权入口覆盖（默认由 apiUrl 推导 auth.<root> 域） */
   authorizeUrl?: string;

@@ -60,6 +60,11 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const CACHE_MAX = 2000;
 
+function configCacheKey(config: NodeAutionalConfig): string {
+  const aud = config.audience?.length ? config.audience.join(',') : config.appId ?? '';
+  return `${config.issuer}|${config.jwksUrl ?? ''}|${config.statusUrl ?? ''}|${aud}`;
+}
+
 function baseUrl(config: NodeAutionalConfig): string {
   return (config.apiUrl || config.issuer).replace(/\/+$/, '');
 }
@@ -137,8 +142,8 @@ interface JWKSState {
   fetchedAt: number;
 }
 
-let jwksCache: JWKSState | null = null;
-let jwksInflight: Promise<JWKSState | null> | null = null;
+const jwksCache = new Map<string, JWKSState>();
+const jwksInflight = new Map<string, Promise<JWKSState | null>>();
 
 interface StatusState {
   revoked: Set<string>;
@@ -147,8 +152,8 @@ interface StatusState {
   fetchedAt: number;
 }
 
-let statusCache: StatusState | null = null;
-let statusInflight: Promise<StatusState | null> | null = null;
+const statusCache = new Map<string, StatusState>();
+const statusInflight = new Map<string, Promise<StatusState | null>>();
 
 async function fetchJSON(url: string, timeoutMs: number): Promise<Record<string, unknown> | null> {
   const { signal, cancel } = withTimeout(timeoutMs);
@@ -161,17 +166,21 @@ async function fetchJSON(url: string, timeoutMs: number): Promise<Record<string,
   }
 }
 
-async function getJWKS(config: NodeAutionalConfig): Promise<JWKSState | null> {
+async function getJWKS(config: NodeAutionalConfig, force = false): Promise<JWKSState | null> {
+  const key = configCacheKey(config);
   const ttl = config.jwksTtlMs ?? 300_000;
-  if (jwksCache && Date.now() - jwksCache.fetchedAt < ttl) return jwksCache;
-  if (jwksInflight) return jwksInflight;
+  const cached = jwksCache.get(key);
+  if (!force && cached && Date.now() - cached.fetchedAt < ttl) return cached;
+  const inflight = jwksInflight.get(key);
+  if (inflight) return inflight;
 
-  jwksInflight = (async () => {
+  const p = (async () => {
     // `.well-known` 恒在 origin 根：apiUrl 可能带 /bff 前缀（脚手架默认），
     // 直接拼会 404 → 所有受保护请求恒 401。见 wellknown.ts。
     const url = config.jwksUrl || wellKnownURL(baseUrl(config), '/.well-known/jwks.json');
     const body = await fetchJSON(url, config.timeoutMs ?? 3000);
-    if (!body || !Array.isArray(body.keys)) return jwksCache;
+    const prev = jwksCache.get(key) ?? null;
+    if (!body || !Array.isArray(body.keys)) return prev;
     const keys = new Map<string, KeyObject>();
     for (const raw of body.keys as Array<Record<string, unknown>>) {
       if (raw.kty !== 'RSA' || typeof raw.kid !== 'string') continue;
@@ -181,46 +190,52 @@ async function getJWKS(config: NodeAutionalConfig): Promise<JWKSState | null> {
         // Ignore malformed keys; fail closed if none remain.
       }
     }
-    if (keys.size === 0) return jwksCache;
-    jwksCache = { keys, fetchedAt: Date.now() };
-    return jwksCache;
+    if (keys.size === 0) return prev;
+    const next = { keys, fetchedAt: Date.now() };
+    jwksCache.set(key, next);
+    return next;
   })().finally(() => {
-    jwksInflight = null;
+    jwksInflight.delete(key);
   });
-
-  return jwksInflight;
+  jwksInflight.set(key, p);
+  return p;
 }
 
 async function getStatus(config: NodeAutionalConfig): Promise<StatusState | null> {
+  const key = configCacheKey(config);
   const ttl = 10_000;
-  if (statusCache && Date.now() - statusCache.fetchedAt < ttl) return statusCache;
-  if (statusInflight) return statusInflight;
+  const cached = statusCache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < ttl) return cached;
+  const inflight = statusInflight.get(key);
+  if (inflight) return inflight;
 
-  statusInflight = (async () => {
+  const p = (async () => {
     const url = config.statusUrl || wellKnownURL(baseUrl(config), '/.well-known/jwt-status.json');
     const body = await fetchJSON(url, config.timeoutMs ?? 3000);
-    if (!body) return statusCache;
+    const prev = statusCache.get(key) ?? null;
+    if (!body) return prev;
     const version = typeof body.version === 'number' ? body.version : 0;
     // Reject version rollback (cache replay).
-    if (statusCache && version < statusCache.version) return statusCache;
+    if (prev && version < prev.version) return prev;
     const revoked = new Set<string>();
     if (Array.isArray(body.revoked_kids)) {
       for (const item of body.revoked_kids as Array<Record<string, unknown>>) {
         if (typeof item.kid === 'string') revoked.add(item.kid);
       }
     }
-    statusCache = {
+    const next = {
       revoked,
       requireKidAfter: typeof body.require_kid_after === 'number' ? body.require_kid_after : 0,
       version,
       fetchedAt: Date.now(),
     };
-    return statusCache;
+    statusCache.set(key, next);
+    return next;
   })().finally(() => {
-    statusInflight = null;
+    statusInflight.delete(key);
   });
-
-  return statusInflight;
+  statusInflight.set(key, p);
+  return p;
 }
 
 function asStringArray(value: unknown): string[] {
@@ -253,9 +268,15 @@ async function verifyWithJWKS(config: NodeAutionalConfig, token: string): Promis
   if (kid && status.revoked.has(kid)) return null;
   if (!kid && status.requireKidAfter > 0 && Math.floor(Date.now() / 1000) >= status.requireKidAfter) return null;
 
-  const jwks = await getJWKS(config);
+  let jwks = await getJWKS(config);
   if (!jwks) return null;
-  const key = kid ? jwks.keys.get(kid) : jwks.keys.size === 1 ? [...jwks.keys.values()][0] : undefined;
+  let key = kid ? jwks.keys.get(kid) : jwks.keys.size === 1 ? [...jwks.keys.values()][0] : undefined;
+  // G4：未知 kid 强制重取一次 JWKS（绕过 TTL），覆盖轮换窗口。
+  if (!key && kid) {
+    jwks = await getJWKS(config, true);
+    if (!jwks) return null;
+    key = jwks.keys.get(kid);
+  }
   if (!key) return null;
 
   const signingInput = Buffer.from(`${parts[0]}.${parts[1]}`);
@@ -265,11 +286,11 @@ async function verifyWithJWKS(config: NodeAutionalConfig, token: string): Promis
   const now = Math.floor(Date.now() / 1000);
   if (typeof payload.exp !== 'number' || payload.exp <= now) return null;
   if (typeof payload.nbf === 'number' && payload.nbf > now + 30) return null;
-  if (typeof payload.type === 'string' && payload.type !== 'access') return null;
+  if (payload.type !== 'access') return null;
 
   const iss = typeof payload.iss === 'string' ? payload.iss : '';
   const allowedIssuers = config.allowedIssuers?.length ? config.allowedIssuers : [config.issuer];
-  if (iss && !allowedIssuers.includes(iss)) return null;
+  if (!iss || !allowedIssuers.includes(iss)) return null;
 
   const allowedAud = config.audience?.length ? config.audience : config.appId ? [config.appId] : [];
   if (allowedAud.length) {
@@ -311,11 +332,12 @@ function decodeOnly(token: string): VerifiedUser | null {
 export async function verifyToken(config: NodeAutionalConfig, token: string): Promise<VerifiedUser | null> {
   const ttl = config.cacheTtlMs ?? 15000;
   const now = Date.now();
+  const cacheKey = `${configCacheKey(config)}|${token}`;
 
   if (ttl > 0) {
-    const hit = cache.get(token);
+    const hit = cache.get(cacheKey);
     if (hit && hit.expiresAt > now) return hit.user;
-    if (hit) cache.delete(token);
+    if (hit) cache.delete(cacheKey);
   }
 
   let user: VerifiedUser | null;
@@ -337,7 +359,7 @@ export async function verifyToken(config: NodeAutionalConfig, token: string): Pr
 
   if (user && ttl > 0) {
     if (cache.size >= CACHE_MAX) cache.clear();
-    cache.set(token, { user, expiresAt: now + ttl });
+    cache.set(cacheKey, { user, expiresAt: now + ttl });
   }
   return user;
 }

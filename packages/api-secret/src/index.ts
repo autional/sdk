@@ -1,6 +1,6 @@
 /**
  * @autional/api-secret — Auto-generated from secret-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-07
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -117,16 +117,61 @@ export interface JWTKeyInfo {
 
 export type JWTKeyResponse = Record<string, unknown>;
 
+export interface JWTKeyStageResponse {
+  kid?: string;
+  publicKey?: string;
+  status?: string;  // published / active
+}
+
 export interface JWTKeysListResponse {
+  activateAt?: number;
+  activeKid?: string;  // G23：active 密钥元数据（来自 jwt/state）。
   keys?: JWTKeyInfo[];
+  requireKidAfter?: number;
+  retireAfter?: number;
+}
+
+export interface JWTPruneRequest {
+  confirm?: boolean;
+  dryRun?: boolean;
+  keep?: number;
+}
+
+export interface JWTPruneResponse {
+  candidates?: number;
+  currentVersion?: number;
+  deleted?: number;
+  dryRun?: boolean;
+  keep?: number;
+  revisions?: number[];
+  scanned?: number;
 }
 
 export interface JWTPublicKeyResponse {
   publicKey?: string;
 }
 
+export interface JWTRequireKIDAfterRequest {
+  requireKidAfter?: number;
+}
+
+export interface JWTRequireKIDAfterResponse {
+  requireKidAfter?: number;
+  version?: number;
+}
+
+export interface JWTRollbackRequest {
+  kid: string;
+  reason?: string;
+}
+
 export interface RotateSecretRequest {
   value: string;
+}
+
+export interface SecretAppScopeResponse {
+  appId?: string;
+  secretCount?: number;
 }
 
 export interface SecretDetailResponse {
@@ -139,6 +184,7 @@ export interface SecretDetailResponse {
   metadata?: Record<string, unknown>;
   notifyBefore?: number;
   status?: string;
+  tenantId?: string;
   updatedAt?: string;
   version?: number;
   versions?: SecretVersionResponse[];
@@ -179,8 +225,15 @@ export interface SecretResponse {
   metadata?: Record<string, unknown>;
   notifyBefore?: number;
   status?: string;
+  tenantId?: string;
   updatedAt?: string;
   version?: number;
+}
+
+export interface SecretScopeResponse {
+  appId?: string;
+  secretCount?: number;
+  tenantId?: string;
 }
 
 export interface SecretValueResponse {
@@ -227,6 +280,8 @@ export interface UpdateSecretRequest {
   value?: string;
 }
 
+export type Map_string_bool = Record<string, boolean>;
+
 export type Duration = "-9223372036854775808" | "9223372036854775807" | "1" | "1000" | "1000000" | "1000000000" | "60000000000" | "3600000000000";
 
 
@@ -256,6 +311,23 @@ export function getAdminSecrets(client: ApiClient, params?: {
 /** 创建密钥 */
 export function postAdminSecrets(client: ApiClient, data: StoreSecretRequest): Promise<SecretResponse> {
   return client.post(`/secret/api/v1/admin/secrets`, data);
+}
+
+/** 平台盘点：跨租户/跨应用列出密钥 */
+export function getAdminSecretsAll(client: ApiClient, params?: {
+  tenant_id?: string;  // 租户过滤（空=全部）
+  app_id?: string;  // 应用作用域过滤（空=全部）
+  prefix?: string;  // 密钥前缀
+  status?: string;  // 状态过滤
+  page?: number;  // 页码
+  page_size?: number;  // 每页数量
+}): Promise<ApiListResult<SecretResponse>> {
+  return client.get(`/secret/api/v1/admin/secrets/all`, { params });
+}
+
+/** 平台盘点：全库 tenant×app 作用域 */
+export function getAdminSecretsAllScopes(client: ApiClient): Promise<SecretScopeResponse[]> {
+  return client.get(`/secret/api/v1/admin/secrets/all/scopes`);
 }
 
 /** 批量删除密钥 */
@@ -317,6 +389,11 @@ export function postAdminSecretsRotate(client: ApiClient, data: RotateSecretRequ
   key: string;  // 密钥路径
 }): Promise<SecretResponse> {
   return client.post(appendQuery(`/secret/api/v1/admin/secrets/rotate`, params), data);
+}
+
+/** 列出密钥的应用作用域 */
+export function getAdminSecretsScopes(client: ApiClient): Promise<SecretAppScopeResponse[]> {
+  return client.get(`/secret/api/v1/admin/secrets/scopes`);
 }
 
 /** 更新密钥元数据 */

@@ -1,4 +1,4 @@
-<!-- generated: core@889ab9186b36 · region: cn · lang: zh — do not edit directly -->
+<!-- generated: core@7d01d7fc8d9b · region: cn · lang: zh — do not edit directly -->
 
 # Autional 合规对照表
 

@@ -344,14 +344,14 @@ const GATES = [
           why: '账号找回默认必须是应用侧恢复码（客户无邮件/短信发送能力）',
         },
         {
-          id: 'no-sending',
-          re: /(默认不发送验证码|no code is sent by default)/i,
-          why: '必须写明默认不发送验证码，避免依赖客户的邮件/短信能力',
+          id: 'verified-registration',
+          re: /(验证码注册|verified code registration|验证后才|after verification)/i,
+          why: '邮箱/手机必须验证通过后才作为账号标识',
         },
         {
           id: 'identifier-contract',
-          re: /(注册用邮箱或手机号|register with email or phone)/i,
-          why: '注册标识符必须写明 email/phone（用户名仅登录别名）',
+          re: /(默认用户名|username \+ password|用户名\+密码|username-only|仅用户名)/i,
+          why: '默认必须是用户名+密码；email/phone 验证后才作为标识',
         },
         {
           id: 'isolation-gate',

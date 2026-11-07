@@ -1054,14 +1054,14 @@ A front-end guard is not a boundary. If the server stores user data, authenticat
 
 **Server**:
 1. Read `Authorization: Bearer <token>`; reject expired JWT `exp`.
-2. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`).
+2. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`); high-traffic resource servers may use `{{NPM_SCOPE}}/node` `verify: 'jwks'` instead (optional — see below).
 3. Owner key: the app's own user id (linked via `external_id`; multiple identities via `external_identities`), or `data.id` if there is no user table. Never use email.
 4. Invalid/expired → 401 · 403 = claims / `entry_plane` / scope / authorization, do not refresh · 5xx → 503.
 5. Cache positive results ≤60s; clear the cache on logout/delete.
 
 **Client**: on 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
 
-Do **not** use the public JWKS for access tokens. `{{NPM_SCOPE}}/node` verifies by default (`userinfo`; `introspect` optional); `decode-only` is debug only.
+`{{NPM_SCOPE}}/node` verifies by default (`userinfo`; `introspect` optional); `decode-only` is debug only. `jwks` is an optional high-performance path only with RS256 + `type=access` + `iss`/`aud`/`typ`/`exp` checks, a bounded key cache, unknown-`kid` refetch, and `jwt-status` revocation checks; sensitive operations still use `/me` or introspect. Revocation lag: ≤60s internal, ≈55s SDK worst case, externally by cache.
 
 Full contract: `{{REFS_BASE}}/backend-verification.md`.
 
@@ -1124,14 +1124,14 @@ async function findOrCreateLocalUser(autionalUser: { id: string; email: string }
 
 **服务端**：
 1. 读取 `Authorization: Bearer <token>`；JWT `exp` 过期直接拒绝。
-2. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）。
+2. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）；高流量资源服务可改用 `{{NPM_SCOPE}}/node` `verify: 'jwks'`（可选——见下）。
 3. owner key：应用自己的 user id（单身份经 `external_id`，多身份经 `external_identities`），没有用户表时用 `data.id`。**不要用邮箱**。
 4. 无效/过期 → 401 · 403 = claims / `entry_plane` / scope / 授权，不刷新 · 5xx → 503。
 5. 正结果缓存 ≤60 秒；登出/删号时清缓存。
 
 **客户端**：401 时刷新一次（单飞 + Web Lock）并重试；403 不重试。
 
-**不要**用公开 JWKS 验 access token。`{{NPM_SCOPE}}/node` 默认会校验（`userinfo`，可选 `introspect`）；`decode-only` 仅供调试。
+`{{NPM_SCOPE}}/node` 默认会校验（`userinfo`，可选 `introspect`）；`decode-only` 仅供调试。`jwks` 是可选的**高性能路径**，须同时满足：RS256 + `type=access` + `iss`/`aud`/`typ`/`exp` 校验、有界密钥缓存、未知 `kid` 重取、`jwt-status` 撤销检查；敏感操作仍走 `/me` 或 introspect。撤销滞后：内部 ≤60 秒、SDK 最坏约 55 秒、外部由缓存决定。
 
 完整契约：`{{REFS_BASE}}/backend-verification.md`。
 

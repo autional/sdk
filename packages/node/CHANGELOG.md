@@ -19,6 +19,12 @@
 - 新增 `verify: 'jwks'`：本地 RS256 验签 + `jwt-status` 撤销/`require_kid_after` 检查；
   支持 `jwksUrl` / `statusUrl` / `allowedIssuers` / `audience` / `jwksTtlMs`。
   默认缓存 JWKS 5 分钟、status 10 秒；未知 kid fail-closed。
+- G4：未知 `kid` 立即强制重取一次 JWKS（绕过 TTL），同一 config 60 秒内最多一次
+  （新增 `jwksForceCooldownMs` 可调）；重取后仍无键返回 `null`（fail closed）。
+  缓存/并发语义不变：按 config 分区、singleflight、刷新失败保留上一版 keyset。
+- G5：`aud` 默认值调整。显式 `audience` 优先（**推荐生产显式配置**）；未配置时回退
+  `issuer` 本身及其 origin 根域（平台资源形如 `https://api.<root>`）→ `appId`（兼容旧 token）。
+  白名单为空时一律拒绝，不再出现「未配置 aud 就接受任意值」。
 
 ## 0.4.0
 

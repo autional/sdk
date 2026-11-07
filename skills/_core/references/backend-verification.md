@@ -20,7 +20,7 @@
 
 1. Read `Authorization: Bearer <token>`.
 2. Decode `exp`; reject expired tokens without a network call.
-3. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`).
+3. Validate with `GET {{API_URL}}/identity/api/v1/auth/me` → `{ data: { id } }` (or `userinfo` → `sub`). High-traffic resource servers may instead use `{{NPM_SCOPE}}/node` `verify: 'jwks'` (optional, conditional — see below).
 4. Owner key: the app's own user id (linked via `external_identities`), or `data.id` when there is no user table. Never email.
 5. Invalid/expired → 401 · `entry_plane`/claims mismatch → 403 (do not refresh) · 5xx → 503.
 6. Cache positive results ≤60s; clear on logout/delete.
@@ -36,7 +36,7 @@ On 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
 
 1. 读取 `Authorization: Bearer <token>`。
 2. 解码 `exp`；过期直接拒绝，不打网络。
-3. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）。
+3. 用 `GET {{API_URL}}/identity/api/v1/auth/me` 校验 → `{ data: { id } }`（或 `userinfo` → `sub`）。高流量资源服务可改用 `{{NPM_SCOPE}}/node` `verify: 'jwks'`（可选、有条件——见下）。
 4. owner key：应用自己的 user id（经 `external_identities` 关联），没有用户表时用 `data.id`。**不要用邮箱**。
 5. 无效/过期 → 401 · `entry_plane`/claims 不匹配 → 403（不刷新）· 5xx → 503。
 6. 正结果缓存 ≤60 秒；登出/删号时清缓存。
@@ -47,28 +47,71 @@ On 401 refresh once (single-flight, Web Lock) and retry; on 403 do not retry.
 <!-- /lang:zh -->
 
 <!-- lang:en -->
-## Why not JWKS
+## JWKS verification (optional, conditional)
 
-Access tokens have no `kid`, and their signing key is not the one published at
-`{{ISSUER}}/.well-known/jwks.json` (that key serves id_tokens).
-JWKS verification therefore fails for real access tokens.
-RS256 signing is live (2026-11-05), but kid/JWKS distribution for access tokens is still pending;
-until it ships, the supported server-side paths are `/me`, `userinfo`, or `introspect`.
+Since 2026-11-07 access tokens carry `kid`, and `{{ISSUER}}/.well-known/jwks.json` publishes
+the signing keys. JWKS is therefore usable — as an **optional high-performance path**, not the
+default. The default stays `userinfo`; `introspect` and `/me` remain authoritative for revocation.
 
-Do not hard-code `iss`: it can vary by region/flow (SAML now unifies to identity-service,
-2026-11-05). Validate through `/me` or `userinfo` instead of pinning it.
+Use `{{NPM_SCOPE}}/node` `verify: 'jwks'` (≥0.5) if you need local verification: it does RS256
+verification plus a `/.well-known/jwt-status.json` revocation check. Pass `appId` (audience) and
+keep `issuer`; the JWKS/status URLs hang off the API **origin** (`/bff` prefixes are stripped).
+Key rotation is server-side (platform `reload`); clients need no redeploy — an unknown `kid`
+triggers a refetch.
+
+If you verify JWTs yourself, enforce **all** of:
+
+1. `alg` allowlist = `RS256` (never `none`; never HS256 with a public key).
+2. Select the key by `kid` from the fixed JWKS URL; an unknown `kid` → refetch once (rate-limited),
+   then fail closed. Tokens without `kid` are only acceptable while the status document allows it.
+3. `type === 'access'` (reject id_token / refresh_token confusion).
+4. `iss` ∈ an explicit allowlist taken from discovery; `aud` contains your app id; header `typ` ∈
+   {`JWT`, `at+jwt`}; `exp` valid (and `nbf` with small skew).
+5. Cache the key set (≤5 min) and verification results (≤15 s); never share a cache across
+   issuers/apps. Do not trust `jku` / `x5u` / embedded keys, and never hard-code a public key.
+
+Sensitive operations (account deletion, password/credential change, admin or payment actions) must
+still call `/me` or introspect on every request — local verification cannot see a token/session
+revocation immediately.
+
+Do not hard-code `iss`: it can vary by region/flow (SAML unifies to identity-service). Take it from
+discovery or the region config and validate it, instead of assuming another region's value.
+
+**Revocation SLO**: internal verifiers ≤60 s; official SDK worst case ≈55 s (oauth keyset 30 s +
+jwt-status 10 s + result cache 15 s); external apps are bounded by their own cache — keep it short
+for sensitive paths.
 <!-- /lang:en -->
 <!-- lang:zh -->
-## 为什么不能用 JWKS
+## JWKS 验签（可选、有条件）
 
-Access token 没有 `kid`，签名密钥也不在
-`{{ISSUER}}/.well-known/jwks.json`（那个密钥服务的是 id_token）。
-用 JWKS 验真实 access token 会失败。
-RS256 签发已于 2026-11-05 上线，但 access token 的 kid/JWKS 分发仍未上线；
-在此之前，服务端可用路径是 `/me`、`userinfo` 或 `introspect`。
+自 2026-11-07 起 access token 带 `kid`，`{{ISSUER}}/.well-known/jwks.json` 也发布签名公钥。
+因此 JWKS **可用**——但它是**可选的高性能路径**，不是默认。默认仍是 `userinfo`；
+`introspect` 与 `/me` 仍是撤销判断的权威来源。
 
-不要写死 `iss`：它会随区域/流程变化（SAML 已于 2026-11-05 统一到 identity-service）。
-用 `/me` 或 `userinfo` 做校验，不要 pin 死。
+需要本地验签时用 `{{NPM_SCOPE}}/node` 的 `verify: 'jwks'`（≥0.5）：本地 RS256 验签 +
+`/.well-known/jwt-status.json` 撤销检查。必须配 `appId`（audience）并保留 `issuer`；
+JWKS/status 挂在 API **origin** 根（`/bff` 前缀会被剥离）。换钥在服务端完成（平台 `reload`），
+客户端无需重新部署——未知 `kid` 会触发重取。
+
+自研验签必须**同时**满足：
+
+1. `alg` 白名单 = `RS256`（拒绝 `none`；拒绝用公钥跑 HS256）。
+2. 按 `kid` 从固定 JWKS URL 选键；未知 `kid` → 强制重取一次（限频），仍失败则拒绝。
+   无 `kid` 的 token 仅在 status 文档允许的窗口内接受。
+3. `type === 'access'`（拒绝 id_token / refresh_token 混淆）。
+4. `iss` ∈ 来自 discovery 的显式白名单；`aud` 包含你的 app id；header `typ` ∈
+   {`JWT`, `at+jwt`}；`exp` 有效（`nbf` 允许小 skew）。
+5. 缓存密钥集（≤5 分钟）与验证结果（≤15 秒）；缓存不得跨 issuer/app 复用。
+   不信任 `jku` / `x5u` / 内嵌密钥，不硬编码公钥。
+
+敏感操作（删号、改密/凭证、管理或支付动作）仍必须每次请求走 `/me` 或 introspect——
+本地验签看不到 token/session 的即时撤销。
+
+不要写死 `iss`：它会随区域/流程变化（SAML 统一到 identity-service）。从 discovery 或区域配置取值
+并校验，不要套用另一个区域的值。
+
+**撤销 SLO**：内部验签方 ≤60 秒；官方 SDK 最坏约 55 秒（oauth keyset 30 秒 + jwt-status 10 秒 +
+结果缓存 15 秒）；外部应用由自身缓存决定——敏感路径要把缓存压短。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -169,22 +212,27 @@ app.use(async (req, res, next) => {
 
 If you use `{{NPM_SCOPE}}/node`, the middleware verifies by default:
 
-- `verify: 'userinfo'` (default) — calls the OAuth userinfo endpoint;
+- `verify: 'userinfo'` (default) — calls the OAuth userinfo endpoint; simplest and always correct;
 - `verify: 'introspect'` — requires `clientId` / `clientSecret`, returns scope;
+- `verify: 'jwks'` — local RS256 verification + `jwt-status` revocation check; optional path for
+  high-traffic resource servers (configure `appId` / `issuer`; unknown `kid` triggers a refetch);
 - `verify: 'decode-only'` — local debugging only; the injected user is marked `verified: false`.
 
-Do not enable `decode-only` on protected routes.
+Do not enable `decode-only` on protected routes — it is not a security boundary. Sensitive
+operations stay on `/me` or `introspect` even when reads use `jwks`.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## Node SDK
 
 使用 `{{NPM_SCOPE}}/node` 时，中间件默认会校验：
 
-- `verify: 'userinfo'`（默认）——调 OAuth userinfo；
+- `verify: 'userinfo'`（默认）——调 OAuth userinfo；最简单也最稳；
 - `verify: 'introspect'`——需要 `clientId` / `clientSecret`，可拿到 scope；
+- `verify: 'jwks'`——本地 RS256 验签 + `jwt-status` 撤销检查；高流量资源服务的可选路径
+  （配 `appId` / `issuer`；未知 `kid` 会自动重取）；
 - `verify: 'decode-only'`——仅本地调试；注入的 user 会标记 `verified: false`。
 
-保护路由不要开 `decode-only`。
+保护路由不要开 `decode-only`——它不是安全边界。读请求用 `jwks` 时，敏感操作仍走 `/me` 或 introspect。
 <!-- /lang:zh -->
 
 <!-- lang:en -->
@@ -219,6 +267,8 @@ Without this, a page refresh logs the user out.
 - Clear on logout and account deletion; do not wait for the TTL.
 - Serverless instances each keep their own cache; a logout on one instance does not clear the others, so keep the TTL short.
 - Revocation and logout can therefore lag up to 60s. For immediate revocation, query `/me` on every request or use Redis-backed introspection.
+- Revocation SLO by verification path: internal verifiers ≤60s; official SDK (`jwks`) worst case ≈55s (oauth keyset 30s + jwt-status 10s + result cache 15s); external apps are bounded by their own cache. Keep caches short on sensitive routes.
+- `jwks` mode adds its own caches: key set (default 5 min, with unknown-`kid` refetch) and jwt-status (10s); do not raise them on sensitive routes.
 <!-- /lang:en -->
 <!-- lang:zh -->
 ## 缓存
@@ -228,4 +278,6 @@ Without this, a page refresh logs the user out.
 - 登出与删号时清缓存，不要等 TTL。
 - Serverless 每个实例各有缓存；一个实例登出不会清其它实例，所以 TTL 要短。
 - 因此撤销与登出最多滞后 60 秒。需要立即生效时，每次请求都查 `/me`，或用 Redis 支撑的 introspect。
+- 撤销 SLO 按验签路径分列：内部验签方 ≤60 秒；官方 SDK（`jwks`）最坏约 55 秒（oauth keyset 30 秒 + jwt-status 10 秒 + 结果缓存 15 秒）；外部应用由自身缓存决定。敏感路由要把缓存压短。
+- `jwks` 模式另有自己的缓存：密钥集（默认 5 分钟，未知 `kid` 会重取）与 jwt-status（10 秒）；敏感路由不要调大。
 <!-- /lang:zh -->

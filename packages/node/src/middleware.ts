@@ -11,7 +11,13 @@
  * 本地调试，必须显式开启，且注入的 user 会标记 unverified。
  */
 
-import { createPublicKey, verify as cryptoVerify, type KeyObject } from 'node:crypto';
+import { verify as cryptoVerify } from 'node:crypto';
+import {
+  audienceMatches,
+  resolveAudiences,
+  resolveSigningKey,
+  type JwksFetchOptions,
+} from './jwks';
 import { wellKnownURL } from './wellknown';
 
 export type VerifyMode = 'userinfo' | 'introspect' | 'jwks' | 'decode-only';
@@ -33,10 +39,19 @@ export interface NodeAutionalConfig {
   statusUrl?: string;
   /** jwks 模式：允许的 issuer（默认 [issuer]） */
   allowedIssuers?: string[];
-  /** jwks 模式：允许的 audience（默认 [appId]；为空则不校验 aud） */
+  /**
+   * jwks 模式：允许的 audience。**推荐显式配置**（平台资源通常形如 `https://api.<root>`）。
+   * 未配置时依次回退：`issuer` 本身及其 origin 根域 → `appId`（兼容旧 token）。
+   * 不接受「任意 aud」：解析结果为空时一律拒绝（fail closed）。
+   */
   audience?: string[];
-  /** jwks 缓存（毫秒），默认 300000 */
+  /** jwks 缓存（毫秒），默认 300000；未知 kid 会绕过 TTL 立即重取一次 */
   jwksTtlMs?: number;
+  /**
+   * jwks 模式：强制重取（未知 kid）限频窗（毫秒），默认 60000。
+   * 同一 config 在窗内最多强制重取一次；`<= 0` 表示不限频（不建议生产使用）。
+   */
+  jwksForceCooldownMs?: number;
   /** 单次验证超时（毫秒），默认 3000 */
   timeoutMs?: number;
   /** 验证结果缓存（毫秒），默认 15000；0 关闭 */
@@ -61,7 +76,9 @@ const cache = new Map<string, CacheEntry>();
 const CACHE_MAX = 2000;
 
 function configCacheKey(config: NodeAutionalConfig): string {
-  const aud = config.audience?.length ? config.audience.join(',') : config.appId ?? '';
+  // 按「生效的 audience 白名单」分区：显式 audience、issuer/根域、appId 各自独立，
+  // 避免双 audience / 多配置在同一进程内串味（G18）。
+  const aud = resolveAudiences(config).join(',');
   return `${config.issuer}|${config.jwksUrl ?? ''}|${config.statusUrl ?? ''}|${aud}`;
 }
 
@@ -137,14 +154,6 @@ async function verifyWithIntrospect(config: NodeAutionalConfig, token: string): 
   }
 }
 
-interface JWKSState {
-  keys: Map<string, KeyObject>;
-  fetchedAt: number;
-}
-
-const jwksCache = new Map<string, JWKSState>();
-const jwksInflight = new Map<string, Promise<JWKSState | null>>();
-
 interface StatusState {
   revoked: Set<string>;
   requireKidAfter: number;
@@ -164,41 +173,6 @@ async function fetchJSON(url: string, timeoutMs: number): Promise<Record<string,
   } finally {
     cancel();
   }
-}
-
-async function getJWKS(config: NodeAutionalConfig, force = false): Promise<JWKSState | null> {
-  const key = configCacheKey(config);
-  const ttl = config.jwksTtlMs ?? 300_000;
-  const cached = jwksCache.get(key);
-  if (!force && cached && Date.now() - cached.fetchedAt < ttl) return cached;
-  const inflight = jwksInflight.get(key);
-  if (inflight) return inflight;
-
-  const p = (async () => {
-    // `.well-known` 恒在 origin 根：apiUrl 可能带 /bff 前缀（脚手架默认），
-    // 直接拼会 404 → 所有受保护请求恒 401。见 wellknown.ts。
-    const url = config.jwksUrl || wellKnownURL(baseUrl(config), '/.well-known/jwks.json');
-    const body = await fetchJSON(url, config.timeoutMs ?? 3000);
-    const prev = jwksCache.get(key) ?? null;
-    if (!body || !Array.isArray(body.keys)) return prev;
-    const keys = new Map<string, KeyObject>();
-    for (const raw of body.keys as Array<Record<string, unknown>>) {
-      if (raw.kty !== 'RSA' || typeof raw.kid !== 'string') continue;
-      try {
-        keys.set(raw.kid, createPublicKey({ key: raw as never, format: 'jwk' }));
-      } catch {
-        // Ignore malformed keys; fail closed if none remain.
-      }
-    }
-    if (keys.size === 0) return prev;
-    const next = { keys, fetchedAt: Date.now() };
-    jwksCache.set(key, next);
-    return next;
-  })().finally(() => {
-    jwksInflight.delete(key);
-  });
-  jwksInflight.set(key, p);
-  return p;
 }
 
 async function getStatus(config: NodeAutionalConfig): Promise<StatusState | null> {
@@ -238,10 +212,15 @@ async function getStatus(config: NodeAutionalConfig): Promise<StatusState | null
   return p;
 }
 
-function asStringArray(value: unknown): string[] {
-  if (typeof value === 'string') return [value];
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  return [];
+function jwksFetchOptions(config: NodeAutionalConfig): JwksFetchOptions {
+  return {
+    // `.well-known` 恒在 origin 根：apiUrl 可能带 /bff 前缀（脚手架默认），
+    // 直接拼会 404 → 所有受保护请求恒 401。见 wellknown.ts。
+    url: config.jwksUrl || wellKnownURL(baseUrl(config), '/.well-known/jwks.json'),
+    ttlMs: config.jwksTtlMs,
+    timeoutMs: config.timeoutMs,
+    forceCooldownMs: config.jwksForceCooldownMs,
+  };
 }
 
 async function verifyWithJWKS(config: NodeAutionalConfig, token: string): Promise<VerifiedUser | null> {
@@ -268,15 +247,9 @@ async function verifyWithJWKS(config: NodeAutionalConfig, token: string): Promis
   if (kid && status.revoked.has(kid)) return null;
   if (!kid && status.requireKidAfter > 0 && Math.floor(Date.now() / 1000) >= status.requireKidAfter) return null;
 
-  let jwks = await getJWKS(config);
-  if (!jwks) return null;
-  let key = kid ? jwks.keys.get(kid) : jwks.keys.size === 1 ? [...jwks.keys.values()][0] : undefined;
-  // G4：未知 kid 强制重取一次 JWKS（绕过 TTL），覆盖轮换窗口。
-  if (!key && kid) {
-    jwks = await getJWKS(config, true);
-    if (!jwks) return null;
-    key = jwks.keys.get(kid);
-  }
+  // G4：先查缓存；未知 kid 时立即强制重取一次（绕过 TTL，60s 限频），
+  // 仍无键则返回 null（fail closed）。singleflight/缓存语义见 jwks.ts。
+  const key = await resolveSigningKey(configCacheKey(config), jwksFetchOptions(config), kid);
   if (!key) return null;
 
   const signingInput = Buffer.from(`${parts[0]}.${parts[1]}`);
@@ -292,11 +265,10 @@ async function verifyWithJWKS(config: NodeAutionalConfig, token: string): Promis
   const allowedIssuers = config.allowedIssuers?.length ? config.allowedIssuers : [config.issuer];
   if (!iss || !allowedIssuers.includes(iss)) return null;
 
-  const allowedAud = config.audience?.length ? config.audience : config.appId ? [config.appId] : [];
-  if (allowedAud.length) {
-    const aud = asStringArray(payload.aud);
-    if (!aud.some((a) => allowedAud.includes(a))) return null;
-  }
+  // G5：aud 白名单。显式 audience 优先；否则回退 issuer/根域 + appId（兼容旧 token）。
+  // 白名单为空一律拒绝——不允许「未配置就放行任意 aud」。
+  const allowedAud = resolveAudiences(config);
+  if (!audienceMatches(payload.aud, allowedAud)) return null;
 
   const sub =
     (typeof payload.sub === 'string' && payload.sub) ||

@@ -1,4 +1,4 @@
-<!-- generated: core@889ab9186b36 · region: com · lang: en — do not edit directly -->
+<!-- generated: core@f5e53f2dab16 · region: com · lang: en — do not edit directly -->
 
 # Identifier and account recovery
 

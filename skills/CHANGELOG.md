@@ -14,6 +14,21 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+## [2026-11-07] core@f5e53f2dab16 —— v3.10：JWKS 验签改为「有条件可用」（评审 G13）
+
+**内容**（`_core/PROCEDURE.md` §5.5 + `_core/references/backend-verification.md`，EN/ZH 对称）：
+- 删除「公开 JWKS 不可用 / access token 无 kid」的过期口径（G13）：2026-11-07 起 access token 带 `kid`，`/.well-known/jwks.json` 发布签名公钥，JWKS **可用**。
+- 但仅作为**可选的高性能路径**：默认仍是 `userinfo`；`jwks` 须用 `@autional/node` `verify: 'jwks'`（≥0.5），自研验签必须同时校验 `type=access`、`iss`、`aud`、header `typ`、`exp`/`nbf`，按 `kid` 选键、未知 `kid` 强制重取一次、密钥集缓存有界（≤5 分钟）。
+- 敏感操作（删号、改密/凭证、管理/支付）仍走 `/me` 或 introspect；**保留**「`decode-only` 不是安全边界」的禁令。
+- 补充撤销 SLO：内部验签方 ≤60 秒；官方 SDK 最坏约 55 秒（oauth keyset 30 秒 + jwt-status 10 秒 + 结果缓存 15 秒）；外部应用由自身缓存决定。
+- 重新生成 14 个交付物（`autional-{cn,com}` × zh/en + references），`_gen/check-skills.mjs` 门校验通过；**未改 npm 包版本、未发布、未提交**。
+
+> 版本号沿用评审单 G13 的 v3.10 编号；仓库最近分发线为 v3.12（见 `RELEASING.md`），实际再分发时按序列递增，本条仅同步文档。
+
+**状态**：源与交付物已同步（core@f5e53f2dab16）；发布/提交待人工执行。
+
+---
+
 ## [2026-11-06] core@889ab9186b36 —— 找回恢复为应用侧恢复码（客户无发送能力）
 
 **内容**（`_core/PROCEDURE.md` + `_core/references/account-recovery.md` + `account-lifecycle.md`，EN/ZH 对称）：
@@ -66,7 +81,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 **内容**（`_core/PROCEDURE.md` + `_core/references/`，EN/ZH 对称）：
 - Phase 4：`@autional/node` 最低 **0.4.0**（更早版本只解码）。
 - 5.5：403 原因扩为 claims / `entry_plane` / scope / 授权（scope 门禁已 enforce）。
-- `backend-verification.md`：RS256 签发已上线，但 access token 仍无 kid/JWKS 分发；SAML `iss` 已统一到 identity-service。
+- `backend-verification.md`：RS256 签发已上线，但 access token 仍无 kid/JWKS 分发；SAML `iss` 已统一到 identity-service。（2026-11-07 已上线 kid/JWKS，见 v3.10 条目）
 
 **状态**：已发布（2026-11-05）；T4 54/54 PASS；npm 未涉及。
 

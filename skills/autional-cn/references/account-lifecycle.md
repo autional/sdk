@@ -1,4 +1,4 @@
-<!-- generated: core@889ab9186b36 · region: cn · lang: zh — do not edit directly -->
+<!-- generated: core@f5e53f2dab16 · region: cn · lang: zh — do not edit directly -->
 
 # 账号生命周期：加入、绑定、找回
 

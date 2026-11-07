@@ -49,7 +49,7 @@ You are an AI agent executing this procedure inside the user's project. Work in 
 
 **What the user gets**
 
-- Username + password login (email or phone is required at registration; no code is sent by default), plus optional OAuth / SMS / magic link
+- Username + password login by default; email/phone are account identifiers only after verification, plus optional OAuth / SMS / magic link
 - Registration, account recovery, profile, device/session management
 - Automatic token refresh with multi-tab safety
 - Server-side request authentication for your own API
@@ -71,7 +71,7 @@ Autional 为应用提供身份层。本 Skill 为已有应用建立身份边界�
 
 **用户将获得**
 
-- 用户名 + 密码登录（注册需填邮箱或手机号；默认不发验证码），可选 OAuth / 短信 / 魔法链接
+- 用户名 + 密码登录（默认）；邮箱/手机验证后才作为账号标识，可选 OAuth / 短信 / 魔法链接
 - 注册、账号找回、资料、设备/会话管理
 - Token 自动刷新 + 多标签页安全
 - 自有 API 的服务端请求认证
@@ -449,7 +449,7 @@ Match the user's scenario against the full matrix in `{{REFS_BASE}}/compliance-m
 [D] Custom
 ```
 
-**Decisions to record**: identifier (register with email or phone; username is a login alias; no code is sent by default) · recovery (app-side recovery code by default; admin reset fallback; email/phone OTP only if the app can send) · registration protection (CAPTCHA + rate limit; email verification is not anti-bot). Option matrix: `{{REFS_BASE}}/account-recovery.md`.
+**Decisions to record**: identifier (register with username + password by default; email/phone are account identifiers only after verified code registration) · recovery (app-side recovery code by default; admin reset fallback; verified email/phone OTP optional) · registration protection (CAPTCHA + rate limit; email verification is not anti-bot). Option matrix: `{{REFS_BASE}}/account-recovery.md`.
 
 **TOTP is a second factor, not a recovery channel.** Enable it only after a recovery code exists; SSO users recover at the IdP.
 
@@ -477,7 +477,7 @@ After the auth policy is written, re-open the login page and confirm the intende
 [D] 自定义
 ```
 
-**必须记录**：标识符（注册用邮箱或手机号；用户名仅作登录别名；默认不发送验证码）· 找回（默认应用侧恢复码；管理员重置兜底；仅当客户有发送能力时才用邮箱/手机验证码）· 注册防护（CAPTCHA + 限流；邮箱验证不是防机器人）。选项矩阵：`{{REFS_BASE}}/account-recovery.md`。
+**必须记录**：标识符（默认用户名+密码；邮箱/手机仅在验证码注册通过后作为账号标识）· 找回（默认应用侧恢复码；管理员重置兜底；已验证邮箱/手机 OTP 可选）· 注册防护（CAPTCHA + 限流；邮箱验证不是防机器人）。选项矩阵：`{{REFS_BASE}}/account-recovery.md`。
 
 **TOTP 是第二因素，不是找回通道。** 先有恢复码再启用；SSO 用户在 IdP 找回。
 
@@ -1572,7 +1572,7 @@ Artifacts:
   ☐ admin password flagged as "shown once"
   ☐ AUTIONAL_CHANGES.md exists
   ☐ recovery path answered (app-side recovery code / admin / none recorded)
-  ☐ identifier strategy recorded (email / phone / email+phone; username is a login alias; no code sent)
+  ☐ identifier strategy recorded (username default; email/phone only after verification)
   ☐ data-isolation gate answered (isolated / downgraded / stopped)
   ☐ backend request authentication implemented (if the server stores user data)
   ☐ forged-token test passed (server-backed apps)
@@ -1615,7 +1615,7 @@ Phase：
   ☐ 管理员密码已提醒「只显示一次」
   ☐ AUTIONAL_CHANGES.md 存在
   ☐ 找回方式已回答（应用侧恢复码 / 管理员 / 不支持并记录）
-  ☐ 标识符策略已记录（邮箱 / 手机号 / 双通道；用户名仅作登录别名；默认不发码）
+  ☐ 标识符策略已记录（默认用户名；邮箱/手机验证后才作为账号标识）
   ☐ 数据隔离门禁已回答（已隔离 / 降级单用户 / 停止）
   ☐ 服务端请求认证已实现（服务端保存用户数据时）
   ☐ 伪造 Token 测试通过（有服务端 API 的应用）

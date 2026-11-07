@@ -14,6 +14,21 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 
 ---
 
+
+## [2026-11-07] core@7d01d7fc8d9b —— 默认用户名+密码；邮箱/手机验证后才入库
+
+**内容**（`_core/PROCEDURE.md` + `_core/references/account-recovery.md`，EN/ZH 对称）：
+- 默认注册改为**用户名 + 密码**；邮箱/手机是可选账号标识，必须通过验证码后才创建/绑定。
+- 未验证邮箱/手机不写入 `identities`、不能登录/找回/通知/占唯一性。
+- 验证码注册（email-code / phone-code）支持设置密码；OAuth/邀请按 verified 来源处理。
+- 找回仍为应用侧恢复码 + 管理员；已验证邮箱/手机 OTP 可选。
+- G6：移除 `no-sending`；新增 `verified-registration`；`identifier-contract` 改为“用户名默认”。
+
+**状态**：本地 build/check **6/6 PASS**；**未发布**（等 identity-service + 门户同窗上线）；npm 待发布。
+
+---
+
+
 ## [2026-11-07] core@f5e53f2dab16 —— v3.10：JWKS 验签改为「有条件可用」（评审 G13）
 
 **内容**（`_core/PROCEDURE.md` §5.5 + `_core/references/backend-verification.md`，EN/ZH 对称）：

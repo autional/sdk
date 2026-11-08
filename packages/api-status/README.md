@@ -26,7 +26,7 @@ Autional Status API — auto-generated TypeScript client from status-service (26
 | `getStatusMetricsLatency(client, params?)` | GET | `/status/metrics/latency` | 查询服务延迟趋势 |
 | `getStatusMetricsUptime(client, params?)` | GET | `/status/metrics/uptime` | 查询服务可用率趋势 |
 | `getStatusOverview(client)` | GET | `/status/overview` | 系统状态概览 |
-| `getStatusRss(client)` | GET | `/status/rss` | RSS事件与维护订阅源 |
+| `getStatusRss(client, params?)` | GET | `/status/rss` | RSS事件与维护订阅源 |
 | `getStatusServices(client)` | GET | `/status/services` | 获取服务目录 |
 | `deleteStatusSubscriptions(client, data: UnsubscribeRequest)` | DELETE | `/status/subscriptions` | 取消订阅 |
 | `getStatusSubscriptions(client, params?)` | GET | `/status/subscriptions` | 查询订阅者列表 |
@@ -45,7 +45,7 @@ npm install @autional/core @autional/api-status
 
 ```ts
 import { Autional, browserPlatform } from '@autional/core';
-import { getStatusRss } from '@autional/api-status';
+import { getStatusJson } from '@autional/api-status';
 
 const autional = new Autional({
   appId: 'my-app',
@@ -55,7 +55,7 @@ const autional = new Autional({
 await autional.initialize();
 
 // 返回值已由 ApiClient 解包为载荷（不是 { code, data, message } 信封）
-const result = await getStatusRss(autional.api);
+const result = await getStatusJson(autional.api);
 console.log(result);
 ```
 

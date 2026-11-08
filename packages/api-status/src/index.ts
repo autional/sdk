@@ -1,6 +1,6 @@
 /**
  * @autional/api-status — Auto-generated from status-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-08
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -414,8 +414,10 @@ export function getStatusOverview(client: ApiClient): Promise<OverviewResponse> 
 }
 
 /** RSS事件与维护订阅源 */
-export function getStatusRss(client: ApiClient): Promise<string> {
-  return client.get(`/status/api/v1/status/rss`);
+export function getStatusRss(client: ApiClient, params?: {
+  lang?: string;  // 频道语言覆盖（en 输出英文；省略时按区域默认：.cn 中文 / .com 英文）
+}): Promise<string> {
+  return client.get(`/status/api/v1/status/rss`, { params });
 }
 
 /** 获取服务目录 */

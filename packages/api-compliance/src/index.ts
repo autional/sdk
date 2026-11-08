@@ -1,6 +1,6 @@
 /**
  * @autional/api-compliance — Auto-generated from compliance-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-08
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -1664,6 +1664,7 @@ export function getAdminComplianceLegalDocuments(client: ApiClient, params?: {
   doc_type?: string;  // doc type filter (terms/privacy)
   page?: number;  // page number
   page_size?: number;  // page size
+  include_content?: boolean;  // include legal document content in list items (default true)
 }): Promise<ApiListResult<LegalDocumentItem>> {
   return client.get(`/compliance/api/v1/admin/compliance/legal-documents`, { params });
 }
@@ -1795,6 +1796,11 @@ export function putAdminCompliancePrivacyImpactByPrivacyImpact(client: ApiClient
 /** 创建/更新隐私政策 */
 export function postAdminCompliancePrivacyPolicies(client: ApiClient, data: UpsertPrivacyPolicyRequest): Promise<SimpleResponse> {
   return client.post(`/compliance/api/v1/admin/compliance/privacy-policies`, data);
+}
+
+/** 获取合规配置信息 */
+export function getAdminComplianceProfile(client: ApiClient): Promise<ComplianceProfileResponse> {
+  return client.get(`/compliance/api/v1/admin/compliance/profile`);
 }
 
 /** 创建或更新合规配置 */

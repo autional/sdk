@@ -1,6 +1,6 @@
 /**
  * @autional/api-identity — Auto-generated from identity-service internal/docs/docs.go
- * Generated: 2026-11-04
+ * Generated: 2026-11-08
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -139,6 +139,13 @@ export interface PairDeviceRequest {
 
 export interface TransferDeviceRequest {
   newOwnerId?: string;
+}
+
+export interface UpdateDeviceRequest {
+  firmwareVer?: string;
+  hardwareId?: string;
+  manufacturer?: string;
+  name?: string;
 }
 
 export interface RiskEventDayCount {
@@ -927,17 +934,23 @@ export interface LoginByEmailCodeRequest {
   captchaToken?: string;
   code: string;
   email: string;
+  password?: string;
+  passwordTransmission?: string;
   registerIfNew?: boolean;
   tenantId?: string;
+  username?: string;  // 仅 register_if_new 且用户不存在时使用；不参与已存在用户的 code 登录。
 }
 
 export interface LoginByPhoneCodeRequest {
   captchaChallengeId?: string;
   captchaToken?: string;
   code: string;
+  password?: string;
+  passwordTransmission?: string;
   phone: string;
   registerIfNew?: boolean;
   tenantId?: string;
+  username?: string;  // 仅 register_if_new 且用户不存在时使用；不参与已存在用户的 code 登录。
 }
 
 /** 用户登录历史记录 */
@@ -1257,6 +1270,7 @@ export interface QrLoginStatusResponse {
 
 /** 敏感操作前强制重新认证 */
 export interface ReAuthenticateRequest {
+  audience?: string;  // Audience 目标资源（step-up token 的 aud）；空 = 使用当前配置 audience。
   mfaCode?: string;  // MFA验证码
   password: string;  // 当前密码
 }
@@ -1332,6 +1346,8 @@ export interface RefreshTokenRequest {
 export interface RegisterByEmailCodeRequest {
   code: string;
   email: string;
+  password: string;
+  passwordTransmission?: string;
   tenantId?: string;
   username?: string;
 }
@@ -1340,14 +1356,16 @@ export interface RegisterByEmailCodeRequest {
 export interface RegisterByInvitationRequest {
   invitationCode: string;
   password: string;
+  passwordTransmission?: string;
   tenantId?: string;  // TenantID 可选：仅用于邀请一致性校验（body 显式租户）；不参与租户解析。
-  username?: string;
+  username: string;
 }
 
 /** OAuth显式补充注册请求参数 */
 export interface RegisterByOAuthRequest {
   agreeTerms: boolean;
   password: string;
+  passwordTransmission?: string;
   pendingToken: string;
   phone?: string;
   username?: string;
@@ -1355,6 +1373,8 @@ export interface RegisterByOAuthRequest {
 
 export interface RegisterByPhoneCodeRequest {
   code: string;
+  password: string;
+  passwordTransmission?: string;
   phone: string;
   tenantId?: string;
   username?: string;
@@ -2336,6 +2356,11 @@ export function getAdminIotsByIots(client: ApiClient, iotId: string): Promise<De
   return client.get(`/identity/api/v1/admin/iots/${iotId}`);
 }
 
+/** Update Device */
+export function putAdminIotsByIots(client: ApiClient, iotId: string, data: UpdateDeviceRequest): Promise<DeviceInfo> {
+  return client.put(`/identity/api/v1/admin/iots/${iotId}`, data);
+}
+
 /** LDAP directory health check */
 export function getAdminLdapHealth(client: ApiClient): Promise<LdapHealthResponse[]> {
   return client.get(`/identity/api/v1/admin/ldap/health`);
@@ -2829,6 +2854,11 @@ export function getAuthMeAuditLogs(client: ApiClient, params?: {
   status_class?: string;  // 状态语义筛选 success/failure
 }): Promise<ApiListResult<AuditLogResponse>> {
   return client.get(`/identity/api/v1/auth/me/audit-logs`, { params });
+}
+
+/** 删除全部Authenticator备份 */
+export function deleteAuthMeAuthenticatorBackup(client: ApiClient): Promise<SimpleResponse> {
+  return client.delete(`/identity/api/v1/auth/me/authenticator/backup`);
 }
 
 export function getAuthMeAuthenticatorBackup(client: ApiClient): Promise<AuthenticatorBackupResponse> {

@@ -1,6 +1,6 @@
 /**
  * @autional/api-session — Auto-generated from session-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-08
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -496,6 +496,11 @@ export function getSessions(client: ApiClient, params?: {
 /** 创建会话 */
 export function postSessions(client: ApiClient, data: CreateSessionRequest): Promise<CreateSessionData> {
   return client.post(`/session/api/v1/sessions`, data);
+}
+
+/** 当前会话活动心跳 */
+export function postSessionsMeActivity(client: ApiClient): Promise<SimpleResponse> {
+  return client.post(`/session/api/v1/sessions/me/activity`);
 }
 
 /** 刷新令牌 */

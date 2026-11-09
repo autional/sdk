@@ -24,7 +24,7 @@ skill 分发内容的变更记录。真源 = `skills/_core/`；交付物 = `skil
 - 找回仍为应用侧恢复码 + 管理员；已验证邮箱/手机 OTP 可选。
 - G6：移除 `no-sending`；新增 `verified-registration`；`identifier-contract` 改为“用户名默认”。
 
-**状态**：本地 build/check **6/6 PASS**；**未发布**（等 identity-service + 门户同窗上线）；npm 待发布。
+**状态**：**已发布 2026-11-09** —— cn `v0.1.0-2d6b63f7` / com `v0.1.0-87fd13e9`（源 `d2a5ff3`）；站点 canonical（`www.autional.{cn,com}/ai/skill.md`）与 CDN 双区均已核验含新口径；npm `@autional/onboard` 为独立版本线（0.6.0，未跟版）。
 
 ---
 

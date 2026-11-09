@@ -1,6 +1,6 @@
 /**
  * @autional/api-compliance — Auto-generated from compliance-service internal/docs/docs.go
- * Generated: 2026-11-08
+ * Generated: 2026-11-09
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -1961,6 +1961,11 @@ export function getAdminComplianceStandardsByStandards(client: ApiClient, standa
 /** 列出合规标准控制项 */
 export function getAdminComplianceStandardsControlsByStandards(client: ApiClient, standardId: string): Promise<ControlItemResponse[]> {
   return client.get(`/compliance/api/v1/admin/compliance/standards/${standardId}/controls`);
+}
+
+/** 获取合规状态概览 */
+export function getAdminComplianceStatus(client: ApiClient): Promise<ComplianceStatusResponse> {
+  return client.get(`/compliance/api/v1/admin/compliance/status`);
 }
 
 /** 查询子处理商列表 */

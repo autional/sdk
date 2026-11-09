@@ -1,6 +1,6 @@
 /**
  * @autional/api-saml — Auto-generated from saml-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-09
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -84,6 +84,10 @@ export interface SamlProviderItem {
   id?: string;
   name?: string;
   nameIdFormat?: string;
+  signAuthnEffective?: boolean;  // 生效值（合并全局默认 + provider 覆盖后），只读。
+  signAuthnRequests?: boolean;
+  signLogout?: boolean;
+  signLogoutEffective?: boolean;
   sloUrl?: string;
   ssoUrl?: string;
   tenantId?: string;
@@ -99,6 +103,7 @@ export interface SamlProviderRequest {
   allowIdpInitiated?: boolean;
   certificate: string;
   certificateBackup?: string;
+  clearSigningOverrides?: boolean;
   defaultRedirectUri?: string;
   enabled?: boolean;
   entityId: string;
@@ -106,6 +111,8 @@ export interface SamlProviderRequest {
   name: string;
   nameIdFormat?: string;
   shouldClearBackup?: boolean;
+  signAuthnRequests?: boolean;  // 三态：null/缺省 = 继承全局默认；true/false = 本 IdP 显式覆盖。
+  signLogout?: boolean;
   sloUrl?: string;
   ssoUrl: string;
   wantAuthnSigned?: boolean;
@@ -120,6 +127,14 @@ export interface SamlSessionItem {
   sessionIndex?: string;
   tenantId?: string;
   userId?: string;
+}
+
+export interface SamlSigningPolicyRequest {
+  clear?: boolean;
+  clearSignAuthn?: boolean;
+  clearSignLogout?: boolean;
+  signAuthnRequests?: boolean;
+  signLogout?: boolean;
 }
 
 export interface SamlUserLinkItem {
@@ -173,6 +188,11 @@ export function putAdminSamlProvidersAttributeMappingByProviders(client: ApiClie
   return client.put(`/saml/api/v1/admin/saml/providers/${providerId}/attribute-mapping`, data);
 }
 
+/** 更新签名策略 */
+export function putAdminSamlProvidersSigningByProviders(client: ApiClient, providerId: string, data: SamlSigningPolicyRequest): Promise<SimpleResponse> {
+  return client.put(`/saml/api/v1/admin/saml/providers/${providerId}/signing`, data);
+}
+
 /** 查询SAML会话列表（管理端） */
 export function getAdminSamlSessions(client: ApiClient, params?: {
   page?: number;  // 页码
@@ -181,6 +201,11 @@ export function getAdminSamlSessions(client: ApiClient, params?: {
   sort_order?: string;  // 排序方向 (asc/desc)
 }): Promise<ApiListResult<SamlSessionItem>> {
   return client.get(`/saml/api/v1/admin/saml/sessions`, { params });
+}
+
+/** SP 签名状态 */
+export function getAdminSamlSigningStatus(client: ApiClient): Promise<void> {
+  return client.get(`/saml/api/v1/admin/saml/signing-status`);
 }
 
 /** 查询用户SAML绑定列表（管理端） */

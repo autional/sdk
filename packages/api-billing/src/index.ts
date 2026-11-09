@@ -1,6 +1,6 @@
 /**
  * @autional/api-billing — Auto-generated from billing-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-09
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -721,6 +721,11 @@ export function putAdminBillingFeatureGatesOverrides(client: ApiClient, data: Ov
 /** 清除功能开关覆盖 */
 export function deleteAdminBillingFeatureGatesOverridesByOverrides(client: ApiClient, gateKey: string): Promise<OverrideResponse> {
   return client.delete(`/billing/api/v1/admin/billing/feature-gates/overrides/${gateKey}`);
+}
+
+/** 平台按目标租户查询功能开关覆盖 */
+export function getAdminBillingFeatureGatesOverridesByOverrides(client: ApiClient, tenantId: string): Promise<OverrideResponse> {
+  return client.get(`/billing/api/v1/admin/billing/feature-gates/overrides/${tenantId}`);
 }
 
 /** 验证计费事件账本完整性 */

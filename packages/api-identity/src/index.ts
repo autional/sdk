@@ -1,6 +1,6 @@
 /**
  * @autional/api-identity — Auto-generated from identity-service internal/docs/docs.go
- * Generated: 2026-11-08
+ * Generated: 2026-11-09
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -3180,6 +3180,11 @@ export function postAuthQrLoginConfirm(client: ApiClient, data: QrLoginConfirmRe
 /** 发起二维码登录 */
 export function postAuthQrLoginInitiate(client: ApiClient, data: QrLoginInitiateRequest): Promise<QrLoginInitiateResponse> {
   return client.post(`/identity/api/v1/auth/qr-login/initiate`, data);
+}
+
+/** 撤销二维码登录（会话创建方） */
+export function postAuthQrLoginRevoke(client: ApiClient, data: QrLoginCancelRequest): Promise<SimpleResponse> {
+  return client.post(`/identity/api/v1/auth/qr-login/revoke`, data);
 }
 
 /** 扫描二维码登录 */

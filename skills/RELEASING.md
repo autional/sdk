@@ -72,7 +72,7 @@ bash skills/_tests/dryrun-audit.sh     # 磁盘级审计（不信自述）；判
 
 ## 3. 通道 A：站点快照（canonical，web 仓）
 
-仓 = `github.com:autional/web`（branch `main`，单仓 → 双 Vercel 项目 REGION=com/cn）。
+仓 = `github.com:autional/web`（branch `main`；`.com` → Vercel，`.cn` → mf01 构建 + 香港自建托管）。
 
 ### 3.1 镜像映射（入仓，勿手改生成物）
 
@@ -100,7 +100,7 @@ h=$(sha256sum public/ai/skill.zh.md | cut -d" " -f1); printf "%s  %s\n" "$h" "sk
 
 ### 3.3 提交与构建守卫
 
-commit（镜像 + `.sha256`）→ push `main` → 双 Vercel 生产部署。
+commit（镜像 + `.sha256`）→ push `main`：`.com` 由 Vercel 构建；`.cn` 由 mf01 cron（约 10 分钟）构建并发布到香港，不经 Vercel。
 
 构建期守卫在 `scripts/gen-static.mjs`（不符**抛错拒构建**）：
 
@@ -115,7 +115,7 @@ commit（镜像 + `.sha256`）→ push `main` → 双 Vercel 生产部署。
 
 ## 4. 通道 B：CDN 上架（兜底，cdn 仓）
 
-仓 = `github.com:autional/cdn`（branch `main`，双 Vercel 项目 cdn / cn-cdn）。上架 = 新版本目录 + 更新本区指针与 rewrite。
+仓 = `github.com:autional/cdn`（branch `main`；`.com` → Vercel，`.cn` → mf01 构建 + 香港自建托管）。上架 = 新版本目录 + 更新本区指针与 latest 别名。
 
 ### 4.1 计算内容指纹（版本号 = `v0.1.0-<8hex>`）
 
@@ -173,13 +173,17 @@ done
 | 文件 | 改动 |
 |------|------|
 | `ai/latest.<region>.json` | `version` + `files` 指向新版本（两区互不影响） |
-| `vercel.json` | `/ai/latest/:path*` rewrite 目标改新版本目录（cn host 条件 → cn 版本；默认 → com 版本） |
+| `vercel.json` | **仅 `.com`**：`/ai/latest/:path*` rewrite 目标改新版本目录 |
+| `shared/infra-ops/sites/sites.manifest.json` | **仅 `.cn`**：`internalRewrites` 中 `/ai/latest/:path` 的 `to` 改新版本目录 |
 
 `/ai/latest.json` 的 host 分流指向 `latest.<region>.json`，无需动。
 
+> ⚠ `.cn` 的 latest 别名不是 Vercel rewrite，而是香港 `sites-static` 的 nginx 配置（由 manifest 生成）。
+> 每次 skill 发布必须同时更新 manifest，并在 mf01/香港执行 `gen-nginx-conf` → 下发 `container.conf` → `docker exec sites-static nginx -s reload`；否则直链更新、latest 仍指旧版。
+
 ### 4.5 提交推送
 
-commit + push `main` → 双 Vercel 生产部署 → 复验（§6）。
+commit + push `main`：`.com` 由 Vercel 构建；`.cn` 由 mf01 cron（约 10 分钟）构建并发布到香港 → 复验（§6）。
 
 > 铁律 1 提醒：已推送的版本目录**永不再改**。发现内容错误 → 修内容、发**新**版本号，把指针与 rewrite 指过去。
 

@@ -1077,6 +1077,11 @@ export function getAdminTenantsByTenants(client: ApiClient, tenantId: string): P
   return client.get(`/tenant/api/v1/admin/tenants/${tenantId}`);
 }
 
+/** 试用租户升级为正式租户 */
+export function postAdminTenantsUpgradeByTenants(client: ApiClient, tenantId: string): Promise<SimpleResponse> {
+  return client.post(`/tenant/api/v1/admin/tenants/${tenantId}/upgrade`);
+}
+
 /** 更新租户信息 */
 export function putAdminTenantsByTenants(client: ApiClient, tenantId: string, data: UpdateTenantRequest): Promise<TenantResponse> {
   return client.put(`/tenant/api/v1/admin/tenants/${tenantId}`, data);

@@ -1,6 +1,6 @@
 /**
  * @autional/api-secret — Auto-generated from secret-service internal/docs/docs.go
- * Generated: 2026-11-07
+ * Generated: 2026-11-11
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -415,6 +415,11 @@ export function postAdminSecretsVersionsValue(client: ApiClient, data: SecretVer
   key: string;  // 密钥路径
 }): Promise<SecretValueResponse> {
   return client.post(appendQuery(`/secret/api/v1/admin/secrets/versions/value`, params), data);
+}
+
+/** 获取公开 JWT 公钥集（JWKS） */
+export function getSecretPublicJwtKeyset(client: ApiClient): Promise<void> {
+  return client.get(`/secret/api/v1/secret/public/jwt/keyset`);
 }
 
 /** 获取 JWT 验证公钥 */

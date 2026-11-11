@@ -1,6 +1,6 @@
 /**
  * @autional/api-session — Auto-generated from session-service internal/docs/docs.go
- * Generated: 2026-11-08
+ * Generated: 2026-11-11
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 

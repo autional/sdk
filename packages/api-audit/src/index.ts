@@ -1,6 +1,6 @@
 /**
  * @autional/api-audit — Auto-generated from audit-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-11
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -903,6 +903,15 @@ export function getAdminAuditPaymentEvents(client: ApiClient, params?: {
   page_size?: number;  // 每页条数（默认20）
 }): Promise<ApiListResult<AuditLogResponse>> {
   return client.get(`/audit/api/v1/admin/audit/payment-events`, { params });
+}
+
+/** 平台管理员跨租户审计查询 */
+export function getAdminAuditPlatformLogs(client: ApiClient, params?: {
+  tenant_id: string;  // 租户 ID（可为 _system）
+  page?: number;  // 页码（默认1）
+  page_size?: number;  // 每页条数（默认20）
+}): Promise<ApiListResult<AuditLogResponse>> {
+  return client.get(`/audit/api/v1/admin/audit/platform/logs`, { params });
 }
 
 /** 获取合规审计报告 */

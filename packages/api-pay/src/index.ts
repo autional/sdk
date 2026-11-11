@@ -1,6 +1,6 @@
 /**
  * @autional/api-pay — Auto-generated from pay-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-11
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 

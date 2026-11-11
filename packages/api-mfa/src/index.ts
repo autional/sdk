@@ -567,6 +567,11 @@ export function getAdminMfaPushStats(client: ApiClient): Promise<PushStatsRespon
   return client.get(`/mfa/api/v1/admin/mfa/push/stats`);
 }
 
+/** 获取Push MFA挑战统计（/admin/mfa/stats 别名，同一 handler） */
+export function getAdminMfaStats(client: ApiClient): Promise<PushStatsResponse> {
+  return client.get(`/mfa/api/v1/admin/mfa/stats`);
+}
+
 /** 管理员重置用户MFA */
 export function deleteAdminMfaResetByReset(client: ApiClient, userId: string): Promise<SimpleResponse> {
   return client.delete(`/mfa/api/v1/admin/mfa/reset/${userId}`);

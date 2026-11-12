@@ -277,6 +277,23 @@ def swagger_to_ts_type(schema, definitions, indent=0):
     return "unknown"
 
 
+# 已退役端点（410 Gone）：生成时打 @deprecated，提醒调用方改走新位置。
+# 与 service 的退役开关配套：mfa/session 旧 trusted-devices 接口默认返回 410。
+DEPRECATED_PREFIXES = {
+    ("mfa", "/mfa/trusted-devices"): "410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices",
+    ("session", "/trusted-devices"): "410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices",
+    ("session", "/admin/trusted-devices"): "410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices",
+    ("session", "/internal/session/trusted-devices"): "410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices",
+}
+
+
+def deprecation_note(prefix, path):
+    for (p, pref), note in DEPRECATED_PREFIXES.items():
+        if p == prefix and path.startswith(pref):
+            return note
+    return ""
+
+
 def format_ts_comment(text):
     if not text:
         return ""
@@ -679,7 +696,14 @@ def generate_functions(endpoints, definitions, prefix):
 
     for fi in func_infos:
         summary = fi["summary"]
-        if summary:
+        dep = deprecation_note(fi["prefix"], fi["path"])
+        if dep:
+            lines.append("/**")
+            if summary:
+                lines.append(f" * {format_ts_comment(summary)}")
+            lines.append(f" * @deprecated {dep}")
+            lines.append(" */")
+        elif summary:
             lines.append(f"/** {format_ts_comment(summary)} */")
 
         params_str = ", ".join(fi["param_list"]) if fi["param_list"] else ""

@@ -1,6 +1,6 @@
 /**
  * @autional/api-session — Auto-generated from session-service internal/docs/docs.go
- * Generated: 2026-11-11
+ * Generated: 2026-11-12
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -470,7 +470,10 @@ export function getAdminTokensByTokens(client: ApiClient, deviceId: string): Pro
   return client.get(`/session/api/v1/admin/tokens/${deviceId}`);
 }
 
-/** Admin list trusted devices */
+/**
+ * Admin list trusted devices
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function getAdminTrustedDevices(client: ApiClient, params?: {
   user_id: string;  // User ID
   page?: number;  // Page
@@ -479,7 +482,10 @@ export function getAdminTrustedDevices(client: ApiClient, params?: {
   return client.get(`/session/api/v1/admin/trusted-devices`, { params });
 }
 
-/** Admin revoke trusted device */
+/**
+ * Admin revoke trusted device
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function deleteAdminTrustedDevicesByTrustedDevices(client: ApiClient, deviceId: string): Promise<SimpleResponse> {
   return client.delete(`/session/api/v1/admin/trusted-devices/${deviceId}`);
 }
@@ -558,17 +564,26 @@ export function getTokensBlacklistCheck(client: ApiClient, params?: {
   return client.get(`/session/api/v1/tokens/blacklist/check`, { params });
 }
 
-/** List my trusted devices */
+/**
+ * List my trusted devices
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function getTrustedDevices(client: ApiClient): Promise<ApiListResult<TrustedDeviceResponse>> {
   return client.get(`/session/api/v1/trusted-devices`);
 }
 
-/** Trust device */
+/**
+ * Trust device
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function postTrustedDevices(client: ApiClient, data: TrustDeviceRequest): Promise<SimpleResponse> {
   return client.post(`/session/api/v1/trusted-devices`, data);
 }
 
-/** Revoke my trusted device */
+/**
+ * Revoke my trusted device
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function deleteTrustedDevicesByTrustedDevices(client: ApiClient, deviceId: string): Promise<SimpleResponse> {
   return client.delete(`/session/api/v1/trusted-devices/${deviceId}`);
 }

@@ -18,7 +18,6 @@ Autional Mfa API — auto-generated TypeScript client from mfa-service (63 funct
 | `putAdminMfaIpWhitelistByIpWhitelist(client, ipWhitelistId: string, data: UpdateIPWhitelistRequest)` | PUT | `/admin/mfa/ip-whitelist/{ip_whitelist_id}` | 更新IP白名单 |
 | `getAdminMfaPushChallenges(client, params?)` | GET | `/admin/mfa/push/challenges` | 管理端查看推送挑战列表 |
 | `getAdminMfaPushStats(client)` | GET | `/admin/mfa/push/stats` | 获取Push MFA挑战统计 |
-| `getAdminMfaStats(client)` | GET | `/admin/mfa/stats` | 获取Push MFA挑战统计（别名） |
 | `deleteAdminMfaResetByReset(client, userId: string)` | DELETE | `/admin/mfa/reset/{user_id}` | 管理员重置用户MFA |
 | `getAdminMfaRiskPolicies(client)` | GET | `/admin/mfa/risk-policies` | 列出所有风险策略 |
 | `postAdminMfaRiskPoliciesEvaluate(client, data: EvaluateRiskPolicyRequest)` | POST | `/admin/mfa/risk-policies/evaluate` | 评估风险策略 |
@@ -26,6 +25,7 @@ Autional Mfa API — auto-generated TypeScript client from mfa-service (63 funct
 | `putAdminMfaRiskPoliciesByRiskPolicies(client, level: string, data: UpdateRiskPolicyByLevelRequest)` | PUT | `/admin/mfa/risk-policies/{level}` | 更新指定等级的风险策略 |
 | `getAdminMfaRiskPolicy(client)` | GET | `/admin/mfa/risk-policy` | 获取MFA风险策略 |
 | `putAdminMfaRiskPolicy(client, data: UpdateRiskPolicyRequest)` | PUT | `/admin/mfa/risk-policy` | 更新MFA风险策略 |
+| `getAdminMfaStats(client)` | GET | `/admin/mfa/stats` | 获取Push MFA挑战统计 |
 | `getAdminMfaTotpByTotp(client, userId: string)` | GET | `/admin/mfa/totp/{user_id}` | 管理端获取用户TOTP状态 |
 | `getMfaBackupCodes(client)` | GET | `/mfa/backup-codes` | 查看备用码 |
 | `getMfaBackupCodesCount(client)` | GET | `/mfa/backup-codes/count` | 查看备用码数量 |

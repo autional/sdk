@@ -1,6 +1,6 @@
 /**
  * @autional/api-mfa — Auto-generated from mfa-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-12
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -567,11 +567,6 @@ export function getAdminMfaPushStats(client: ApiClient): Promise<PushStatsRespon
   return client.get(`/mfa/api/v1/admin/mfa/push/stats`);
 }
 
-/** 获取Push MFA挑战统计（/admin/mfa/stats 别名，同一 handler） */
-export function getAdminMfaStats(client: ApiClient): Promise<PushStatsResponse> {
-  return client.get(`/mfa/api/v1/admin/mfa/stats`);
-}
-
 /** 管理员重置用户MFA */
 export function deleteAdminMfaResetByReset(client: ApiClient, userId: string): Promise<SimpleResponse> {
   return client.delete(`/mfa/api/v1/admin/mfa/reset/${userId}`);
@@ -605,6 +600,11 @@ export function getAdminMfaRiskPolicy(client: ApiClient): Promise<RiskPolicyResp
 /** 更新MFA风险策略 */
 export function putAdminMfaRiskPolicy(client: ApiClient, data: UpdateRiskPolicyRequest): Promise<RiskPolicyResponse> {
   return client.put(`/mfa/api/v1/admin/mfa/risk-policy`, data);
+}
+
+/** 获取Push MFA挑战统计 */
+export function getAdminMfaStats(client: ApiClient): Promise<PushStatsResponse> {
+  return client.get(`/mfa/api/v1/admin/mfa/stats`);
 }
 
 /** 管理端获取用户TOTP状态 */
@@ -807,22 +807,34 @@ export function postMfaTotpVerify(client: ApiClient, data: TOTPVerifyRequest): P
   return client.post(`/mfa/api/v1/mfa/totp/verify`, data);
 }
 
-/** 撤销所有受信设备 */
+/**
+ * 撤销所有受信设备
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function deleteMfaTrustedDevices(client: ApiClient): Promise<TrustedDeviceCountResponse> {
   return client.delete(`/mfa/api/v1/mfa/trusted-devices`);
 }
 
-/** 列出受信设备 */
+/**
+ * 列出受信设备
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function getMfaTrustedDevices(client: ApiClient): Promise<ApiListResult<TrustedDeviceItem>> {
   return client.get(`/mfa/api/v1/mfa/trusted-devices`);
 }
 
-/** 记住受信设备 */
+/**
+ * 记住受信设备
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function postMfaTrustedDevices(client: ApiClient, data: TrustDeviceRequest): Promise<TrustedDeviceItem> {
   return client.post(`/mfa/api/v1/mfa/trusted-devices`, data);
 }
 
-/** 检查设备是否受信 */
+/**
+ * 检查设备是否受信
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function getMfaTrustedDevicesCheck(client: ApiClient, params?: {
   user_id: string;  // 用户ID
   fingerprint: string;  // 设备指纹
@@ -830,17 +842,26 @@ export function getMfaTrustedDevicesCheck(client: ApiClient, params?: {
   return client.get(`/mfa/api/v1/mfa/trusted-devices/check`, { params });
 }
 
-/** 清理过期受信设备 */
+/**
+ * 清理过期受信设备
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function postMfaTrustedDevicesCleanup(client: ApiClient): Promise<SimpleResponse> {
   return client.post(`/mfa/api/v1/mfa/trusted-devices/cleanup`);
 }
 
-/** 撤销受信设备 */
+/**
+ * 撤销受信设备
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function deleteMfaTrustedDevicesByTrustedDevices(client: ApiClient, trustedDeviceId: string): Promise<void> {
   return client.delete(`/mfa/api/v1/mfa/trusted-devices/${trustedDeviceId}`);
 }
 
-/** 获取受信设备详情 */
+/**
+ * 获取受信设备详情
+ * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
+ */
 export function getMfaTrustedDevicesByTrustedDevices(client: ApiClient, trustedDeviceId: string): Promise<TrustedDeviceItem> {
   return client.get(`/mfa/api/v1/mfa/trusted-devices/${trustedDeviceId}`);
 }

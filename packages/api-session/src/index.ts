@@ -140,15 +140,6 @@ export interface CreateSessionRequest {
   userAgent?: string;
 }
 
-export interface CreateTrustedDeviceRequest {
-  browser?: string;
-  deviceFingerprint: string;
-  deviceType?: string;
-  ip?: string;
-  os?: string;
-  userId: string;
-}
-
 /** 设备指纹信息 */
 export interface DeviceFingerprintResponse {
   browser?: string;  // 浏览器
@@ -312,25 +303,6 @@ export interface TokenValidationResponse {
   valid?: boolean;
 }
 
-export interface TrustDeviceRequest {
-  deviceFingerprint: string;
-  deviceName?: string;
-}
-
-export interface TrustedDeviceResponse {
-  browser?: string;
-  createdAt?: string;
-  deviceFingerprint?: string;
-  deviceName?: string;
-  deviceType?: string;
-  id?: string;
-  ip?: string;
-  os?: string;
-  tenantId?: string;
-  trustedUntil?: string;
-  userId?: string;
-}
-
 export interface UpdateTenantJWTConfigRequest {
   accessExpiry: string;
   leeway?: string;
@@ -470,26 +442,6 @@ export function getAdminTokensByTokens(client: ApiClient, deviceId: string): Pro
   return client.get(`/session/api/v1/admin/tokens/${deviceId}`);
 }
 
-/**
- * Admin list trusted devices
- * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
- */
-export function getAdminTrustedDevices(client: ApiClient, params?: {
-  user_id: string;  // User ID
-  page?: number;  // Page
-  page_size?: number;  // Page size
-}): Promise<ApiListResult<TrustedDeviceResponse>> {
-  return client.get(`/session/api/v1/admin/trusted-devices`, { params });
-}
-
-/**
- * Admin revoke trusted device
- * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
- */
-export function deleteAdminTrustedDevicesByTrustedDevices(client: ApiClient, deviceId: string): Promise<SimpleResponse> {
-  return client.delete(`/session/api/v1/admin/trusted-devices/${deviceId}`);
-}
-
 /** 查询用户会话列表 */
 export function getSessions(client: ApiClient, params?: {
   auth_user_id: string;  // 认证用户ID
@@ -562,29 +514,5 @@ export function getTokensBlacklistCheck(client: ApiClient, params?: {
   token: string;  // 待检查的令牌
 }): Promise<BlacklistCheckResponse> {
   return client.get(`/session/api/v1/tokens/blacklist/check`, { params });
-}
-
-/**
- * List my trusted devices
- * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
- */
-export function getTrustedDevices(client: ApiClient): Promise<ApiListResult<TrustedDeviceResponse>> {
-  return client.get(`/session/api/v1/trusted-devices`);
-}
-
-/**
- * Trust device
- * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
- */
-export function postTrustedDevices(client: ApiClient, data: TrustDeviceRequest): Promise<SimpleResponse> {
-  return client.post(`/session/api/v1/trusted-devices`, data);
-}
-
-/**
- * Revoke my trusted device
- * @deprecated 410 Gone — moved to identity: GET/DELETE /api/v1/auth/me/devices
- */
-export function deleteTrustedDevicesByTrustedDevices(client: ApiClient, deviceId: string): Promise<SimpleResponse> {
-  return client.delete(`/session/api/v1/trusted-devices/${deviceId}`);
 }
 

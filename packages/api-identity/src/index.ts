@@ -3009,6 +3009,21 @@ export function deleteAuthMeRecoveryContactsByRecoveryContacts(client: ApiClient
   return client.delete(`/identity/api/v1/auth/me/recovery-contacts/${contactId}`);
 }
 
+/** 邀请预览 */
+export function getAuthInvitationsByToken(client: ApiClient, token: string): Promise<SimpleResponse> {
+  return client.get(`/identity/api/v1/auth/invitations/${token}`);
+}
+
+/** 生成恢复码 */
+export function postAuthRecoveryCodesRegenerate(client: ApiClient): Promise<SimpleResponse> {
+  return client.post(`/identity/api/v1/auth/recovery-codes/regenerate`);
+}
+
+/** 校验恢复码 */
+export function postAuthRecoveryCodesVerify(client: ApiClient): Promise<SimpleResponse> {
+  return client.post(`/identity/api/v1/auth/recovery-codes/verify`);
+}
+
 /** 验证恢复联系人 */
 export function postAuthMeRecoveryContactsVerifyByRecoveryContacts(client: ApiClient, contactId: string, data: VerifyRecoveryContactRequest): Promise<SimpleResponse> {
   return client.post(`/identity/api/v1/auth/me/recovery-contacts/${contactId}/verify`, data);

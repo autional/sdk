@@ -135,6 +135,7 @@ Autional Identity API — auto-generated TypeScript client from identity-service
 | `postAuthForgotPassword(client, data: ForgotPasswordRequest)` | POST | `/auth/forgot-password` | 忘记密码 |
 | `postAuthGenerateTicket(client, data: GenerateTicketInput)` | POST | `/auth/generate-ticket` | 生成一次性票据 |
 | `postAuthIdTokenSignin(client, data: Record<string, unknown>)` | POST | `/auth/id-token/signin` | ID Token登录（未启用） |
+| `getAuthInvitationsByInvitations(client, token: string)` | GET | `/auth/invitations/{token}` | 邀请预览 |
 | `postAuthLdapLogin(client, data: LdapLoginRequest)` | POST | `/auth/ldap/login` | LDAP directory authentication |
 | `postAuthLogin(client, data: LoginRequest)` | POST | `/auth/login` | 用户登录 |
 | `postAuthLoginEmailCode(client, data: LoginByEmailCodeRequest)` | POST | `/auth/login/email-code` | 邮箱验证码登录 |
@@ -177,9 +178,6 @@ Autional Identity API — auto-generated TypeScript client from identity-service
 | `postAuthMeReauthenticate(client, data: ReAuthenticateRequest)` | POST | `/auth/me/reauthenticate` | 重新认证（step-up） |
 | `getAuthMeRecoveryContacts(client)` | GET | `/auth/me/recovery-contacts` | 获取恢复联系人列表 |
 | `postAuthMeRecoveryContacts(client, data: AddRecoveryContactRequest)` | POST | `/auth/me/recovery-contacts` | 添加恢复联系人 |
-| `getAuthInvitationsByToken(client, token: string)` | GET | `/auth/invitations/{token}` | 邀请预览 |
-| `postAuthRecoveryCodesRegenerate(client)` | POST | `/auth/recovery-codes/regenerate` | 生成恢复码 |
-| `postAuthRecoveryCodesVerify(client)` | POST | `/auth/recovery-codes/verify` | 校验恢复码 |
 | `deleteAuthMeRecoveryContactsByRecoveryContacts(client, contactId: string)` | DELETE | `/auth/me/recovery-contacts/{contact_id}` | 移除恢复联系人 |
 | `postAuthMeRecoveryContactsVerifyByRecoveryContacts(client, contactId: string, data: VerifyRecoveryContactRequest)` | POST | `/auth/me/recovery-contacts/{contact_id}/verify` | 验证恢复联系人 |
 | `getAuthMeRoleActivations(client)` | GET | `/auth/me/role-activations` | 查询我的角色激活 |
@@ -219,6 +217,8 @@ Autional Identity API — auto-generated TypeScript client from identity-service
 | `postAuthReAuthenticate(client, data: ReAuthenticateRequest)` | POST | `/auth/re-authenticate` | 重新认证（step-up） |
 | `postAuthRecoverAccount(client, data: RecoverAccountRequest)` | POST | `/auth/recover-account` | 通过恢复联系人初始化账户恢复 |
 | `postAuthRecoverAccountReset(client, data: RecoverAccountResetRequest)` | POST | `/auth/recover-account/reset` | 通过恢复码重置密码 |
+| `postAuthRecoveryCodesRegenerate(client)` | POST | `/auth/recovery-codes/regenerate` | 生成恢复码 |
+| `postAuthRecoveryCodesVerify(client)` | POST | `/auth/recovery-codes/verify` | 校验恢复码 |
 | `postAuthRecoveryComplete(client, data: CompleteAccountRecoveryRequest)` | POST | `/auth/recovery/complete` | 完成账户恢复 |
 | `postAuthRecoveryRequest(client, data: RequestAccountRecoveryRequest)` | POST | `/auth/recovery/request` | 发起账户恢复 |
 | `postAuthRecoveryVerify(client, data: VerifyAccountRecoveryRequest)` | POST | `/auth/recovery/verify` | 验证账户恢复码 |

@@ -1,6 +1,6 @@
 /**
  * @autional/api-tenant — Auto-generated from tenant-service internal/docs/docs.go
- * Generated: 2026-10-28
+ * Generated: 2026-11-12
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -157,11 +157,23 @@ export interface AppSecuritySettings {
   sessionTimeout?: number;
 }
 
+export interface ApplicationConfig {
+  portal?: ApplicationPortalConfig;
+}
+
+export interface ApplicationPortalConfig {
+  allowedRoles?: string[];  // * 角色门槛（audience=admin 时可进一步收窄）
+  audience?: string;  // * 可见性受众：public | admin | platform（前端据此判定谁能看见该门户）
+  base?: string;  // * 子域下固定路径前缀
+  host?: string;  // * 子域前缀（空串 = 根域）
+}
+
 /** 应用详情 */
 export interface ApplicationResponse {
   adminUrl?: string;
   category?: string;
   code?: string;
+  config?: ApplicationConfig;  // Config 应用配置的对外子集（当前只有 portal）；无数据时省略， 前端据 `config.portal.audience` 判定门户可见性，缺失则回落共享注册表。
   createdAt?: string;
   description?: string;
   entryUrl?: string;
@@ -175,6 +187,7 @@ export interface ApplicationResponse {
   name?: string;
   order?: number;
   requireMfa?: boolean;
+  resource?: string;
   sessionTimeout?: number;
   status?: string;
   tenantId?: string;
@@ -357,6 +370,7 @@ export interface CreateApplicationRequest {
   name: string;
   order?: number;
   requireMfa?: boolean;
+  resource?: string;
   sessionTimeout?: number;
   Type?: string;
   version?: string;
@@ -631,8 +645,9 @@ export interface PublicTenantResponse {
 }
 
 export interface RegisterTrialTenantRequest {
-  adminEmail: string;
+  adminEmail?: string;
   adminPassword: string;
+  adminUsername?: string;  // AdminUsername 为 T1 首选；为空时回退 AdminEmail（兼容旧 portal）。
   agreementAccepted?: boolean;
   agreementVersion?: string;
   displayName?: string;
@@ -764,6 +779,7 @@ export interface UpdateApplicationRequest {
   name?: string;
   order?: number;
   requireMfa?: boolean;
+  resource?: string;
   sessionTimeout?: number;
   Type?: string;
   version?: string;
@@ -1075,11 +1091,6 @@ export function deleteAdminTenantsByTenants(client: ApiClient, tenantId: string)
 /** 获取租户详情 */
 export function getAdminTenantsByTenants(client: ApiClient, tenantId: string): Promise<TenantResponse> {
   return client.get(`/tenant/api/v1/admin/tenants/${tenantId}`);
-}
-
-/** 试用租户升级为正式租户 */
-export function postAdminTenantsUpgradeByTenants(client: ApiClient, tenantId: string): Promise<SimpleResponse> {
-  return client.post(`/tenant/api/v1/admin/tenants/${tenantId}/upgrade`);
 }
 
 /** 更新租户信息 */
@@ -1445,6 +1456,11 @@ export function getAdminTenantsStatisticsByTenants(client: ApiClient, tenantId: 
 /** 暂停租户 */
 export function postAdminTenantsSuspendByTenants(client: ApiClient, tenantId: string): Promise<TenantResponse> {
   return client.post(`/tenant/api/v1/admin/tenants/${tenantId}/suspend`);
+}
+
+/** 试用租户升级为正式租户 */
+export function postAdminTenantsUpgradeByTenants(client: ApiClient, tenantId: string): Promise<SimpleResponse> {
+  return client.post(`/tenant/api/v1/admin/tenants/${tenantId}/upgrade`);
 }
 
 /** 列出 Webhook */

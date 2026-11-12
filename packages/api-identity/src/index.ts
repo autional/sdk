@@ -1,6 +1,6 @@
 /**
  * @autional/api-identity — Auto-generated from identity-service internal/docs/docs.go
- * Generated: 2026-11-09
+ * Generated: 2026-11-12
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -854,6 +854,15 @@ export interface ImportSAMLMetadataRequest {
   metadataUrl: string;
 }
 
+export interface InvitationPreviewResponse {
+  emailMasked?: string;
+  expiresAt?: number;
+  role?: string;
+  tenantId?: string;
+  tenantName?: string;
+  valid?: boolean;
+}
+
 export interface KeyExchangeResponse {
   algorithm?: string;  // "ECDH-P256-HKDF-SHA256-AES256GCM"
   expiresIn?: number;  // TTL in seconds
@@ -978,6 +987,7 @@ export interface LoginRequest {
   captchaToken?: string;  // CAPTCHA verification token (PoW/Turnstile)
   clientNonce?: string;  // hash 模式: 客户端随机 nonce
   clientPubKey?: string;  // symmetric 模式: 客户端 ECDH 临时公钥
+  deviceFingerprint?: string;  // DeviceFingerprint 客户端设备指纹（dfp_ 前缀）。仅在租户 auth_policy device_fingerprint_enabled=true 时被采信（服务端二次门控，不信客户端自证）。
   identity: string;  // Username/Email/Phone
   keyExchangeId?: string;  // symmetric 模式: ECDH 密钥交换 ID
   keyId?: string;  // asymmetric 模式: 服务端公钥 ID
@@ -994,6 +1004,7 @@ export interface LoginResponse {
   expiresIn?: number;  // Expiration time
   membershipStatus?: string;  // MembershipStatus 新注册待审批（WS-A A3）；pending 时不返回 token。
   mfaCheckReason?: string;  // MFA触发原因描述
+  mfaSkippedByTrustedDevice?: boolean;  // MFASkippedByTrustedDevice 本次登录因「可信设备」跳过了自适应 MFA 第二步。 仅在 flag 开启 + 设备类风险因子 + 信任期内命中时置 true（审计同源事件）。
   mustChangePassword?: boolean;  // Password must be changed
   passwordExpiresIn?: number;  // Days until password expires
   passwordWarning?: string;  // Password warning: expiring/expired_grace/expired
@@ -1354,6 +1365,8 @@ export interface RegisterByEmailCodeRequest {
 
 /** 邀请注册请求参数 */
 export interface RegisterByInvitationRequest {
+  email?: string;  // Email/EmailCode：开启「邀请邮箱绑定」时必填。Email 必须与邀请邮箱一致， EmailCode 为该邮箱收到的验证码；校验通过后邮箱以 verified 写入 identity。
+  emailCode?: string;
   invitationCode: string;
   password: string;
   passwordTransmission?: string;
@@ -2784,6 +2797,11 @@ export function postAuthIdTokenSignin(client: ApiClient, data: Record<string, un
   return client.post(`/identity/api/v1/auth/id-token/signin`, data);
 }
 
+/** 邀请预览 */
+export function getAuthInvitationsByInvitations(client: ApiClient, token: string): Promise<InvitationPreviewResponse> {
+  return client.get(`/identity/api/v1/auth/invitations/${token}`);
+}
+
 /** LDAP directory authentication */
 export function postAuthLdapLogin(client: ApiClient, data: LdapLoginRequest): Promise<LdapLoginResponse> {
   return client.post(`/identity/api/v1/auth/ldap/login`, data);
@@ -3009,21 +3027,6 @@ export function deleteAuthMeRecoveryContactsByRecoveryContacts(client: ApiClient
   return client.delete(`/identity/api/v1/auth/me/recovery-contacts/${contactId}`);
 }
 
-/** 邀请预览 */
-export function getAuthInvitationsByToken(client: ApiClient, token: string): Promise<SimpleResponse> {
-  return client.get(`/identity/api/v1/auth/invitations/${token}`);
-}
-
-/** 生成恢复码 */
-export function postAuthRecoveryCodesRegenerate(client: ApiClient): Promise<SimpleResponse> {
-  return client.post(`/identity/api/v1/auth/recovery-codes/regenerate`);
-}
-
-/** 校验恢复码 */
-export function postAuthRecoveryCodesVerify(client: ApiClient): Promise<SimpleResponse> {
-  return client.post(`/identity/api/v1/auth/recovery-codes/verify`);
-}
-
 /** 验证恢复联系人 */
 export function postAuthMeRecoveryContactsVerifyByRecoveryContacts(client: ApiClient, contactId: string, data: VerifyRecoveryContactRequest): Promise<SimpleResponse> {
   return client.post(`/identity/api/v1/auth/me/recovery-contacts/${contactId}/verify`, data);
@@ -3227,6 +3230,16 @@ export function postAuthRecoverAccount(client: ApiClient, data: RecoverAccountRe
 /** 通过恢复码重置密码 */
 export function postAuthRecoverAccountReset(client: ApiClient, data: RecoverAccountResetRequest): Promise<RecoverAccountResetResponse> {
   return client.post(`/identity/api/v1/auth/recover-account/reset`, data);
+}
+
+/** 生成恢复码 */
+export function postAuthRecoveryCodesRegenerate(client: ApiClient): Promise<void> {
+  return client.post(`/identity/api/v1/auth/recovery-codes/regenerate`);
+}
+
+/** 校验恢复码 */
+export function postAuthRecoveryCodesVerify(client: ApiClient): Promise<void> {
+  return client.post(`/identity/api/v1/auth/recovery-codes/verify`);
 }
 
 /** 完成账户恢复 */

@@ -13,7 +13,6 @@ Autional Tenant API — auto-generated TypeScript client from tenant-service (97
 | `getAdminTenantsStats(client)` | GET | `/admin/tenants/stats` | 获取全部租户统计 |
 | `deleteAdminTenantsByTenants(client, tenantId: string)` | DELETE | `/admin/tenants/{tenant_id}` | 删除租户 |
 | `getAdminTenantsByTenants(client, tenantId: string)` | GET | `/admin/tenants/{tenant_id}` | 获取租户详情 |
-| `postAdminTenantsUpgradeByTenants(client, tenantId: string)` | POST | `/admin/tenants/{tenant_id}/upgrade` | 试用租户升级为正式租户 |
 | `putAdminTenantsByTenants(client, tenantId: string, data: UpdateTenantRequest)` | PUT | `/admin/tenants/{tenant_id}` | 更新租户信息 |
 | `postAdminTenantsActivateByTenants(client, tenantId: string)` | POST | `/admin/tenants/{tenant_id}/activate` | 激活租户 |
 | `getAdminTenantsApiKeysByTenants(client, tenantId: string)` | GET | `/admin/tenants/{tenant_id}/api-keys` | 列出租户 API Keys |
@@ -83,6 +82,7 @@ Autional Tenant API — auto-generated TypeScript client from tenant-service (97
 | `putAdminTenantsSecurityPolicyByTenants(client, tenantId: string, data: UpdateSecurityPolicyRequest)` | PUT | `/admin/tenants/{tenant_id}/security-policy` | 更新安全策略 |
 | `getAdminTenantsStatisticsByTenants(client, tenantId: string)` | GET | `/admin/tenants/{tenant_id}/statistics` | 获取租户统计概览 |
 | `postAdminTenantsSuspendByTenants(client, tenantId: string)` | POST | `/admin/tenants/{tenant_id}/suspend` | 暂停租户 |
+| `postAdminTenantsUpgradeByTenants(client, tenantId: string)` | POST | `/admin/tenants/{tenant_id}/upgrade` | 试用租户升级为正式租户 |
 | `getAdminTenantsWebhooksByTenants(client, tenantId: string)` | GET | `/admin/tenants/{tenant_id}/webhooks` | 列出 Webhook |
 | `postAdminTenantsWebhooksByTenants(client, tenantId: string, data: CreateWebhookRequest)` | POST | `/admin/tenants/{tenant_id}/webhooks` | 创建 Webhook |
 | `deleteAdminTenantsWebhooksByTenantsByWebhooks(client, tenantId: string, hookId: string)` | DELETE | `/admin/tenants/{tenant_id}/webhooks/{hook_id}` | 删除 Webhook |

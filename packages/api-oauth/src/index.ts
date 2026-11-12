@@ -1,6 +1,6 @@
 /**
  * @autional/api-oauth — Auto-generated from oauth-service internal/docs/docs.go
- * Generated: 2026-11-11
+ * Generated: 2026-11-12
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -248,8 +248,10 @@ export interface ConsentResponse {
 
 export interface CreateClientRequest {
   alias?: string;  // Alias 显示简称（可选）：前台列表优先展示，空则用 Name。
+  applicationId?: string;  // ApplicationID 关联的租户应用 ID（写入 metadata.application_id）。
   clientAuthMethods?: string[];
   corsOrigins?: string[];
+  defaultResource?: string;  // DefaultResource 默认资源标识（写入 metadata.default_resource），用于 AT 的 aud。
   fapiProfile?: string;
   grantTypes?: string[];
   isConfidential?: boolean;
@@ -341,9 +343,12 @@ export interface InternalDeviceAuthorizeDelegatorRequest {
 
 export interface InternalIntrospectResponse {
   active?: boolean;
+  aid?: string;
+  aud?: string;
   clientId?: string;
   exp?: number;
   scope?: string;
+  tenantId?: string;
   userId?: string;
 }
 
@@ -378,10 +383,12 @@ export interface OAuthCallbackResponse {
 
 export interface OAuthClientItem {
   alias?: string;  // Alias 显示简称（metadata.alias）
+  applicationId?: string;
   clientAuthMethods?: string;
   clientId?: string;
   corsOrigins?: string[];
   createdAt?: string;
+  defaultResource?: string;
   deletedAt?: string;
   fapiProfile?: string;
   grantTypes?: string[];
@@ -487,6 +494,7 @@ export interface OAuthTokenResponse {
 
 export interface OIDCUserInfoResponse {
   ageGroup?: string;
+  aid?: string;
   birthdate?: string;
   clientId?: string;  // Internal
   email?: string;  // Email Claims（scope=email 时填充；真源 = identity 的邮箱身份与验证状态）
@@ -502,6 +510,7 @@ export interface OIDCUserInfoResponse {
   preferredUsername?: string;
   scope?: string;
   sub?: string;  // 用户ID（必填）
+  tenantId?: string;  // TenantID / AID 让外部资源服务可以直接按租户/应用判定（无需再查库）。
   updatedAt?: number;
   website?: string;
   zoneinfo?: string;
@@ -562,20 +571,24 @@ export interface RotateSecretResponse {
 /** 令牌自检结果 */
 export interface TokenIntrospectionResponse {
   active?: boolean;  // 是否有效
+  aid?: string;  // 应用
   aud?: string;  // 受众
   clientId?: string;  // 客户端ID
   exp?: number;  // 过期时间
   iat?: number;  // 签发时间
   scope?: string;  // 范围
   sub?: string;  // 用户ID
+  tenantId?: string;  // 租户
   tokenType?: string;  // 令牌类型
   username?: string;  // 用户名
 }
 
 export interface UpdateClientRequest {
   alias?: string;
+  applicationId?: string;
   clientAuthMethods?: string[];
   corsOrigins?: string[];
+  defaultResource?: string;
   fapiProfile?: string;
   grantTypes?: string[];
   isConfidential?: boolean;

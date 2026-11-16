@@ -1290,11 +1290,13 @@ export interface QrLoginApprovalApproveRequest {
 export interface QrLoginApprovalInitiateRequest {
   challengeToken: string;
   deviceKey?: string;
+  dpopJkt?: string;  // DpopJKT 桌面端公钥的 RFC 7638 指纹（可选）。语义同 QrLoginInitiateRequest.DpopJKT： 审批渠道必须与 QR 渠道一致地支持绑定，否则审批渠道成为绕过口。
   originUa?: string;
 }
 
 export interface QrLoginApprovalInitiateResponse {
   code?: string;
+  dpopBound?: boolean;  // DpopBound 本次会话是否真的绑定了交付证明（additive，omitempty）。
   expiresIn?: number;
   requestId?: string;
   requiresStepUp?: boolean;  // RequiresStepUp 本条请求在批准时是否要求额外确认（step_up，桌面码回填）。 桌面端据此提示「请在手机上手动输入下面这 6 位码」；false = 正常一键确认。
@@ -1331,10 +1333,12 @@ export interface QrLoginConfirmRequest {
 }
 
 export interface QrLoginInitiateRequest {
+  dpopJkt?: string;  // DpopJKT 桌面端公钥的 RFC 7638 指纹（base64url 43 字符，**可选**）。 提供时：本次会话把令牌交付通道钉到这把公钥上（bound_to=`dpop1:<jkt>`）， 只有持有对应私钥（能生成匹配 DP...
   tenantId?: string;  // Explicit tenant from the address bar
 }
 
 export interface QrLoginInitiateResponse {
+  dpopBound?: boolean;  // DpopBound 本次会话是否真的绑定了交付证明（additive，omitempty）。 false 时不出现在响应体里 ⇒ 老客户端零变化。
   expiresIn?: number;
   numberMatching?: string;
   sessionToken?: string;

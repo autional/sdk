@@ -1,6 +1,6 @@
 /**
  * @autional/api-communication — Auto-generated from communication-service internal/docs/docs.go
- * Generated: 2026-11-11
+ * Generated: 2026-11-16
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -318,6 +318,7 @@ export interface PushResultResponse {
 
 export interface PushSendResponse {
   failed?: number;
+  removed?: number;
   sent?: number;
   total?: number;
 }

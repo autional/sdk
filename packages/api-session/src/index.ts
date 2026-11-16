@@ -1,6 +1,6 @@
 /**
  * @autional/api-session — Auto-generated from session-service internal/docs/docs.go
- * Generated: 2026-11-12
+ * Generated: 2026-11-16
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -134,6 +134,7 @@ export interface CreateSessionRequest {
   browser?: string;
   deviceFingerprint?: string;
   deviceId?: string;
+  deviceKey?: string;  // DeviceKey 设备键（可选，WP1）：会话行记录该键后可按设备精确撤销。 缺省不传 → 不落库；撤销该设备时命中 0 条（identity 侧走安全降级）。
   deviceType?: string;
   ip?: string;
   os?: string;
@@ -198,6 +199,19 @@ export interface RevokeAllTokensRequest {
   reason?: string;  // 原因
   Type?: string;  // 为空则撤销所有类型
   userId?: string;  // 用户ID
+}
+
+/** 按 (tenant_id,user_id,device_key) 只撤销该设备的未撤销会话 */
+export interface RevokeSessionsByDeviceRequest {
+  deviceKey: string;  // 设备键
+  reason?: string;  // 撤销原因
+  tenantId?: string;  // 租户ID
+  userId: string;  // 用户ID
+}
+
+/** revoked = 实际撤销的会话数量 */
+export interface RevokeSessionsByDeviceResponse {
+  revoked?: number;
 }
 
 /** 风险评估因素 */

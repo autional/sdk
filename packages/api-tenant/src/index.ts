@@ -1,6 +1,6 @@
 /**
  * @autional/api-tenant — Auto-generated from tenant-service internal/docs/docs.go
- * Generated: 2026-11-12
+ * Generated: 2026-11-16
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -267,6 +267,7 @@ export interface AuthPolicyResponse {
   silentChallengeEnabled?: boolean;
   ssoProviders?: string;
   tenantId?: string;
+  trustedDeviceMinBinding?: string;
   web3Enabled?: boolean;
 }
 
@@ -832,6 +833,7 @@ export interface UpdateAuthPolicyRequest {
   sessionTimeout?: string;
   silentChallengeEnabled?: boolean;
   ssoProviders?: string;
+  trustedDeviceMinBinding?: "cookie" | "passkey";
   web3Enabled?: boolean;
 }
 

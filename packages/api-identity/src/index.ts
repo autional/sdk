@@ -1,6 +1,6 @@
 /**
  * @autional/api-identity — Auto-generated from identity-service internal/docs/docs.go
- * Generated: 2026-11-12
+ * Generated: 2026-11-16
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -396,6 +396,11 @@ export interface AuthUserResponse {
   pendingParentalConsent?: boolean;  // 是否等待家长同意
   phone?: string;  // 手机号
   phoneVerifiedAt?: string;  // 手机验证时间
+  realNameEvidenceType?: string;  // 实名证据方式（U593）
+  realNameLevel?: string;  // 实名级别 IAL（U593；real_name_verified_at 的附注）
+  realNameProvider?: string;  // 实名外部核验提供方（U593）
+  realNameValidUntil?: string;  // 实名结论有效期（U593）
+  realNameVerifiedAt?: string;  // 实名验证通过时间（U589；与邮箱/手机验证独立）
   status?: string;  // 状态
   tenantId?: string;  // 租户ID
   updatedAt?: string;  // 更新时间
@@ -702,7 +707,9 @@ export interface DeviceResponse {
   loginCount?: number;  // 登录次数
   os?: string;  // 系统
   sessionId?: string;  // 关联会话
+  trustBinding?: string;  // TrustBinding 绑定强度：none|cookie|passkey|dbsc
   trustScore?: number;  // 信任评分
+  trustedUntil?: string;  // TrustedUntil 信任截止时间（RFC3339；空 = 未信任）
   Type?: string;  // 类型
   userId?: string;  // 用户ID
 }
@@ -860,6 +867,7 @@ export interface InvitationPreviewResponse {
   role?: string;
   tenantId?: string;
   tenantName?: string;
+  tenantSlug?: string;
   valid?: boolean;
 }
 
@@ -985,12 +993,15 @@ export interface LoginRequest {
   captchaChallengeId?: string;  // CAPTCHA challenge ID
   captchaProvider?: string;  // CAPTCHA provider (pow/turnstile)
   captchaToken?: string;  // CAPTCHA verification token (PoW/Turnstile)
+  clientId?: string;  // ClientID 本次登录所属的 OAuth client_id；**有 mfa_ticket 时必填**（handler 条件校验）。 与票记录 client_id 不一致（或不在生效白名单）⇒ 视为无票，回落标准 MFA（绝不 f...
   clientNonce?: string;  // hash 模式: 客户端随机 nonce
   clientPubKey?: string;  // symmetric 模式: 客户端 ECDH 临时公钥
-  deviceFingerprint?: string;  // DeviceFingerprint 客户端设备指纹（dfp_ 前缀）。仅在租户 auth_policy device_fingerprint_enabled=true 时被采信（服务端二次门控，不信客户端自证）。
+  deviceFingerprint?: string;  // Deprecated: 客户端指纹不再参与信任判定（P2 起信任键 = 服务端签发的 __Host-did 设备键）。 字段仅为前端兼容保留，服务端忽略；浏览器指纹只作请求期风险特征。
   identity: string;  // Username/Email/Phone
   keyExchangeId?: string;  // symmetric 模式: ECDH 密钥交换 ID
   keyId?: string;  // asymmetric 模式: 服务端公钥 ID
+  mfaRedirect?: string;  // MFARedirect 本次登录的回跳地址（登录页 redirect 参数原值）；Phase 1 仅审计 host 一致性。
+  mfaTicket?: string;  // MFATicket MFA 票据（POST /auth/mfa/ticket 换取，300s 单次）。 有效时跳过 MFA 第二步（只跳第二步，密码照常校验）；无效/过期一律回落 MFA 挑战。
   password: string;  // Password or hash/ciphertext (取决于 password_transmission)
   passwordTransmission?: string;  // plain|hash|symmetric|asymmetric
   tenantId?: string;  // Tenant ID
@@ -1030,6 +1041,31 @@ export interface LogoutSessionResponse {
 
 export interface MFAChallengeCodeSentResponse {
   sent?: boolean;
+}
+
+export interface MFAProofBeginRequest {
+  clientId?: string;  // ClientID 发起换票的 OAuth client_id（桥只服务 authenticator = 01AR0000000000000000000005）。 语义必填，但**刻意不加** binding:"required"：缺失...
+  identity: string;  // 用户标识（email/手机号/用户名）
+  tenant: string;  // 租户 slug（或租户 ID）
+}
+
+export interface MFAProofBeginResponse {
+  challenge?: string;  // 随机挑战（base64url，120s 有效）
+  expiresIn?: number;  // 挑战有效期（秒）
+}
+
+export interface MFAProofTicketRequest {
+  challenge: string;  // begin 返回的挑战
+  clientId?: string;  // ClientID 同 begin 的 client_id（语义必填；同样不加 binding:"required"，由 handler 判空并审计）。
+  identity: string;  // 与 begin 同一标识
+  proof: string;  // base64(HMAC-SHA256(TOTP secret, challenge))
+  redirectHost?: string;  // RedirectHost 回跳域（可选）：落库后仅用于兑换端 **audit-only** 比对（Phase 1）。
+  tenant: string;  // 与 begin 同一租户
+}
+
+export interface MFAProofTicketResponse {
+  expiresIn?: number;  // 票据有效期（秒）
+  ticket?: string;  // 一次性票据（300s 有效、仅可消费一次）
 }
 
 /** 双人复核记录请求 */
@@ -1223,7 +1259,6 @@ export interface PublicAuthConfigResponse {
   complianceProfile?: ComplianceProfileInfo;
   complianceWarnings?: ComplianceWarningItem[];
   crossTenantSwitchEnabled?: boolean;
-  deviceFingerprintEnabled?: boolean;
   displayName?: string;
   identityThreshold?: number;
   ipThreshold?: number;
@@ -1246,6 +1281,45 @@ export interface PublicAuthConfigResponse {
   transmissionNonceExpiresAt?: string;
   transmissionPublicKey?: string;
   transmissionPublicKeyId?: string;
+}
+
+export interface QrLoginApprovalApproveRequest {
+  confirmCode?: string;  // ConfirmCode 桌面屏幕上展示的 6 位审批码，由用户**手动输入**。 必须与该请求的审批码（binding_code）一致；不一致 → 403（ErrLoginApprovalStepUpMismatch）。
+}
+
+export interface QrLoginApprovalInitiateRequest {
+  challengeToken: string;
+  deviceKey?: string;
+  originUa?: string;
+}
+
+export interface QrLoginApprovalInitiateResponse {
+  code?: string;
+  expiresIn?: number;
+  requestId?: string;
+  requiresStepUp?: boolean;  // RequiresStepUp 本条请求在批准时是否要求额外确认（step_up，桌面码回填）。 桌面端据此提示「请在手机上手动输入下面这 6 位码」；false = 正常一键确认。
+  sessionToken?: string;
+}
+
+export interface QrLoginApprovalPendingItem {
+  code?: string;  // Code 审批码（6 位）。**仅普通行下发**：requires_step_up=true 的行恒为空 （json omitempty ⇒ 键不出现），因为该行的码只能从**桌面屏幕**读取， App 拿到就等于可以把码原样回填，s...
+  createdAt?: string;
+  expiresIn?: number;
+  familiarNetwork?: boolean;  // FamiliarNetwork 本次发起 IP 与该用户近期登录网络是否同段（IPv4 /24、IPv6 /64）。 nil = 无法判断：无历史 / 数据源不可用 / 来源 IP 属私网或保留段（不可用于判定）。
+  geoCity?: string;  // GeoCity 发起 IP 的离线城市解析结果（如「广东 深圳」）。 只用于展示、不参与任何判定；空串 = 未知/能力关闭（前端据此隐藏）。
+  knownDevice?: boolean;  // KnownDevice 本次发起设备键是否已属于该用户（nil = 无法判断）。
+  originIp?: string;  // OriginIP 发起侧来源地址，**展示专用**；来源属私网/保留段（如网关网桥地址 172.19.0.x） 时返回空串（前端不渲染），库内原值保留、审计口径不变。
+  originUa?: string;
+  requestId?: string;
+  requiresStepUp?: boolean;  // RequiresStepUp 本条请求批准时是否要求额外确认（step_up，桌面码回填）。 additive 字段（ADR-025 P1-t1-2）：true 时 App 应提前渲染「输入桌面上的 6 位码」 输入框，而不是一键确认...
+}
+
+export interface QrLoginApprovalPendingResponse {
+  items?: QrLoginApprovalPendingItem[];
+}
+
+export interface QrLoginApprovalResult {
+  status?: string;
 }
 
 export interface QrLoginCancelRequest {
@@ -1277,6 +1351,7 @@ export interface QrLoginStatusResponse {
   numberMatching?: string;
   refreshToken?: string;
   status?: string;
+  superseded?: boolean;  // Superseded 仅在 status=cancelled **且**因被同主体新请求替代（cancel_reason=superseded）时为 true。 **附加字段**（additive，omitempty）：status ...
 }
 
 /** 敏感操作前强制重新认证 */
@@ -1533,6 +1608,8 @@ export interface SecurityStatusResponse {
 
 /** 信任设备请求参数 */
 export interface SelfTrustDeviceRequest {
+  binding?: string;  // Binding 绑定强度：空/cookie（默认）| passkey | dbsc（预留，当前拒绝）。
+  credentialId?: string;  // CredentialID passkey 绑定时必填：必须是该用户**单设备凭据**（BackupEligible=false）。
   trusted?: boolean;  // Is trusted
 }
 
@@ -1589,11 +1666,6 @@ export interface TicketSigninRequest {
   ticket: string;  // 一次性票据
 }
 
-/** 信任设备请求参数 */
-export interface TrustDeviceRequest {
-  trust: boolean;  // 是否信任
-}
-
 /** 解绑OAuth账户请求 */
 export interface UnbindOAuthRequest {
   provider: string;  // Provider
@@ -1638,7 +1710,6 @@ export interface UpdateAuthConfigRequest {
   captchaEnabled?: boolean;
   changeCooldownMinutes?: number;  // 密码修改冷却时间（分钟）
   crossTenantSwitchEnabled?: boolean;
-  deviceFingerprintEnabled?: boolean;
   expiryDays?: number;  // 密码过期天数
   gracePeriodDays?: number;  // 过期宽限天数
   historyCount?: number;  // 密码历史保留数量
@@ -2608,11 +2679,6 @@ export function postAdminUsersChildrenConsentVerifyByUsers(client: ApiClient, us
   return client.post(`/identity/api/v1/admin/users/${userId}/children-consent/verify`);
 }
 
-/** 管理员查询用户设备列表 */
-export function getAdminUsersDevicesByUsers(client: ApiClient, userId: string): Promise<ApiListResult<DeviceResponse>> {
-  return client.get(`/identity/api/v1/admin/users/${userId}/devices`);
-}
-
 /** 获取用户身份列表 */
 export function getAdminUsersIdentitiesByUsers(client: ApiClient, userId: string): Promise<IdentityListData> {
   return client.get(`/identity/api/v1/admin/users/${userId}/identities`);
@@ -2810,6 +2876,36 @@ export function postAuthLdapLogin(client: ApiClient, data: LdapLoginRequest): Pr
 /** 用户登录 */
 export function postAuthLogin(client: ApiClient, data: LoginRequest): Promise<LoginResponse> {
   return client.post(`/identity/api/v1/auth/login`, data);
+}
+
+/** 按审批码通过登录请求 */
+export function postAuthLoginApprovalByCodeApproveByByCode(client: ApiClient, code: string, data: QrLoginApprovalApproveRequest): Promise<QrLoginApprovalResult> {
+  return client.post(`/identity/api/v1/auth/login-approval/by-code/${code}/approve`, data);
+}
+
+/** 按审批码拒绝登录请求 */
+export function postAuthLoginApprovalByCodeDenyByByCode(client: ApiClient, code: string): Promise<QrLoginApprovalResult> {
+  return client.post(`/identity/api/v1/auth/login-approval/by-code/${code}/deny`);
+}
+
+/** 发起同账号登录审批 */
+export function postAuthLoginApprovalInitiate(client: ApiClient, data: QrLoginApprovalInitiateRequest): Promise<QrLoginApprovalInitiateResponse> {
+  return client.post(`/identity/api/v1/auth/login-approval/initiate`, data);
+}
+
+/** 列出本人待审批的登录请求 */
+export function getAuthLoginApprovalPending(client: ApiClient): Promise<QrLoginApprovalPendingResponse> {
+  return client.get(`/identity/api/v1/auth/login-approval/pending`);
+}
+
+/** 按请求 ID 通过登录请求 */
+export function postAuthLoginApprovalApproveByLoginApproval(client: ApiClient, requestId: string, data: QrLoginApprovalApproveRequest): Promise<QrLoginApprovalResult> {
+  return client.post(`/identity/api/v1/auth/login-approval/${requestId}/approve`, data);
+}
+
+/** 按请求 ID 拒绝登录请求 */
+export function postAuthLoginApprovalDenyByLoginApproval(client: ApiClient, requestId: string): Promise<QrLoginApprovalResult> {
+  return client.post(`/identity/api/v1/auth/login-approval/${requestId}/deny`);
 }
 
 /** 邮箱验证码登录 */
@@ -3118,9 +3214,19 @@ export function deleteAuthMeWebauthnCredentialsByWebauthnCredentials(client: Api
   return client.delete(`/identity/api/v1/auth/me/webauthn-credentials/${credentialId}`);
 }
 
+/** 生成MFA票据挑战 */
+export function postAuthMfaProofBegin(client: ApiClient, data: MFAProofBeginRequest): Promise<MFAProofBeginResponse> {
+  return client.post(`/identity/api/v1/auth/mfa/proof/begin`, data);
+}
+
 /** 发送MFA挑战验证码 */
 export function postAuthMfaSendCode(client: ApiClient, data: SendMFAChallengeCodeRequest): Promise<MFAChallengeCodeSentResponse> {
   return client.post(`/identity/api/v1/auth/mfa/send-code`, data);
+}
+
+/** 换取MFA票据 */
+export function postAuthMfaTicket(client: ApiClient, data: MFAProofTicketRequest): Promise<MFAProofTicketResponse> {
+  return client.post(`/identity/api/v1/auth/mfa/ticket`, data);
 }
 
 /** 验证MFA挑战 */
@@ -3400,28 +3506,6 @@ export function postAuthWebauthnRegisterBegin(client: ApiClient, data: BeginRegi
 /** 完成Passkey注册 */
 export function postAuthWebauthnRegisterComplete(client: ApiClient, data: CompleteRegistrationRequest): Promise<SimpleResponse> {
   return client.post(`/identity/api/v1/auth/webauthn/register/complete`, data);
-}
-
-/** 移除所有设备 */
-export function deleteDevices(client: ApiClient, params?: {
-  except_current?: boolean;  // 是否排除当前设备
-}): Promise<void> {
-  return client.delete(`/identity/api/v1/devices`, params);
-}
-
-/** 获取用户设备列表 */
-export function getDevices(client: ApiClient): Promise<ApiListResult<DeviceResponse>> {
-  return client.get(`/identity/api/v1/devices`);
-}
-
-/** 移除设备 */
-export function deleteDevicesByDevices(client: ApiClient, deviceId: string): Promise<void> {
-  return client.delete(`/identity/api/v1/devices/${deviceId}`);
-}
-
-/** 信任/取消信任设备 */
-export function putDevicesTrustByDevices(client: ApiClient, deviceId: string, data: TrustDeviceRequest): Promise<SimpleResponse> {
-  return client.put(`/identity/api/v1/devices/${deviceId}/trust`, data);
 }
 
 /** List User Devices */

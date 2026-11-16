@@ -1,6 +1,6 @@
 /**
  * @autional/api-audit — Auto-generated from audit-service internal/docs/docs.go
- * Generated: 2026-11-11
+ * Generated: 2026-11-16
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -361,6 +361,7 @@ export interface MerkleProofResponse {
 
 /** 批量查询多个审计日志条目的 Merkle Proof */
 export interface MerkleProofsRequest {
+  chainId?: string;  // ChainID 为空 = 旧语义（单链租户成功；多链租户 400）。 非空 = 只在该链内取条目；链不存在 fail-closed（不回落默认链）。
   entryIds: string[];  // 条目ID列表
 }
 
@@ -875,6 +876,7 @@ export function getAdminAuditLogsByLogs(client: ApiClient, auditLogId: string): 
 export function getAdminAuditMerkleProof(client: ApiClient, params?: {
   tenant_id: string;  // 租户ID
   entry_id: string;  // 审计日志条目ID
+  chain_id?: string;  // 链ID（多链租户必填；= hash.BuildChainID(tenant_id, app_id)）
 }): Promise<MerkleProofResponse> {
   return client.get(`/audit/api/v1/admin/audit/merkle-proof`, { params });
 }
@@ -887,6 +889,7 @@ export function postAdminAuditMerkleProofs(client: ApiClient, data: MerkleProofs
 /** 获取租户审计日志的 Merkle Root */
 export function getAdminAuditMerkleRoot(client: ApiClient, params?: {
   tenant_id: string;  // 租户ID
+  chain_id?: string;  // 链ID（多链租户必填；= hash.BuildChainID(tenant_id, app_id)）
   start?: string;  // 开始日期 (YYYY-MM-DD)
   end?: string;  // 结束日期 (YYYY-MM-DD)
 }): Promise<MerkleRootResponse> {

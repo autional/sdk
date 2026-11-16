@@ -1,6 +1,6 @@
 /**
  * @autional/api-oauth — Auto-generated from oauth-service internal/docs/docs.go
- * Generated: 2026-11-12
+ * Generated: 2026-11-16
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 

@@ -1,3 +1,5 @@
+import type { AmrClaim } from './amr';
+
 export interface User {
   id: string;
   username?: string;
@@ -112,8 +114,14 @@ export interface SessionInfo {
   ip?: string;
   geoIp?: string;
   userAgent?: string;
-  /** 认证方法（如 password,totp） */
-  amr?: string;
+  /**
+   * 认证方法引用（AMR），归一后的方法数组。
+   *
+   * 会话 DTO 的线上形态是**逗号串**（`"pwd,otp"`，见 ADR-028 §1.1 行 D），
+   * 归一时用 `normalizeSessionAmr`（切逗号 + trim + 去空）；数组形态也接受。
+   * 不要用 `normalizeAmr` 处理本字段——它服务 JWT `custom.amr`（数组载体），不切逗号。
+   */
+  amr?: AmrClaim;
   /** 是否当前会话（服务端按 JWT sid 标记） */
   isCurrentSession: boolean;
   authenticatedAt?: string;

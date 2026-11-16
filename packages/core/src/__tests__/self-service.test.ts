@@ -179,8 +179,10 @@ describe('AuthClient self-service (B2C)', () => {
         items: [
           { id: 's1', device_type: 'web', ip: '1.2.3.4', geoip: 'CN', user_agent: 'UA', amr: 'pwd', is_current_session: true, created_at: '2026-01-01T00:00:00Z' },
           { id: 's2', device_type: 'mobile' },
+          { id: 's3', device_type: 'web', amr: ['pwd', 'oob'], is_current_session: false },
+          { id: 's4', device_type: 'web', amr: ['webauthn', '', 42], is_current_session: false },
         ],
-        total: 2,
+        total: 4,
         pagination: { page: 2, page_size: 10 },
       },
     });
@@ -188,14 +190,20 @@ describe('AuthClient self-service (B2C)', () => {
 
     const list = await client.getSessions(2, 10);
 
-    expect(list.total).toBe(2);
+    expect(list.total).toBe(4);
     expect(list.page).toBe(2);
     expect(list.pageSize).toBe(10);
     expect(list.sessions[0]).toMatchObject({
-      id: 's1', deviceType: 'web', ip: '1.2.3.4', geoIp: 'CN', userAgent: 'UA', amr: 'pwd',
+      id: 's1', deviceType: 'web', ip: '1.2.3.4', geoIp: 'CN', userAgent: 'UA', amr: ['pwd'],
       isCurrentSession: true, createdAt: '2026-01-01T00:00:00Z',
     });
+    // 缺该 claim → undefined（与「给了但为空」区分）
     expect(list.sessions[1]).toMatchObject({ id: 's2', deviceType: 'mobile', isCurrentSession: false });
+    expect(list.sessions[1]!.amr).toBeUndefined();
+    // 新数组形态原样保留
+    expect(list.sessions[2]!.amr).toEqual(['pwd', 'oob']);
+    // 数组内的空串/非字符串元素被过滤
+    expect(list.sessions[3]!.amr).toEqual(['webauthn']);
   });
 
   it('revokeSession encodes the session id in the path', async () => {

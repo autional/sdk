@@ -8,6 +8,7 @@ import type {
   DeleteAccountOptions, TrialTenantResult, DeviceCodeInfo, DeviceLoginOptions,
 } from './types';
 import { AutionalAuthError } from './errors';
+import { normalizeSessionAmr } from './amr';
 import type { DpopManager } from './dpop';
 import { processPasswordForTransmission } from './crypto/password-transmission';
 import { solveProofOfWork } from './crypto/pow-solver';
@@ -400,7 +401,9 @@ export class AuthClient {
         ip: s.ip as string | undefined,
         geoIp: s.geoip as string | undefined,
         userAgent: s.user_agent as string | undefined,
-        amr: s.amr as string | undefined,
+        // 会话 DTO 的 amr 是逗号串（ADR-028 §1.1 行 D）→ normalizeSessionAmr 切分；
+        // 但保留「服务端没给该字段 → undefined」的既有契约（SessionInfo.amr 可选）。
+        amr: s.amr === undefined || s.amr === null ? undefined : normalizeSessionAmr(s.amr),
         isCurrentSession: Boolean(s.is_current_session),
         authenticatedAt: s.authenticated_at as string | undefined,
         idleExpiresAt: s.idle_expires_at as string | undefined,

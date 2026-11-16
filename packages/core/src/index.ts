@@ -14,6 +14,8 @@ export { browserPlatform, sessionStoragePlatform, memoryPlatform } from './platf
 export type { AutionalPlatform, StorageAdapter, HttpAdapter, CryptoAdapter } from './platform';
 export { extractTenantSlugFromIssuer, buildPortalUrl } from './portal';
 export type { PortalName } from './portal';
+export { normalizeAmr, normalizeAmrOptional, normalizeSessionAmr } from './amr';
+export type { AmrClaim } from './amr';
 export {
   processPasswordForTransmission,
   solveProofOfWork,

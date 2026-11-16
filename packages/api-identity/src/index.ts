@@ -2991,8 +2991,11 @@ export function deleteAuthMeAuthenticatorBackupByBackup(client: ApiClient, backu
   return client.delete(`/identity/api/v1/auth/me/authenticator/backup/${backupId}`);
 }
 
-export function getAuthMeAuthenticatorDevices(client: ApiClient): Promise<ApiListResult<AuthenticatorDeviceItem>> {
-  return client.get(`/identity/api/v1/auth/me/authenticator/devices`);
+export function getAuthMeAuthenticatorDevices(client: ApiClient, params?: {
+  page?: number;  // 页码
+  page_size?: number;  // 每页数量（1-100）
+}): Promise<ApiListResult<AuthenticatorDeviceItem>> {
+  return client.get(`/identity/api/v1/auth/me/authenticator/devices`, { params });
 }
 
 /** 移除认证器设备 */

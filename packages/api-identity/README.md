@@ -157,7 +157,7 @@ Autional Identity API — auto-generated TypeScript client from identity-service
 | `getAuthMeAuthenticatorBackup(client)` | GET | `/auth/me/authenticator/backup` | - |
 | `postAuthMeAuthenticatorBackup(client, data: AuthenticatorBackupUploadRequest)` | POST | `/auth/me/authenticator/backup` | - |
 | `deleteAuthMeAuthenticatorBackupByBackup(client, backupId: string)` | DELETE | `/auth/me/authenticator/backup/{backup_id}` | - |
-| `getAuthMeAuthenticatorDevices(client)` | GET | `/auth/me/authenticator/devices` | - |
+| `getAuthMeAuthenticatorDevices(client, params?)` | GET | `/auth/me/authenticator/devices` | - |
 | `deleteAuthMeAuthenticatorDevicesByDevices(client, deviceId: string)` | DELETE | `/auth/me/authenticator/devices/{device_id}` | 移除认证器设备 |
 | `getAuthMeChildrenConsent(client)` | GET | `/auth/me/children-consent` | 获取儿童隐私同意状态 |
 | `deleteAuthMeConsent(client, params?)` | DELETE | `/auth/me/consent` | 撤销用户同意 |

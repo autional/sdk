@@ -1,6 +1,6 @@
 /**
  * @autional/api-secret — Auto-generated from secret-service internal/docs/docs.go
- * Generated: 2026-11-16
+ * Generated: 2026-11-18
  * DO NOT EDIT — run `python sdk/scripts/generate-api-packages.py` to regenerate
  */
 
@@ -183,6 +183,7 @@ export interface SecretDetailResponse {
   key?: string;
   metadata?: Record<string, unknown>;
   notifyBefore?: number;
+  serviceName?: string;  // ServiceName 第 4 维作用域（'' = 全局默认行；provision 行 = 服务名）。 只增不删；管理台据此回填 detail 深链的 service_name 参数（见 GetSecretDetail 注释）。
   status?: string;
   tenantId?: string;
   updatedAt?: string;
@@ -224,6 +225,7 @@ export interface SecretResponse {
   key?: string;
   metadata?: Record<string, unknown>;
   notifyBefore?: number;
+  serviceName?: string;  // ServiceName 第 4 维作用域（'' = 全局默认行；provision 行 = 服务名）。 只增不删；管理台据此回填 detail 深链的 service_name 参数（见 GetSecretDetail 注释）。
   status?: string;
   tenantId?: string;
   updatedAt?: string;
@@ -277,7 +279,6 @@ export interface UpdateSecretRequest {
   expiresAt?: string;
   metadata?: Record<string, unknown>;
   notifyBefore?: number;
-  value?: string;
 }
 
 export type Map_string_bool = Record<string, boolean>;
@@ -343,6 +344,9 @@ export function postAdminSecretsBatchRevoke(client: ApiClient, data: BatchRevoke
 /** 获取密钥详情 */
 export function getAdminSecretsDetail(client: ApiClient, params?: {
   key: string;  // 密钥路径
+  tenant_id?: string;  // 租户作用域（空=沿用 X-Tenant-ID；跨租户仅平台会话可用）
+  app_id?: string;  // 应用作用域（空=沿用 X-App-ID/ctx；provision 行 = 服务名）
+  service_name?: string;  // 第 4 维服务作用域（provision 行必传；空=全局默认行）
 }): Promise<SecretDetailResponse> {
   return client.get(`/secret/api/v1/admin/secrets/detail`, { params });
 }

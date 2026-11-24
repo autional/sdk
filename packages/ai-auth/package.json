@@ -1,0 +1,45 @@
+{
+  "name": "@autional/ai-auth",
+  "version": "0.0.0",
+  "description": "Passwordless OAuth/OIDC login for Autional AI sites — BFF handler with HttpOnly sessions, PKCE, scope-limited JWT access tokens and consent-revocation checks.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "pretest": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.mjs",
+    "clean": "rimraf dist",
+    "prepublishOnly": "node ../../scripts/prepublish-guard.mjs"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "keywords": [
+    "auth",
+    "oauth",
+    "oidc",
+    "pkce",
+    "cloudflare-workers",
+    "vercel",
+    "autional"
+  ],
+  "devDependencies": {
+    "rimraf": "^5.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "license": "MIT"
+}

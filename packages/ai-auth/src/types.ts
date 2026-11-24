@@ -81,6 +81,29 @@ export interface AiAuthEndpoints {
   jwks: string;
 }
 
+/** Platform identity endpoints used by the embedded (no-redirect) flow. */
+export interface AiIdentityConfig {
+  /** Identity API base, e.g. `https://api.autional.cn/bff`. */
+  api: string;
+  /** Tenant that owns QR/email login (the union tenant). */
+  tenantId: string;
+  /** Internal consent-create endpoint. */
+  consentCreate: {
+    endpoint: string;
+    apiKey: string;
+  };
+  /** Scopes recorded on the consent row. Default `['openid', 'email']`. */
+  scopes?: string[];
+}
+
+export interface AiEmbedHandlers {
+  sendEmail(request: Request): Promise<Response>;
+  loginEmail(request: Request): Promise<Response>;
+  qrInitiate(request: Request): Promise<Response>;
+  qrStatus(request: Request): Promise<Response>;
+  qrRevoke(request: Request): Promise<Response>;
+}
+
 export interface AiAuthConfig {
   /** OIDC issuer, e.g. https://api.autional.cn (no trailing slash). */
   issuer: string;
@@ -110,6 +133,12 @@ export interface AiAuthConfig {
   sessionIdleTtlSeconds?: number;
   /** OAuth state lifetime. Default 10m. */
   stateTtlSeconds?: number;
+
+  /**
+   * Embedded (no-redirect) login: customer pages call this BFF's
+   * `/api/auth/embed/*` directly. Omit to keep OAuth-only behavior.
+   */
+  identity?: AiIdentityConfig;
 
   /** Platform internal endpoint for revocation checks. */
   consentStatus?: {
@@ -152,8 +181,10 @@ export interface AiUser {
 }
 
 export interface AiAuth {
-  /** Dispatch `/api/auth/{login,callback,session,logout}` by pathname. */
+  /** Dispatch `/api/auth/{login,callback,session,logout,embed/*}` by pathname. */
   route(request: Request): Promise<Response>;
+  /** Embedded passwordless endpoints (503 when `identity` is not configured). */
+  embed: AiEmbedHandlers;
   login(request: Request): Promise<Response>;
   callback(request: Request): Promise<Response>;
   session(request: Request): Promise<Response>;

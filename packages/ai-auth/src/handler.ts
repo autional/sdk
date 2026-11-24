@@ -22,6 +22,7 @@ import {
 } from './crypto.js';
 import { appendSetCookie, clearCookie, readCookie, serializeCookie } from './cookies.js';
 import { createConsentChecker } from './consent.js';
+import { createEmbedHandlers } from './embed.js';
 import { createEndpointResolver, pkceChallenge, verifyIdToken } from './oidc.js';
 import { newSession, openSession, sealSession, sessionCookieName, touchSession } from './session.js';
 import type { AiAuth, AiAuthConfig, AiSession, TokenResponse, UserInfoResponse } from './types.js';
@@ -51,6 +52,13 @@ interface NormalizedConfig {
   loginPath: string;
   requireEmail: boolean;
   fetcher: typeof fetch;
+  identity: {
+    api: string;
+    tenantId: string;
+    consentCreateUrl: string;
+    internalApiKey: string;
+    scopes: string[];
+  } | null;
 }
 
 interface StatePayload {
@@ -94,6 +102,31 @@ function normalizeConfig(config: AiAuthConfig): NormalizedConfig {
   const allowedNextPrefixes = (config.allowedNextPrefixes ?? ['/ai']).map((prefix) =>
     prefix.endsWith('/') ? prefix.slice(0, -1) || '/' : prefix,
   );
+  let identity: NormalizedConfig['identity'] = null;
+  if (config.identity) {
+    const api = config.identity.api.replace(/\/+$/u, '');
+    if (!/^https:\/\//u.test(api) && !config.allowInsecureHttp) {
+      throw new Error('ai-auth: identity.api must use https');
+    }
+    if (!isNonEmptyString(config.identity.tenantId)) {
+      throw new Error('ai-auth: identity.tenantId is required');
+    }
+    const consentEndpoint = config.identity.consentCreate?.endpoint ?? '';
+    const consentApiKey = config.identity.consentCreate?.apiKey ?? '';
+    if (!/^https:\/\//u.test(consentEndpoint) && !config.allowInsecureHttp) {
+      throw new Error('ai-auth: identity.consentCreate.endpoint must use https');
+    }
+    if (!isNonEmptyString(consentApiKey)) {
+      throw new Error('ai-auth: identity.consentCreate.apiKey is required');
+    }
+    identity = {
+      api,
+      tenantId: config.identity.tenantId,
+      consentCreateUrl: consentEndpoint,
+      internalApiKey: consentApiKey,
+      scopes: config.identity.scopes ?? DEFAULT_SCOPES,
+    };
+  }
   return {
     raw: config,
     ...(config.onError ? { onError: config.onError } : {}),
@@ -114,6 +147,7 @@ function normalizeConfig(config: AiAuthConfig): NormalizedConfig {
     loginPath: '/ai/login',
     requireEmail: config.requireEmail ?? true,
     fetcher: config.fetch ?? fetch,
+    identity,
   };
 }
 
@@ -277,6 +311,18 @@ export function createAiAuth(configInput: AiAuthConfig, hooks: CreateAiAuthHooks
     allowInsecureHttp: config.raw.allowInsecureHttp,
   });
   const consent = createConsentChecker({ ...config.raw, fetch: config.fetcher });
+  const embed = createEmbedHandlers({
+    fetcher: config.fetcher,
+    issuer: config.issuer,
+    clientId: config.clientId,
+    sessionSecret: config.sessionSecret,
+    absoluteTtl: config.absoluteTtl,
+    idleTtl: config.idleTtl,
+    cookiePrefix: config.cookiePrefix,
+    secureCookies: config.secureCookies,
+    identity: config.identity,
+    ...(config.onError ? { onError: config.onError } : {}),
+  });
   let privateKey: Promise<CryptoKey> | null = null;
 
   async function login(request: Request): Promise<Response> {
@@ -488,6 +534,13 @@ export function createAiAuth(configInput: AiAuthConfig, hooks: CreateAiAuthHooks
     } catch {
       return jsonResponse({ error: 'bad_request' }, 400);
     }
+    // Embedded endpoints must be matched before the OAuth suffixes: otherwise
+    // `/embed/email/login` would be dispatched as the OAuth login handler.
+    if (pathname.endsWith('/embed/email/send')) return embed.sendEmail(request);
+    if (pathname.endsWith('/embed/email/login')) return embed.loginEmail(request);
+    if (pathname.endsWith('/embed/qr/initiate')) return embed.qrInitiate(request);
+    if (pathname.endsWith('/embed/qr/status')) return embed.qrStatus(request);
+    if (pathname.endsWith('/embed/qr/revoke')) return embed.qrRevoke(request);
     if (pathname.endsWith('/login')) return login(request);
     if (pathname.endsWith('/callback')) return callback(request);
     if (pathname.endsWith('/session')) return session(request);
@@ -495,7 +548,7 @@ export function createAiAuth(configInput: AiAuthConfig, hooks: CreateAiAuthHooks
     return jsonResponse({ error: 'not_found' }, 404);
   }
 
-  return { route, login, callback, session, logout, getUser, mintInternalToken };
+  return { route, embed, login, callback, session, logout, getUser, mintInternalToken };
 }
 
 // Re-export helpers used by adapters/tests without expanding the public surface too much.

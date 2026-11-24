@@ -10,6 +10,8 @@ export type {
   AiAuth,
   AiAuthConfig,
   AiAuthEndpoints,
+  AiEmbedHandlers,
+  AiIdentityConfig,
   AiSession,
   AiUser,
   ConsentCache,

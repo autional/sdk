@@ -24,6 +24,44 @@ browser ── /api/auth/session ──▶ BFF ── consent-status ──▶ p
 
 The BFF only exposes `sub`, `email`, `emailVerified`, `tenantId` and `issuer`.
 
+## Embedded login (no redirect)
+
+When `identity` is configured, the same BFF also serves passwordless login on
+the customer's own domain. The browser never sees an identity or OAuth token;
+it only receives the encrypted `__Host-ai-session` cookie.
+
+| Path | Method | Purpose |
+|---|---|---|
+| `/api/auth/embed/qr/initiate` | POST | Start a QR login session |
+| `/api/auth/embed/qr/status?token=` | GET | Poll; on `confirmed` sets the session cookie |
+| `/api/auth/embed/qr/revoke` | POST | Cancel the QR session |
+| `/api/auth/embed/email/send` | POST | Send a 6-digit email code |
+| `/api/auth/embed/email/login` | POST | Verify the code and set the session cookie |
+
+```ts
+const auth = createAiAuth({
+  // ...OAuth fields (still required for callback compatibility)
+  identity: {
+    api: 'https://api.autional.cn/bff',
+    tenantId: '01M60J7J1WZRC0K3BSSVS5J6S1', // union tenant
+    consentCreate: {
+      endpoint: 'https://api.autional.cn/bff/oauth/api/v1/internal/oauth/consents',
+      apiKey: env.AI_INTERNAL_API_KEY,
+    },
+    scopes: ['openid', 'email'],
+  },
+});
+
+// Optional: mount the individual handlers instead of route()
+await auth.embed.sendEmail(request);
+```
+
+Login success records consent through the platform internal endpoint
+(`grant_method=embedded_bff`) and reuses `consentStatus` for revocation checks:
+after the user revokes access, `/session` returns
+`{ authenticated: false, error: 'consent_revoked' }` within the cache TTL
+(default 60s).
+
 ## Usage
 
 ### Cloudflare Workers

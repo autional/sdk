@@ -4,13 +4,13 @@
   "description": "Passwordless OAuth/OIDC login for Autional AI sites — BFF handler with HttpOnly sessions, PKCE, scope-limited JWT access tokens and consent-revocation checks.",
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "sideEffects": false,
